@@ -1,7 +1,7 @@
 import { Path } from "npm:rot-js@2.2.1"
 
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
-import { pointsEqual } from "./helpers.ts"
+import { keyOfPoint, pointsEqual } from "./helpers.ts"
 import { withGameMessage } from "./log.ts"
 import type { Direction, GameState, HorizontalDirection } from "./model.ts"
 import { isPassableTile } from "./mapgen.ts"
@@ -11,6 +11,10 @@ import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 export interface AutoMoveAnomaly {
   point: Point
   reason: string
+}
+
+export function keyForAutoMoveAnomaly(anomaly: AutoMoveAnomaly): string {
+  return `${keyOfPoint(anomaly.point)}:${anomaly.reason}`
 }
 
 export function findPath(
@@ -97,10 +101,10 @@ export function findAutoMovePath(game: GameState, destination: Point): Point[] {
 }
 
 export function shouldHaltAutoMoveForAnomaly(
-  seenReasons: ReadonlySet<string>,
+  seenAnomalies: ReadonlySet<string>,
   anomaly: AutoMoveAnomaly | null,
 ): anomaly is AutoMoveAnomaly {
-  return anomaly !== null && !seenReasons.has(anomaly.reason)
+  return anomaly !== null && !seenAnomalies.has(keyForAutoMoveAnomaly(anomaly))
 }
 
 export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {

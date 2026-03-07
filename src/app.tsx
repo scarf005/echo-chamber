@@ -15,6 +15,7 @@ import {
   groupLogMessages,
   holdPosition,
   isAutoMoveNavigable,
+  keyForAutoMoveAnomaly,
   isPlayerSonarEnabled,
   movePlayer,
   shouldHaltAutoMoveForAnomaly,
@@ -68,23 +69,19 @@ export function App() {
   const sonarLoopRef = useRef<ReturnType<typeof createSonarLoop> | null>(null)
   const playedExplosionCountsRef = useRef<Map<string, number>>(new Map())
   const playedSonarContactCueCountRef = useRef(0)
-  const autoMoveSeenReasonsRef = useRef<Set<string>>(new Set())
+  const autoMoveSeenAnomaliesRef = useRef<Set<string>>(new Set())
   const autoMoveSeenTargetRef = useRef<Point | null>(null)
 
-  const clearAutoMoveSeenReasons = () => {
-    autoMoveSeenReasonsRef.current = new Set()
+  const resetAutoMoveSeenAnomalies = () => {
+    autoMoveSeenAnomaliesRef.current = new Set()
+    autoMoveSeenTargetRef.current = null
+  }
+
+  const clearAutoMoveRoute = () => {
     autoMoveSeenTargetRef.current = null
   }
 
   const beginAutoMoveRoute = (point: Point) => {
-    if (
-      autoMoveSeenTargetRef.current &&
-      pointsEqual(autoMoveSeenTargetRef.current, point)
-    ) {
-      return
-    }
-
-    autoMoveSeenReasonsRef.current = new Set()
     autoMoveSeenTargetRef.current = { ...point }
   }
 
@@ -198,7 +195,7 @@ export function App() {
     setRunSeed(normalizedSeed)
     setPreviewTarget(null)
     setAutoMoveTarget(null)
-    clearAutoMoveSeenReasons()
+    resetAutoMoveSeenAnomalies()
     setGame(createGame({ seed: normalizedSeed }))
   }
 
@@ -211,7 +208,7 @@ export function App() {
 
     setPreviewTarget(null)
     setAutoMoveTarget(null)
-    clearAutoMoveSeenReasons()
+    resetAutoMoveSeenAnomalies()
   }, [game.status])
 
   useEffect(() => {
@@ -226,7 +223,7 @@ export function App() {
 
     if (game.status !== "playing") {
       setAutoMoveTarget(null)
-      clearAutoMoveSeenReasons()
+      resetAutoMoveSeenAnomalies()
       return
     }
 
@@ -239,18 +236,18 @@ export function App() {
       setGame((current) => {
         if (current.status !== "playing") {
           setAutoMoveTarget(null)
-          clearAutoMoveSeenReasons()
+          resetAutoMoveSeenAnomalies()
           return current
         }
 
         const anomaly = findAutoMoveAnomaly(current)
 
         if (
-          shouldHaltAutoMoveForAnomaly(autoMoveSeenReasonsRef.current, anomaly)
+          shouldHaltAutoMoveForAnomaly(autoMoveSeenAnomaliesRef.current, anomaly)
         ) {
-          autoMoveSeenReasonsRef.current = new Set([
-            ...autoMoveSeenReasonsRef.current,
-            anomaly.reason,
+          autoMoveSeenAnomaliesRef.current = new Set([
+            ...autoMoveSeenAnomaliesRef.current,
+            keyForAutoMoveAnomaly(anomaly),
           ])
           setAutoMoveTarget(null)
           return withGameMessage(
@@ -269,7 +266,7 @@ export function App() {
 
         if (path.length < 2) {
           setAutoMoveTarget(null)
-          clearAutoMoveSeenReasons()
+          clearAutoMoveRoute()
           return withGameMessage(
             {
               ...current,
@@ -286,7 +283,7 @@ export function App() {
 
         if (!isPassableTile(tileAt(current.map, nextPoint.x, nextPoint.y))) {
           setAutoMoveTarget(null)
-          clearAutoMoveSeenReasons()
+          clearAutoMoveRoute()
           return withGameMessage({
             ...current,
           }, createAutoMoveStopMessage("wall ahead", current.player, nextPoint))
@@ -296,7 +293,7 @@ export function App() {
 
         if (!direction) {
           setAutoMoveTarget(null)
-          clearAutoMoveSeenReasons()
+          clearAutoMoveRoute()
           return current
         }
 
@@ -313,13 +310,13 @@ export function App() {
 
         if (
           shouldHaltAutoMoveForAnomaly(
-            autoMoveSeenReasonsRef.current,
+            autoMoveSeenAnomaliesRef.current,
             nextAnomaly,
           )
         ) {
-          autoMoveSeenReasonsRef.current = new Set([
-            ...autoMoveSeenReasonsRef.current,
-            nextAnomaly.reason,
+          autoMoveSeenAnomaliesRef.current = new Set([
+            ...autoMoveSeenAnomaliesRef.current,
+            keyForAutoMoveAnomaly(nextAnomaly),
           ])
           setAutoMoveTarget(null)
           return withGameMessage(
@@ -339,7 +336,7 @@ export function App() {
           next.status !== "playing"
         ) {
           setAutoMoveTarget(null)
-          clearAutoMoveSeenReasons()
+          clearAutoMoveRoute()
         }
 
         return next
@@ -361,7 +358,7 @@ export function App() {
     if (!isAutoMoveNavigable(game, point)) {
       setPreviewTarget(null)
       setAutoMoveTarget(null)
-      clearAutoMoveSeenReasons()
+      clearAutoMoveRoute()
       setGame((current) =>
         withGameMessage(
           {
@@ -451,7 +448,7 @@ export function App() {
         event.preventDefault()
         setPreviewTarget(null)
         setAutoMoveTarget(null)
-        clearAutoMoveSeenReasons()
+        clearAutoMoveRoute()
         setGame((current) => fireTorpedo(current))
         return
       }
@@ -460,7 +457,7 @@ export function App() {
         event.preventDefault()
         setPreviewTarget(null)
         setAutoMoveTarget(null)
-        clearAutoMoveSeenReasons()
+        clearAutoMoveRoute()
         setGame((current) => dropDepthCharge(current))
         return
       }
@@ -469,7 +466,7 @@ export function App() {
         event.preventDefault()
         setPreviewTarget(null)
         setAutoMoveTarget(null)
-        clearAutoMoveSeenReasons()
+        clearAutoMoveRoute()
         setGame((current) => holdPosition(current))
         return
       }
@@ -483,7 +480,7 @@ export function App() {
       event.preventDefault()
       setPreviewTarget(null)
       setAutoMoveTarget(null)
-      clearAutoMoveSeenReasons()
+      resetAutoMoveSeenAnomalies()
       setGame((current) => {
         const next = movePlayer(current, direction)
 
