@@ -3,7 +3,7 @@ import { COLORS } from "./colors.ts"
 import { calculateTileSize, screenShakeOffset } from "./helpers/draw.ts"
 import { buildEntityMaps, indexAlphaMap, indexCrackMap } from "./helpers/selectors.ts"
 import { drawEntitiesLayer } from "./layers/entities.ts"
-import { drawEffectsLayer, drawSonarLayer } from "./layers/effects.ts"
+import { drawEffectsLayer, drawShockwaveLayer } from "./layers/effects.ts"
 import { drawTileMemoryLayer } from "./layers/tileMemory.ts"
 
 export function drawGame(
@@ -46,10 +46,10 @@ export function drawGame(
   const effectMaps: {
     trails: Map<number, number>
     dust: Map<number, number>
-    sonarFront: Map<number, number>
+    shockwaveFront: Map<number, number>
     cracks: Map<number, CrackCell>
   } = {
-    sonarFront: indexAlphaMap(game.sonarFront),
+    shockwaveFront: indexAlphaMap(game.shockwaveFront),
     trails: indexAlphaMap(game.trails),
     dust: indexAlphaMap(game.dust),
     cracks: indexCrackMap(game.cracks),
@@ -65,7 +65,7 @@ export function drawGame(
       drawTileMemoryLayer(context, game, index, x, y, tileSize)
       drawEffectsLayer(context, tileSize, screenX, screenY, index, effectMaps)
       drawEntitiesLayer(context, game, tileSize, screenX, screenY, x, y, index, entityMaps)
-      drawSonarLayer(context, tileSize, screenX, screenY, index, effectMaps)
+      drawShockwaveLayer(context, tileSize, screenX, screenY, index, effectMaps)
     }
   }
 }

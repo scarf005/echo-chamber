@@ -11,7 +11,7 @@ export function drawEffectsLayer(
   effectMaps: {
     trails: Map<number, number>
     dust: Map<number, number>
-    sonarFront: Map<number, number>
+    shockwaveFront: Map<number, number>
     cracks: Map<number, CrackCell>
   },
 ): void {
@@ -64,7 +64,7 @@ export function drawEffectsLayer(
   }
 }
 
-export function drawSonarLayer(
+export function drawShockwaveLayer(
   context: CanvasRenderingContext2D,
   tileSize: number,
   screenX: number,
@@ -72,11 +72,11 @@ export function drawSonarLayer(
   index: number,
   effectMaps: {
     dust: Map<number, number>
-    sonarFront: Map<number, number>
+    shockwaveFront: Map<number, number>
   },
 ): void {
   const dustAlpha = effectMaps.dust.get(index) ?? 0
-  const sonarAlpha = (effectMaps.sonarFront.get(index) ?? 0) * Math.max(0.1, 1 - dustAlpha * 0.85)
+  const sonarAlpha = (effectMaps.shockwaveFront.get(index) ?? 0) * Math.max(0.1, 1 - dustAlpha * 0.85)
 
   if (sonarAlpha <= 0) {
     return

@@ -9,25 +9,19 @@ import {
   TORPEDO_SPEED,
   TRAIL_DECAY,
 } from "./constants.ts"
-import {
-  decayCells,
-  decayCracks,
-  decayShake,
-  mergeFadeCell,
-  resolveImpactMessage,
-} from "./effects.ts"
-import {
-  cloneBoulder,
-  cloneDepthCharge,
-  cloneMap,
-  cloneTorpedo,
-  indexForPoint,
-} from "./helpers.ts"
-import type { GameState, HorizontalDirection, TurnAction } from "./model.ts"
+import { decayCells, decayCracks, decayShake, resolveImpactMessage } from "./effects.ts"
+import { cloneBoulder, cloneDepthCharge, cloneMap, cloneTorpedo } from "./helpers.ts"
+import type {
+  GameState,
+  HorizontalDirection,
+  RevealableEntity,
+  Shockwave,
+  TurnAction,
+} from "./model.ts"
 import { refreshPerception } from "./perception.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
 import { stepDepthCharges, stepTorpedoes } from "./systems/projectiles.ts"
-import { stepSonar } from "./systems/sonar.ts"
+import { stepShockwaves } from "./systems/shockwaves.ts"
 import type { Point } from "./mapgen.ts"
 
 export function advanceTurn(
@@ -48,13 +42,10 @@ export function advanceTurn(
   let torpedoesRemaining = game.torpedoesRemaining
   let screenShake = decayShake(game.screenShake, SHAKE_DECAY)
 
-  if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
-    trails = mergeFadeCell(trails, indexForPoint(map.width, game.player), 0.68)
-  }
-
   if (action?.kind === "torpedo") {
     torpedoes.push({
       position: { ...nextPlayer },
+      senderId: "player",
       direction: action.direction,
       speed: TORPEDO_SPEED,
       rangeRemaining: TORPEDO_RANGE,
@@ -65,6 +56,7 @@ export function advanceTurn(
   if (action?.kind === "depth-charge") {
     depthCharges.push({
       position: { ...nextPlayer },
+      senderId: "player",
       speed: DEPTH_CHARGE_SPEED,
       rangeRemaining: DEPTH_CHARGE_RANGE,
     })
@@ -109,13 +101,17 @@ export function advanceTurn(
   screenShake = Math.max(screenShake, boulderStep.screenShake)
 
   const shouldEmitSonar = nextTurn % SONAR_INTERVAL === 0
-  const sonarStep = stepSonar(
+  const spawnedShockwaves: Shockwave[] = [
+    ...torpedoStep.shockwaves,
+    ...depthChargeStep.shockwaves,
+    ...(shouldEmitSonar ? [createSonarShockwave(nextPlayer)] : []),
+  ]
+  const shockwaveStep = stepShockwaves(
     map,
-    nextPlayer,
-    game.sonarWaves,
-    shouldEmitSonar,
+    game.shockwaves,
+    spawnedShockwaves,
     dust,
-    [...torpedoStep.shockwaveOrigins, ...depthChargeStep.shockwaveOrigins],
+    collectRevealableEntities(map.capsule, torpedoes, depthCharges, fallingBoulders),
   )
   const won =
     nextPlayer.x === map.capsule.x && nextPlayer.y === map.capsule.y
@@ -135,8 +131,8 @@ export function advanceTurn(
       turn: nextTurn,
       status: won ? "won" : "playing",
       lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
-      sonarWaves: sonarStep.waves,
-      sonarFront: sonarStep.front,
+      shockwaves: shockwaveStep.waves,
+      shockwaveFront: shockwaveStep.front,
       torpedoes,
       depthCharges,
       trails,
@@ -152,6 +148,32 @@ export function advanceTurn(
         ? impactMessage
         : fallbackMessage,
     },
-    sonarStep.revealed,
+    shockwaveStep.revealedTiles,
+    shockwaveStep.revealedEntities,
   )
+}
+
+function createSonarShockwave(origin: Point): Shockwave {
+  return {
+    origin: { ...origin },
+    radius: 0,
+    senderId: "player",
+    damaging: false,
+    revealTerrain: true,
+    revealEntities: true,
+  }
+}
+
+function collectRevealableEntities(
+  capsule: Point,
+  torpedoes: GameState["torpedoes"],
+  depthCharges: GameState["depthCharges"],
+  fallingBoulders: GameState["fallingBoulders"],
+): RevealableEntity[] {
+  return [
+    { kind: "capsule", position: { ...capsule } },
+    ...torpedoes.map((torpedo) => ({ kind: "torpedo" as const, position: { ...torpedo.position } })),
+    ...depthCharges.map((depthCharge) => ({ kind: "depth-charge" as const, position: { ...depthCharge.position } })),
+    ...fallingBoulders.map((boulder) => ({ kind: "boulder" as const, position: { ...boulder.position } })),
+  ]
 }

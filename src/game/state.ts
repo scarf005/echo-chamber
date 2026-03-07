@@ -25,8 +25,8 @@ export function createGame(options: GameOptions = {}): GameState {
       () => 0,
     ),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -39,7 +39,7 @@ export function createGame(options: GameOptions = {}): GameState {
     message: "Recover the capsule. Sonar cycles every 5 turns.",
   }
 
-  return refreshPerception(game, [])
+  return refreshPerception(game, [], [])
 }
 
 export function createRandomSeed(): string {

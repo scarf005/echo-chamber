@@ -1,11 +1,12 @@
 import { PASSIVE_DETECTED_RADIUS, PASSIVE_EXACT_RADIUS } from "./constants.ts"
 import { chebyshevDistance } from "./helpers.ts"
-import type { GameState, VisibilityLevel } from "./model.ts"
-import { tileAt, type TileKind } from "./mapgen.ts"
+import type { EntityReveal, GameState, TileReveal, VisibilityLevel } from "./model.ts"
+import { tileAt } from "./mapgen.ts"
 
 export function refreshPerception(
   game: GameState,
-  sonarReveals: Array<{ index: number; tile: TileKind }>,
+  tileReveals: TileReveal[],
+  entityReveals: EntityReveal[],
 ): GameState {
   const memory = game.memory.slice()
   const visibility = Array.from(
@@ -13,7 +14,7 @@ export function refreshPerception(
     () => 0 as VisibilityLevel,
   )
 
-  const capsuleKnown = game.capsuleKnown || game.status === "won" ||
+  let capsuleKnown = game.capsuleKnown || game.status === "won" ||
     chebyshevDistance(game.player, game.map.capsule) <= PASSIVE_EXACT_RADIUS
 
   for (let y = 0; y < game.map.height; y += 1) {
@@ -40,8 +41,16 @@ export function refreshPerception(
     }
   }
 
-  for (const reveal of sonarReveals) {
+  for (const reveal of tileReveals) {
     memory[reveal.index] = reveal.tile
+    setVisibility(visibility, reveal.index, 1)
+  }
+
+  for (const reveal of entityReveals) {
+    if (reveal.kind === "capsule") {
+      capsuleKnown = true
+    }
+
     setVisibility(visibility, reveal.index, 1)
   }
 

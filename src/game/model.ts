@@ -5,9 +5,30 @@ export type HorizontalDirection = "left" | "right"
 export type VisibilityLevel = 0 | 1 | 2 | 3
 export type GameStatus = "playing" | "won"
 
-export interface SonarWave {
+export type RevealableEntityKind = "capsule" | "torpedo" | "depth-charge" | "boulder"
+
+export interface Shockwave {
   origin: Point
   radius: number
+  senderId: string
+  damaging: boolean
+  revealTerrain: boolean
+  revealEntities: boolean
+}
+
+export interface TileReveal {
+  index: number
+  tile: TileKind
+}
+
+export interface EntityReveal {
+  index: number
+  kind: RevealableEntityKind
+}
+
+export interface RevealableEntity {
+  position: Point
+  kind: RevealableEntityKind
 }
 
 export interface FadeCell {
@@ -23,6 +44,7 @@ export interface CrackCell {
 
 export interface Torpedo {
   position: Point
+  senderId: string
   direction: HorizontalDirection
   speed: number
   rangeRemaining: number
@@ -30,6 +52,7 @@ export interface Torpedo {
 
 export interface DepthCharge {
   position: Point
+  senderId: string
   speed: number
   rangeRemaining: number
 }
@@ -49,8 +72,8 @@ export interface GameState {
   memory: Array<TileKind | null>
   visibility: VisibilityLevel[]
   lastSonarTurn: number
-  sonarWaves: SonarWave[]
-  sonarFront: FadeCell[]
+  shockwaves: Shockwave[]
+  shockwaveFront: FadeCell[]
   torpedoes: Torpedo[]
   depthCharges: DepthCharge[]
   trails: FadeCell[]

@@ -1,4 +1,4 @@
-import type { CrackCell, DepthCharge, FadeCell, FallingBoulder, Torpedo } from "../model.ts"
+import type { CrackCell, DepthCharge, FadeCell, FallingBoulder, Shockwave, Torpedo } from "../model.ts"
 import { mergeCrackCells, mergeFadeCell, mergeFadeCells } from "../effects.ts"
 import { indexForPoint, isNearObstacleBelow } from "../helpers.ts"
 import { tileAt, type GeneratedMap, type Point } from "../mapgen.ts"
@@ -21,14 +21,14 @@ export function stepTorpedoes(
   impacts: number
   caveIns: number
   screenShake: number
-  shockwaveOrigins: Point[]
+  shockwaves: Shockwave[]
 } {
   const nextTorpedoes: Torpedo[] = []
   let nextTrails = trails
   let nextCracks = cracks
   let nextDust = dust
   const fallingBoulders: FallingBoulder[] = []
-  const shockwaveOrigins: Point[] = []
+  const shockwaves: Shockwave[] = []
   let impacts = 0
   let caveIns = 0
   let screenShake = 0
@@ -76,7 +76,7 @@ export function stepTorpedoes(
         nextCracks = mergeCrackCells(nextCracks, explosion.cracks)
         nextDust = mergeFadeCells(nextDust, explosion.dust)
         fallingBoulders.push(...explosion.fallingBoulders)
-        shockwaveOrigins.push({ ...impactPoint })
+        shockwaves.push(createExplosionShockwave(impactPoint, torpedo.senderId))
         exploded = true
         impacts += 1
         caveIns += explosion.fallingBoulders.length
@@ -106,7 +106,7 @@ export function stepTorpedoes(
     impacts,
     caveIns,
     screenShake,
-    shockwaveOrigins,
+    shockwaves,
   }
 }
 
@@ -127,14 +127,14 @@ export function stepDepthCharges(
   impacts: number
   caveIns: number
   screenShake: number
-  shockwaveOrigins: Point[]
+  shockwaves: Shockwave[]
 } {
   const nextDepthCharges: DepthCharge[] = []
   let nextTrails = trails
   let nextCracks = cracks
   let nextDust = dust
   const fallingBoulders: FallingBoulder[] = []
-  const shockwaveOrigins: Point[] = []
+  const shockwaves: Shockwave[] = []
   let impacts = 0
   let caveIns = 0
   let screenShake = 0
@@ -182,7 +182,7 @@ export function stepDepthCharges(
         nextCracks = mergeCrackCells(nextCracks, explosion.cracks)
         nextDust = mergeFadeCells(nextDust, explosion.dust)
         fallingBoulders.push(...explosion.fallingBoulders)
-        shockwaveOrigins.push({ ...impactPoint })
+        shockwaves.push(createExplosionShockwave(impactPoint, depthCharge.senderId))
         exploded = true
         impacts += 1
         caveIns += explosion.fallingBoulders.length
@@ -213,7 +213,7 @@ export function stepDepthCharges(
         nextCracks = mergeCrackCells(nextCracks, explosion.cracks)
         nextDust = mergeFadeCells(nextDust, explosion.dust)
         fallingBoulders.push(...explosion.fallingBoulders)
-        shockwaveOrigins.push({ ...current })
+        shockwaves.push(createExplosionShockwave(current, depthCharge.senderId))
         exploded = true
         impacts += 1
         caveIns += explosion.fallingBoulders.length
@@ -240,6 +240,17 @@ export function stepDepthCharges(
     impacts,
     caveIns,
     screenShake,
-    shockwaveOrigins,
+    shockwaves,
+  }
+}
+
+function createExplosionShockwave(origin: Point, senderId: string): Shockwave {
+  return {
+    origin: { ...origin },
+    radius: 0,
+    senderId,
+    damaging: true,
+    revealTerrain: false,
+    revealEntities: false,
   }
 }
