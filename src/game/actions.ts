@@ -55,6 +55,14 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
   )
 }
 
+export function holdPosition(game: GameState): GameState {
+  if (game.status !== "playing") {
+    return game
+  }
+
+  return advanceTurn(game, game.player, game.facing, null, "Holding position.")
+}
+
 export function fireTorpedo(
   game: GameState,
   direction: HorizontalDirection = game.facing,

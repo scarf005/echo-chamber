@@ -7,6 +7,7 @@ import {
   directionFromKey,
   dropDepthCharge,
   fireTorpedo,
+  holdPosition,
   movePlayer,
   SONAR_INTERVAL,
 } from "./game/game.ts"
@@ -80,6 +81,12 @@ export function App() {
         return
       }
 
+      if (event.key === ".") {
+        event.preventDefault()
+        setGame((current) => holdPosition(current))
+        return
+      }
+
       const direction = directionFromKey(event.key)
 
       if (!direction) {
@@ -149,6 +156,7 @@ export function App() {
           <div class="sidebar-heading">orders</div>
           <div class="sidebar-copy">{game.message}</div>
           <div class="sidebar-copy">move with WASD or arrows</div>
+          <div class="sidebar-copy">wait with .</div>
           <div class="sidebar-copy">launch torpedo with Z</div>
           <div class="sidebar-copy">drop depth charge with X</div>
           <div class="sidebar-copy">press R for random run</div>

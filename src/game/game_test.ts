@@ -9,6 +9,7 @@ import {
   dropDepthCharge,
   fireTorpedo,
   type GameState,
+  holdPosition,
   movePlayer,
 } from "./game.ts"
 import {
@@ -43,6 +44,25 @@ Deno.test("moving submarines leave bubble trails at their previous position", ()
   const trailIndex = game.player.y * game.map.width + game.player.x
 
   assert(next.trails.some((cell) => cell.index === trailIndex && cell.alpha >= 0.68))
+})
+
+Deno.test("holdPosition consumes a turn without moving the submarine", () => {
+  const game = createFlatGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.turn, 1)
+  assertEquals(next.player, game.player)
+  assertEquals(next.message, "Holding position.")
+})
+
+Deno.test("holdPosition still triggers sonar on the fifth turn", () => {
+  const game = createCapsuleSonarGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.turn, 5)
+  assertEquals(next.player, game.player)
+  assertEquals(next.lastSonarTurn, 5)
+  assertEquals(next.capsuleKnown, true)
 })
 
 Deno.test("sonar emits on the fifth successful move", () => {
