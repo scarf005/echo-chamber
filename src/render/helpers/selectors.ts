@@ -19,6 +19,20 @@ export function indexAlphaMap(cells: FadeCell[]): Map<number, number> {
   return result
 }
 
+export function indexFadeMap(cells: FadeCell[]): Map<number, FadeCell> {
+  const result = new Map<number, FadeCell>()
+
+  for (const cell of cells) {
+    const current = result.get(cell.index)
+
+    if (!current || cell.alpha > current.alpha) {
+      result.set(cell.index, cell)
+    }
+  }
+
+  return result
+}
+
 export function indexCrackMap(cells: CrackCell[]): Map<number, CrackCell> {
   const result = new Map<number, CrackCell>()
 
@@ -59,7 +73,11 @@ function buildEntityMap<T extends { position: { x: number; y: number } }>(
   }, new Map<number, T>())
 }
 
-export function wallGlyphForMask(game: GameState, x: number, y: number): string {
+export function wallGlyphForMask(
+  game: GameState,
+  x: number,
+  y: number,
+): string {
   const mask = Number(isKnownWall(game, x, y - 1)) |
     (Number(isKnownWall(game, x + 1, y)) << 1) |
     (Number(isKnownWall(game, x, y + 1)) << 2) |

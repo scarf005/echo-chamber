@@ -1,9 +1,14 @@
-import type { CrackCell, GameState } from "../game/game.ts"
+import type { CrackCell, FadeCell, GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
 import { COLORS } from "./colors.ts"
 import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
 import { calculateTileSize, screenShakeOffset } from "./helpers/draw.ts"
-import { buildEntityMaps, indexAlphaMap, indexCrackMap } from "./helpers/selectors.ts"
+import {
+  buildEntityMaps,
+  indexAlphaMap,
+  indexCrackMap,
+  indexFadeMap,
+} from "./helpers/selectors.ts"
 import { drawEntitiesLayer } from "./layers/entities.ts"
 import { drawEffectsLayer, drawShockwaveLayer } from "./layers/effects.ts"
 import { drawTileMemoryLayer } from "./layers/tileMemory.ts"
@@ -40,9 +45,19 @@ export function drawGame(
     shake.x * devicePixelRatio,
     shake.y * devicePixelRatio,
   )
-  context.clearRect(-tileSize, -tileSize, cssWidth + tileSize * 2, cssHeight + tileSize * 2)
+  context.clearRect(
+    -tileSize,
+    -tileSize,
+    cssWidth + tileSize * 2,
+    cssHeight + tileSize * 2,
+  )
   context.fillStyle = COLORS.background
-  context.fillRect(-tileSize, -tileSize, cssWidth + tileSize * 2, cssHeight + tileSize * 2)
+  context.fillRect(
+    -tileSize,
+    -tileSize,
+    cssWidth + tileSize * 2,
+    cssHeight + tileSize * 2,
+  )
   context.font = `${Math.max(8, tileSize - 2)}px ${TERMINAL_FONT_STACK}`
   context.textAlign = "center"
   context.textBaseline = "middle"
@@ -50,10 +65,10 @@ export function drawGame(
   const effectMaps: {
     trails: Map<number, number>
     dust: Map<number, number>
-    shockwaveFront: Map<number, number>
+    shockwaveFront: Map<number, FadeCell>
     cracks: Map<number, CrackCell>
   } = {
-    shockwaveFront: indexAlphaMap(game.shockwaveFront),
+    shockwaveFront: indexFadeMap(game.shockwaveFront),
     trails: indexAlphaMap(game.trails),
     dust: indexAlphaMap(game.dust),
     cracks: indexCrackMap(game.cracks),
@@ -67,9 +82,35 @@ export function drawGame(
       const screenY = y * tileSize
 
       drawTileMemoryLayer(context, game, index, x, y, tileSize)
-      drawEffectsLayer(context, tileSize, screenX, screenY, index, effectMaps)
-      drawEntitiesLayer(context, game, tileSize, screenX, screenY, x, y, index, entityMaps)
-      drawShockwaveLayer(context, tileSize, screenX, screenY, index, effectMaps)
+      drawEffectsLayer(
+        context,
+        game,
+        tileSize,
+        screenX,
+        screenY,
+        index,
+        effectMaps,
+      )
+      drawEntitiesLayer(
+        context,
+        game,
+        tileSize,
+        screenX,
+        screenY,
+        x,
+        y,
+        index,
+        entityMaps,
+      )
+      drawShockwaveLayer(
+        context,
+        game,
+        tileSize,
+        screenX,
+        screenY,
+        index,
+        effectMaps,
+      )
     }
   }
 
@@ -106,6 +147,7 @@ function drawPathPreview(
   }
 
   context.stroke()
+
   context.restore()
 }
 

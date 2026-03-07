@@ -1,9 +1,10 @@
-import type { CrackCell } from "../../game/game.ts"
+import type { CrackCell, FadeCell, GameState } from "../../game/game.ts"
 import { COLORS } from "../colors.ts"
 import { drawGlyph, drawTileBackground } from "../helpers/draw.ts"
 
 export function drawEffectsLayer(
   context: CanvasRenderingContext2D,
+  game: GameState,
   tileSize: number,
   screenX: number,
   screenY: number,
@@ -11,10 +12,14 @@ export function drawEffectsLayer(
   effectMaps: {
     trails: Map<number, number>
     dust: Map<number, number>
-    shockwaveFront: Map<number, number>
+    shockwaveFront: Map<number, FadeCell>
     cracks: Map<number, CrackCell>
   },
 ): void {
+  if (game.visibility[index] === 0) {
+    return
+  }
+
   const trailAlpha = effectMaps.trails.get(index) ?? 0
   const dustAlpha = effectMaps.dust.get(index) ?? 0
   const crack = effectMaps.cracks.get(index)
@@ -66,17 +71,24 @@ export function drawEffectsLayer(
 
 export function drawShockwaveLayer(
   context: CanvasRenderingContext2D,
+  game: GameState,
   tileSize: number,
   screenX: number,
   screenY: number,
   index: number,
   effectMaps: {
     dust: Map<number, number>
-    shockwaveFront: Map<number, number>
+    shockwaveFront: Map<number, FadeCell>
   },
 ): void {
   const dustAlpha = effectMaps.dust.get(index) ?? 0
-  const sonarAlpha = (effectMaps.shockwaveFront.get(index) ?? 0) * Math.max(0.1, 1 - dustAlpha * 0.85)
+  const front = effectMaps.shockwaveFront.get(index)
+
+  if (!front || (front.requiresVisibility && game.visibility[index] === 0)) {
+    return
+  }
+
+  const sonarAlpha = front.alpha * Math.max(0.1, 1 - dustAlpha * 0.85)
 
   if (sonarAlpha <= 0) {
     return
