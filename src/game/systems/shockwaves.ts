@@ -16,6 +16,7 @@ export function stepShockwaves(
   waves: Shockwave[],
   spawnedWaves: Shockwave[],
   dust: FadeCell[],
+  trails: FadeCell[],
   revealableEntities: RevealableEntity[],
 ): {
   waves: Shockwave[]
@@ -28,6 +29,7 @@ export function stepShockwaves(
   const revealedEntities = new Map<string, EntityReveal>()
   const dustByIndex = indexAlphaLookup(dust)
   const entitiesByIndex = buildEntitiesByIndex(map.width, revealableEntities)
+  const blockerIndexes = buildBlockerIndexes(map.width, revealableEntities, trails)
   const nextWaves: Shockwave[] = []
 
   for (const wave of waves) {
@@ -36,6 +38,7 @@ export function stepShockwaves(
       wave,
       dustByIndex,
       entitiesByIndex,
+      blockerIndexes,
       front,
       revealedTiles,
       revealedEntities,
@@ -51,6 +54,7 @@ export function stepShockwaves(
       wave,
       dustByIndex,
       entitiesByIndex,
+      blockerIndexes,
       front,
       revealedTiles,
       revealedEntities,
@@ -72,6 +76,7 @@ function advanceShockwave(
   wave: Shockwave,
   dustByIndex: Map<number, number>,
   entitiesByIndex: Map<number, RevealableEntityKind[]>,
+  blockerIndexes: Set<number>,
   front: Map<number, number>,
   revealedTiles: Map<number, TileKind>,
   revealedEntities: Map<string, EntityReveal>,
@@ -86,6 +91,7 @@ function advanceShockwave(
     nextRadius,
     dustByIndex,
     entitiesByIndex,
+    blockerIndexes,
   )
 
   for (const [index, alpha] of trace.front) {
@@ -111,6 +117,7 @@ function traceWaveBand(
   nextRadius: number,
   dustByIndex: Map<number, number>,
   entitiesByIndex: Map<number, RevealableEntityKind[]>,
+  blockerIndexes: Set<number>,
 ): {
   front: Map<number, number>
   revealedTiles: Map<number, TileKind>
@@ -181,10 +188,36 @@ function traceWaveBand(
 
         front.set(mapIndex, waveAlpha(distance))
       }
+
+      if (blockerIndexes.has(mapIndex)) {
+        break
+      }
     }
   }
 
   return { front, revealedTiles, revealedEntities }
+}
+
+function buildBlockerIndexes(
+  width: number,
+  revealableEntities: RevealableEntity[],
+  trails: FadeCell[],
+): Set<number> {
+  const blockerIndexes = new Set<number>()
+
+  for (const entity of revealableEntities) {
+    if (entity.kind === "player") {
+      continue
+    }
+
+    blockerIndexes.add(indexForPoint(width, entity.position))
+  }
+
+  for (const trail of trails) {
+    blockerIndexes.add(trail.index)
+  }
+
+  return blockerIndexes
 }
 
 function buildEntitiesByIndex(

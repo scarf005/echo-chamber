@@ -13,7 +13,8 @@ import {
   decayCells,
   decayCracks,
   decayShake,
-  mergeFadeCell,
+  decayTrailCells,
+  mergeTrailCell,
   resolveImpactMessage,
 } from "./effects.ts"
 import {
@@ -57,7 +58,7 @@ export function advanceTurn(
     ...pickup,
     position: { ...pickup.position },
   }))
-  let trails = decayCells(game.trails, TRAIL_DECAY)
+  let trails = decayTrailCells(map, game.trails, TRAIL_DECAY)
   let dust = decayCells(game.dust, DUST_DECAY)
   let cracks = decayCracks(game.cracks, CRACK_DECAY)
   let fallingBoulders = game.fallingBoulders.map(cloneBoulder)
@@ -72,7 +73,7 @@ export function advanceTurn(
     : null
 
   if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
-    trails = mergeFadeCell(trails, indexForPoint(map.width, game.player), 0.68)
+    trails = mergeTrailCell(trails, indexForPoint(map.width, game.player), 1)
   }
 
   if (action?.kind === "torpedo") {
@@ -183,6 +184,7 @@ export function advanceTurn(
     game.shockwaves,
     spawnedShockwaves,
     dust,
+    trails,
     collectRevealableEntities(
       map.capsule,
       torpedoes,
