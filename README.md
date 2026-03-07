@@ -27,7 +27,15 @@ $ deno task build
 ### SFX
 
 - `public/audio/underwater-deep-water-loop.mp3`
-- `[Underwater Deep Water Loop by Department64 (CC-BY-4.0)](https://freesound.org/people/Department64/sounds/651743/)`
+- [Underwater Deep Water Loop by Department64 (CC-BY-4.0)](https://freesound.org/people/Department64/sounds/651743/)
+- `public/audio/underwater-explosion-1.mp3`
+- [UnderWater_Explosion1 by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819743/)
+- `public/audio/underwater-explosion-2.mp3`
+- [UnderWater_Explosion2 by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819744/)
+- `public/audio/underwater-explosion-3.mp3`
+- [UnderWater_Explosion3 by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819745/)
+- `public/audio/underwater-explosion-far.mp3`
+- [UnderWater_ExplosionFar by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819746/)
 
 ### Font
 
