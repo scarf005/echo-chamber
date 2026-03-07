@@ -5,7 +5,10 @@ import {
   createGame,
   createRandomSeed,
   directionFromKey,
+  dropDepthCharge,
+  fireTorpedo,
   movePlayer,
+  SONAR_INTERVAL,
 } from "./game/game.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 
@@ -38,6 +41,18 @@ export function App() {
         return
       }
 
+      if (event.key === "z" || event.key === "Z") {
+        event.preventDefault()
+        setGame((current) => fireTorpedo(current))
+        return
+      }
+
+      if (event.key === "x" || event.key === "X") {
+        event.preventDefault()
+        setGame((current) => dropDepthCharge(current))
+        return
+      }
+
       const direction = directionFromKey(event.key)
 
       if (!direction) {
@@ -52,7 +67,8 @@ export function App() {
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [seedInput])
 
-  const sonarIn = ((3 - (game.turn % 3)) % 3) || 3
+  const sonarIn = ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
+    SONAR_INTERVAL
 
   return (
     <main class="game-shell">
@@ -79,6 +95,7 @@ export function App() {
       <section class="hud hud-top-right">
         <div>turn {game.turn}</div>
         <div>sonar in {sonarIn}</div>
+        <div>payload {game.torpedoesRemaining}</div>
         <div>
           {game.status === "won" ? "capsule secured" : "recover capsule"}
         </div>
@@ -87,6 +104,8 @@ export function App() {
       <section class="hud hud-bottom-left">
         <div>{game.message}</div>
         <div>move with WASD or arrows</div>
+        <div>launch torpedo with Z</div>
+        <div>drop depth charge with X</div>
         <div>press R for random run</div>
       </section>
 

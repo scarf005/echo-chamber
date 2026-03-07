@@ -3,6 +3,7 @@
   "specifiers": {
     "jsr:@std/assert@*": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.12",
+    "jsr:@std/random@*": "0.1.5",
     "npm:@deno/vite-plugin@^1.0.5": "1.0.6_vite@7.3.1",
     "npm:@preact/preset-vite@^2.10.2": "2.10.3_@babel+core@7.29.0_vite@7.3.1_preact@10.28.4",
     "npm:preact@^10.28.0": "10.28.4",
@@ -19,6 +20,9 @@
     },
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
+    },
+    "@std/random@0.1.5": {
+      "integrity": "d26614c4f6c441afc22397a1c5b8f27d02ab8f5572f1d29e7b0cd57f3d548235"
     }
   },
   "npm": {
