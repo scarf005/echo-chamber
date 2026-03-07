@@ -25,6 +25,7 @@ import {
   indexForPoint,
   pointsEqual,
 } from "./helpers.ts"
+import { withGameMessage } from "./log.ts"
 import { collectPickups } from "./items.ts"
 import type {
   GameState,
@@ -215,43 +216,47 @@ export function advanceTurn(
     torpedoStep.caveIns,
     boulderStep.landings,
   )
+  const nextMessage = playerDestroyed
+    ? hostileMessage ?? "Your submarine is destroyed. Press R for a new run."
+    : won
+    ? "Capsule secured. Press R for a new run."
+    : pickupStep.message !== null
+    ? pickupStep.message
+    : impactMessage !== null
+    ? impactMessage
+    : hostileLaunchMessage !== null
+    ? hostileLaunchMessage
+    : fallbackMessage
 
-  return refreshPerception(
-    {
-      ...game,
-      map,
-      player: { ...nextPlayer },
-      turn: nextTurn,
-      status: playerDestroyed ? "lost" : won ? "won" : "playing",
-      lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
-      shockwaves: shockwaveStep.waves,
-      shockwaveFront: shockwaveStep.front,
-      torpedoes,
-      depthCharges,
-      pickups,
-      trails,
-      dust,
-      cracks,
-      fallingBoulders,
-      hostileSubmarines,
-      facing,
-      torpedoAmmo,
-      depthChargeAmmo,
-      screenShake,
-      message: playerDestroyed
-        ? hostileMessage ?? "Your submarine is destroyed. Press R for a new run."
-        : won
-        ? "Capsule secured. Press R for a new run."
-        : pickupStep.message !== null
-        ? pickupStep.message
-        : impactMessage !== null
-        ? impactMessage
-        : hostileLaunchMessage !== null
-        ? hostileLaunchMessage
-        : fallbackMessage,
-    },
-    [...shockwaveStep.revealedTiles, ...pickupStep.tileReveals],
-    shockwaveStep.revealedEntities,
+  return withGameMessage(
+    refreshPerception(
+      {
+        ...game,
+        map,
+        player: { ...nextPlayer },
+        turn: nextTurn,
+        status: playerDestroyed ? "lost" : won ? "won" : "playing",
+        lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
+        shockwaves: shockwaveStep.waves,
+        shockwaveFront: shockwaveStep.front,
+        torpedoes,
+        depthCharges,
+        pickups,
+        trails,
+        dust,
+        cracks,
+        fallingBoulders,
+        hostileSubmarines,
+        facing,
+        torpedoAmmo,
+        depthChargeAmmo,
+        screenShake,
+        message: nextMessage,
+      },
+      [...shockwaveStep.revealedTiles, ...pickupStep.tileReveals],
+      shockwaveStep.revealedEntities,
+    ),
+    nextMessage,
   )
 }
 

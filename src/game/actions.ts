@@ -1,4 +1,5 @@
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
+import { withGameMessage } from "./log.ts"
 import type { Direction, GameState, HorizontalDirection } from "./model.ts"
 import { isPassableTile } from "./mapgen.ts"
 import { advanceTurn } from "./turn.ts"
@@ -39,11 +40,10 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
   }
 
   if (!isPassableTile(tileAt(game.map, target.x, target.y))) {
-    return {
+    return withGameMessage({
       ...game,
-      message: "Hull blocked.",
       facing: horizontalFacingForMove(game.facing, direction),
-    }
+    }, "Hull blocked.")
   }
 
   return advanceTurn(
@@ -72,11 +72,10 @@ export function fireTorpedo(
   }
 
   if (game.torpedoAmmo <= 0) {
-    return {
+    return withGameMessage({
       ...game,
       facing: direction,
-      message: "No torpedoes remaining.",
-    }
+    }, "No torpedoes remaining.")
   }
 
   return advanceTurn(
@@ -94,10 +93,9 @@ export function dropDepthCharge(game: GameState): GameState {
   }
 
   if (game.depthChargeAmmo <= 0) {
-    return {
+    return withGameMessage({
       ...game,
-      message: "No depth charges remaining.",
-    }
+    }, "No depth charges remaining.")
   }
 
   return advanceTurn(
