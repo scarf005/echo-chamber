@@ -7,6 +7,8 @@ import {
   directionFromKey,
   dropDepthCharge,
   fireTorpedo,
+  holdPosition,
+  holdPosition,
   movePlayer,
   SONAR_INTERVAL,
 } from "./game/game.ts"
@@ -16,9 +18,16 @@ import { FastilesViewport } from "./render/FastilesViewport.tsx"
 const DEFAULT_SEED = "echo-chamber"
 
 export function App() {
-  const [seedInput, setSeedInput] = useState(DEFAULT_SEED)
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false)
+  const [runSeed, setRunSeed] = useState(DEFAULT_SEED)
   const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
+  const runSeedRef = useRef(DEFAULT_SEED)
+  const isOptionsOpenRef = useRef(false)
   const backgroundMusicRef = useRef<ReturnType<typeof createBackgroundMusic> | null>(null)
+
+  useEffect(() => {
+    isOptionsOpenRef.current = isOptionsOpen
+  }, [isOptionsOpen])
 
   useEffect(() => {
     const backgroundMusic = createBackgroundMusic()
@@ -39,10 +48,11 @@ export function App() {
     }
   }, [])
 
-  const startRun = (rawSeed: string) => {
+  const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
-    setSeedInput(normalizedSeed)
+    runSeedRef.current = normalizedSeed
+    setRunSeed(normalizedSeed)
     setGame(createGame({ seed: normalizedSeed }))
   }
 
@@ -50,11 +60,23 @@ export function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target
 
-      if (target instanceof HTMLInputElement) {
-        if (event.key === "Enter") {
-          startRun(seedInput || createRandomSeed())
+      if (isOptionsOpenRef.current) {
+        if (event.key === "Escape") {
+          event.preventDefault()
+          setIsOptionsOpen(false)
         }
 
+        return
+      }
+
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        return
+      }
+
+      if (
+        target instanceof HTMLElement &&
+        target.closest("button, input, textarea, select, a")
+      ) {
         return
       }
 
@@ -74,6 +96,18 @@ export function App() {
         setGame((current) => dropDepthCharge(current))
         return
       }
+      if (event.key === ".") {
+        event.preventDefault()
+        setGame((current) => holdPosition(current))
+        return
+      }
+
+
+      if (event.key === ".") {
+        event.preventDefault()
+        setGame((current) => holdPosition(current))
+        return
+      }
 
       const direction = directionFromKey(event.key)
 
@@ -87,56 +121,105 @@ export function App() {
 
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [seedInput])
+  }, [])
 
   const sonarIn = ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
     SONAR_INTERVAL
 
   return (
     <main class="game-shell">
-      <FastilesViewport game={game} />
-
-      <section class="hud hud-top-left">
-        <label class="seed-field">
-          <span>seed</span>
-          <input
-            type="text"
-            value={seedInput}
-            onInput={(event) => setSeedInput(event.currentTarget.value)}
-          />
-        </label>
-
-        <button
-          type="button"
-          onClick={() => startRun(seedInput)}
-        >
-          new run
-        </button>
+      <section class="viewport-stage">
+        <FastilesViewport game={game} />
       </section>
 
-      <section class="hud hud-top-right">
-        <div>turn {game.turn}</div>
-        <div>sonar in {sonarIn}</div>
-        <div>payload {game.torpedoesRemaining}</div>
-        <div>
-          {game.status === "won" ? "capsule secured" : "recover capsule"}
-        </div>
-      </section>
+      <aside class="sidebar">
+        <section class="sidebar-panel sidebar-panel-primary">
+          <div class="panel-header">
+            <div class="sidebar-heading">mission status</div>
+            <button
+              type="button"
+              class="icon-button"
+              aria-label="open options"
+              aria-haspopup="dialog"
+              aria-expanded={isOptionsOpen}
+              onClick={() => setIsOptionsOpen(true)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
+          <div class="stat-row">
+            <span>turn</span>
+            <strong>{game.turn}</strong>
+          </div>
+          <div class="stat-row">
+            <span>sonar in</span>
+            <strong>{sonarIn}</strong>
+          </div>
+          <div class="stat-row">
+            <span>torpedoes</span>
+            <strong>{game.torpedoAmmo}</strong>
+          </div>
+          <div class="stat-row">
+            <span>depth charges</span>
+            <strong>{game.depthChargeAmmo}</strong>
+          </div>
+        </section>
 
-      <section class="hud hud-bottom-left">
-        <div>{game.message}</div>
-        <div>move with WASD or arrows</div>
-        <div>launch torpedo with Z</div>
-        <div>drop depth charge with X</div>
-        <div>press R for random run</div>
-      </section>
+        <section class="sidebar-panel">
+          <div class="sidebar-heading">orders</div>
+          <div class="sidebar-copy">{game.message}</div>
+          <div class="sidebar-copy">move with WASD or arrows</div>
+          <div class="sidebar-copy">wait with .</div>
+          <div class="sidebar-copy">launch torpedo with Z</div>
+          <div class="sidebar-copy">drop depth charge with X</div>
+          <div class="sidebar-copy">press R for random run</div>
+        </section>
+      </aside>
 
-      {game.status === "won"
+      {isOptionsOpen
         ? (
-          <section class="hud hud-center">
-            <strong>capsule secured</strong>
-            <span>press R for a new run</span>
-          </section>
+          <div class="modal-backdrop" onClick={() => setIsOptionsOpen(false)}>
+            <section
+              class="modal-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-label="options"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div class="panel-header">
+                <div class="sidebar-heading">options</div>
+                <button
+                  type="button"
+                  class="modal-close"
+                  onClick={() => setIsOptionsOpen(false)}
+                >
+                  close
+                </button>
+              </div>
+              <div class="button-stack">
+                <button
+                  type="button"
+                  onClick={() => {
+                    startRun()
+                    setIsOptionsOpen(false)
+                  }}
+                >
+                  restart mission
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    startRun(createRandomSeed())
+                    setIsOptionsOpen(false)
+                  }}
+                >
+                  random run
+                </button>
+              </div>
+            </section>
+          </div>
         )
         : null}
     </main>

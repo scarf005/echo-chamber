@@ -60,15 +60,17 @@
     linear-gradient(180deg, rgba(4, 16, 22, 0.96), rgba(3, 8, 12, 0.88));
 }
 
-.sidebar-panel-alert {
-  border-color: rgba(196, 234, 201, 0.45);
-  background: rgba(9, 20, 16, 0.9);
-}
-
 .sidebar-heading {
   color: rgba(124, 208, 214, 0.72);
   letter-spacing: 0.08em;
   font-size: 0.78rem;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
 }
 
 .stat-row {
@@ -78,8 +80,7 @@
   gap: 1rem;
 }
 
-.stat-row strong,
-.sidebar-panel-alert strong {
+.stat-row strong {
   color: #f2fffd;
   font-size: 1rem;
 }
@@ -93,7 +94,8 @@
   width: 100%;
 }
 
-.sidebar button {
+.sidebar button,
+.modal-panel button {
   font: inherit;
   color: inherit;
   background: rgba(1, 17, 24, 0.92);
@@ -104,14 +106,55 @@
 }
 
 .sidebar button:hover,
-.sidebar button:focus-visible {
+.sidebar button:focus-visible,
+.modal-panel button:hover,
+.modal-panel button:focus-visible {
   border-color: rgba(186, 243, 247, 0.58);
   background: rgba(5, 27, 36, 0.96);
   outline: none;
 }
 
-.sidebar-copy,
-.sidebar-panel-alert span {
+.icon-button {
+  display: inline-grid;
+  gap: 0.22rem;
+  width: 2.3rem;
+  min-width: 2.3rem;
+  padding: 0.45rem;
+  place-items: center;
+}
+
+.icon-button span {
+  display: block;
+  width: 0.95rem;
+  height: 1px;
+  background: currentColor;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(2, 7, 12, 0.72);
+}
+
+.modal-panel {
+  display: grid;
+  gap: 0.85rem;
+  width: min(22rem, 100%);
+  padding: 1rem;
+  border: 1px solid rgba(124, 208, 214, 0.32);
+  background: rgba(3, 8, 12, 0.97);
+  box-shadow: 0 1.5rem 4rem rgba(0, 0, 0, 0.45);
+  text-transform: lowercase;
+}
+
+.modal-close {
+  min-width: 4.5rem;
+}
+
+.sidebar-copy {
   line-height: 1.5;
 }
 
