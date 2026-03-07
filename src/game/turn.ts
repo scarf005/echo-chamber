@@ -118,7 +118,8 @@ export function advanceTurn(
   playerDestroyed = playerDestroyed || torpedoStep.playerDestroyed
 
   if (torpedoStep.playerDestroyed) {
-    hostileMessage = "A hostile torpedo tears through your hull. Press R for a new run."
+    hostileMessage =
+      "A hostile torpedo tears through your hull. Press R for a new run."
   }
 
   const depthChargeStep = stepDepthCharges(
@@ -142,11 +143,13 @@ export function advanceTurn(
   playerDestroyed = playerDestroyed || depthChargeStep.playerDestroyed
 
   if (depthChargeStep.playerDestroyed) {
-    hostileMessage = "A hostile blast caves in your hull. Press R for a new run."
+    hostileMessage =
+      "A hostile blast caves in your hull. Press R for a new run."
   }
 
-  const boulderStep = stepFallingBoulders(map, fallingBoulders, dust)
+  const boulderStep = stepFallingBoulders(map, fallingBoulders, trails, dust)
   fallingBoulders = boulderStep.fallingBoulders
+  trails = boulderStep.trails
   dust = boulderStep.dust
   screenShake = Math.max(screenShake, boulderStep.screenShake)
 
@@ -162,18 +165,26 @@ export function advanceTurn(
     const hostileStep = stepHostileSubmarines(
       map,
       hostileSubmarines,
-      nextPlayer,
-      spawnedShockwaves,
+      {
+        player: nextPlayer,
+        previousPlayer: game.player,
+        shockwaves: spawnedShockwaves,
+        trails,
+        memory: game.memory,
+      },
       game.seed,
       nextTurn,
     )
 
     hostileSubmarines = hostileStep.hostileSubmarines
     torpedoes = [...torpedoes, ...hostileStep.launchedTorpedoes]
+    depthCharges = [...depthCharges, ...hostileStep.launchedDepthCharges]
+    spawnedShockwaves.push(...hostileStep.spawnedShockwaves)
     playerDestroyed = hostileStep.playerDestroyed
 
     if (hostileStep.playerDestroyed) {
-      hostileMessage = "A hostile submarine rams your hull. Press R for a new run."
+      hostileMessage =
+        "A hostile submarine rams your hull. Press R for a new run."
     } else if (hostileStep.launchedTorpedoes.length > 0) {
       hostileLaunchMessage = "Hostile contact. Incoming torpedo."
     }
@@ -186,6 +197,7 @@ export function advanceTurn(
     dust,
     trails,
     collectRevealableEntities(
+      nextPlayer,
       map.capsule,
       torpedoes,
       depthCharges,
@@ -218,8 +230,10 @@ export function advanceTurn(
     torpedoStep.caveIns,
     boulderStep.landings,
   )
+
   const nextMessage = playerDestroyed
-    ? hostileMessage ?? "Your submarine is destroyed. Press R for a new run."
+    ? hostileMessage ??
+      "Your submarine is destroyed. Press R for a new run."
     : won
     ? "Capsule secured. Press R for a new run."
     : pickupStep.message !== null
@@ -274,6 +288,7 @@ function createSonarShockwave(origin: Point): Shockwave {
 }
 
 function collectRevealableEntities(
+  player: Point,
   capsule: Point,
   torpedoes: GameState["torpedoes"],
   depthCharges: GameState["depthCharges"],
@@ -282,6 +297,7 @@ function collectRevealableEntities(
   hostileSubmarines: GameState["hostileSubmarines"],
 ): RevealableEntity[] {
   return [
+    { kind: "player", position: { ...player } },
     { kind: "capsule", position: { ...capsule } },
     ...torpedoes.map((torpedo) => ({
       kind: "torpedo" as const,

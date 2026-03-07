@@ -8,15 +8,21 @@ import type {
   Torpedo,
 } from "../model.ts"
 import { TORPEDO_BLAST_RADIUS } from "../constants.ts"
-import { mergeCrackCells, mergeFadeCell, mergeFadeCells } from "../effects.ts"
+import {
+  mergeCrackCells,
+  mergeFadeCell,
+  mergeFadeCells,
+  mergeTrailCell,
+} from "../effects.ts"
 import {
   chebyshevDistance,
   cloneHostileSubmarine,
+  deltaForDirection,
   indexForPoint,
   isNearObstacleBelow,
   pointsEqual,
 } from "../helpers.ts"
-import { tileAt, type GeneratedMap, type Point } from "../mapgen.ts"
+import { type GeneratedMap, type Point, tileAt } from "../mapgen.ts"
 import { detonateTorpedo } from "./destruction.ts"
 
 const PROJECTILE_PROXIMITY_RADIUS = 2
@@ -71,24 +77,20 @@ export function stepTorpedoes(
 
   for (const torpedo of torpedoes) {
     let current = { ...torpedo.position }
-    let remaining = torpedo.rangeRemaining
     let exploded = false
 
     for (let step = 0; step < torpedo.speed; step += 1) {
-      if (remaining <= 0) {
-        break
-      }
-
+      const delta = deltaForDirection(torpedo.direction)
       const nextPoint = {
-        x: current.x + (torpedo.direction === "left" ? -1 : 1),
-        y: current.y,
+        x: current.x + delta.x,
+        y: current.y + delta.y,
       }
       const tile = tileAt(map, nextPoint.x, nextPoint.y)
 
-      nextTrails = mergeFadeCell(
+      nextTrails = mergeTrailCell(
         nextTrails,
         indexForPoint(map.width, current),
-        0.82,
+        1,
       )
 
       if (!tile || tile === "wall") {
@@ -108,7 +110,11 @@ export function stepTorpedoes(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
-        nextHostileSubmarines.splice(0, nextHostileSubmarines.length, ...explosion.hostileSubmarines)
+        nextHostileSubmarines.splice(
+          0,
+          nextHostileSubmarines.length,
+          ...explosion.hostileSubmarines,
+        )
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
@@ -119,7 +125,15 @@ export function stepTorpedoes(
         break
       }
 
-      if (hasHostileTargetNearby(nextPoint, torpedo.senderId, nextHostileSubmarines, player)) {
+      if (
+        hasProjectileTargetNearby(
+          nextPoint,
+          torpedo.senderId,
+          torpedo.avoidFriendlyFire ?? true,
+          nextHostileSubmarines,
+          player,
+        )
+      ) {
         const impactPoint = { ...nextPoint }
         const explosion = detonateProjectile(
           map,
@@ -136,7 +150,11 @@ export function stepTorpedoes(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
-        nextHostileSubmarines.splice(0, nextHostileSubmarines.length, ...explosion.hostileSubmarines)
+        nextHostileSubmarines.splice(
+          0,
+          nextHostileSubmarines.length,
+          ...explosion.hostileSubmarines,
+        )
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
@@ -148,14 +166,12 @@ export function stepTorpedoes(
       }
 
       current = nextPoint
-      remaining -= 1
     }
 
-    if (!exploded && remaining > 0) {
+    if (!exploded) {
       nextTorpedoes.push({
         ...torpedo,
         position: current,
-        rangeRemaining: remaining,
       })
     }
   }
@@ -220,13 +236,21 @@ export function stepDepthCharges(
         break
       }
 
-      nextTrails = mergeFadeCell(
+      nextTrails = mergeTrailCell(
         nextTrails,
         indexForPoint(map.width, current),
-        0.76,
+        1,
       )
 
-      if (hasHostileTargetNearby(current, depthCharge.senderId, nextHostileSubmarines, player)) {
+      if (
+        hasProjectileTargetNearby(
+          current,
+          depthCharge.senderId,
+          depthCharge.avoidFriendlyFire ?? true,
+          nextHostileSubmarines,
+          player,
+        )
+      ) {
         const explosion = detonateProjectile(
           map,
           current,
@@ -242,7 +266,11 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
-        nextHostileSubmarines.splice(0, nextHostileSubmarines.length, ...explosion.hostileSubmarines)
+        nextHostileSubmarines.splice(
+          0,
+          nextHostileSubmarines.length,
+          ...explosion.hostileSubmarines,
+        )
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
@@ -276,7 +304,11 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
-        nextHostileSubmarines.splice(0, nextHostileSubmarines.length, ...explosion.hostileSubmarines)
+        nextHostileSubmarines.splice(
+          0,
+          nextHostileSubmarines.length,
+          ...explosion.hostileSubmarines,
+        )
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
@@ -290,7 +322,15 @@ export function stepDepthCharges(
       current = nextPoint
       remaining -= 1
 
-      if (hasHostileTargetNearby(current, depthCharge.senderId, nextHostileSubmarines, player)) {
+      if (
+        hasProjectileTargetNearby(
+          current,
+          depthCharge.senderId,
+          depthCharge.avoidFriendlyFire ?? true,
+          nextHostileSubmarines,
+          player,
+        )
+      ) {
         const explosion = detonateProjectile(
           map,
           current,
@@ -306,7 +346,11 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
-        nextHostileSubmarines.splice(0, nextHostileSubmarines.length, ...explosion.hostileSubmarines)
+        nextHostileSubmarines.splice(
+          0,
+          nextHostileSubmarines.length,
+          ...explosion.hostileSubmarines,
+        )
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
@@ -333,7 +377,11 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
-        nextHostileSubmarines.splice(0, nextHostileSubmarines.length, ...explosion.hostileSubmarines)
+        nextHostileSubmarines.splice(
+          0,
+          nextHostileSubmarines.length,
+          ...explosion.hostileSubmarines,
+        )
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
@@ -381,7 +429,7 @@ function detonateProjectile(
   player: Point,
 ): ExplosionResolution {
   const explosion = detonateTorpedo(map, impactPoint, seedKey)
-  const nextTrails = mergeFadeCell(
+  const nextTrails = mergeTrailCell(
     trails,
     indexForPoint(map.width, impactPoint),
     1,
@@ -400,26 +448,44 @@ function detonateProjectile(
     dust: nextDust,
     fallingBoulders: explosion.fallingBoulders,
     shockwave: createExplosionShockwave(impactPoint, senderId),
-    hostileSubmarines: resolveHostileBlastDamage(impactPoint, senderId, hostileSubmarines),
+    hostileSubmarines: resolveHostileBlastDamage(
+      impactPoint,
+      senderId,
+      hostileSubmarines,
+    ),
     playerDestroyed: doesExplosionDestroyPlayer(impactPoint, senderId, player),
     caveIns: explosion.fallingBoulders.length,
     screenShake: explosion.screenShake,
   }
 }
 
-function hasHostileTargetNearby(
+function hasProjectileTargetNearby(
   point: Point,
   senderId: string,
+  avoidFriendlyFire: boolean,
   hostileSubmarines: HostileSubmarine[],
   player: Point,
 ): boolean {
   if (senderId === "player") {
     return hostileSubmarines.some((hostileSubmarine) =>
-      chebyshevDistance(point, hostileSubmarine.position) <= PROJECTILE_PROXIMITY_RADIUS
+      chebyshevDistance(point, hostileSubmarine.position) <=
+        PROJECTILE_PROXIMITY_RADIUS
     )
   }
 
-  return chebyshevDistance(point, player) <= PROJECTILE_PROXIMITY_RADIUS
+  if (chebyshevDistance(point, player) <= PROJECTILE_PROXIMITY_RADIUS) {
+    return true
+  }
+
+  if (avoidFriendlyFire) {
+    return false
+  }
+
+  return hostileSubmarines.some((hostileSubmarine) =>
+    hostileSubmarine.id !== senderId &&
+    chebyshevDistance(point, hostileSubmarine.position) <=
+      PROJECTILE_PROXIMITY_RADIUS
+  )
 }
 
 function resolveHostileBlastDamage(
@@ -427,17 +493,20 @@ function resolveHostileBlastDamage(
   senderId: string,
   hostileSubmarines: HostileSubmarine[],
 ): HostileSubmarine[] {
-  if (senderId !== "player") {
-    return hostileSubmarines
-  }
-
   return hostileSubmarines.filter((hostileSubmarine) =>
-    chebyshevDistance(impactPoint, hostileSubmarine.position) > EXPLOSION_DAMAGE_RADIUS
+    hostileSubmarine.id === senderId ||
+    chebyshevDistance(impactPoint, hostileSubmarine.position) >
+      EXPLOSION_DAMAGE_RADIUS
   )
 }
 
-function doesExplosionDestroyPlayer(impactPoint: Point, senderId: string, player: Point): boolean {
-  return senderId !== "player" && chebyshevDistance(impactPoint, player) <= EXPLOSION_DAMAGE_RADIUS
+function doesExplosionDestroyPlayer(
+  impactPoint: Point,
+  senderId: string,
+  player: Point,
+): boolean {
+  return senderId !== "player" &&
+    chebyshevDistance(impactPoint, player) <= EXPLOSION_DAMAGE_RADIUS
 }
 
 function createExplosionShockwave(origin: Point, senderId: string): Shockwave {

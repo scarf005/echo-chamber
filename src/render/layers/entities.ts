@@ -29,7 +29,9 @@ export function drawEntitiesLayer(
   const visibility = game.visibility[index]
   const entityMemory = game.entityMemory?.[index] ?? null
 
-  if (x === game.map.capsule.x && y === game.map.capsule.y && game.capsuleKnown) {
+  if (
+    x === game.map.capsule.x && y === game.map.capsule.y && game.capsuleKnown
+  ) {
     drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, 1)
   }
 
@@ -76,7 +78,13 @@ export function drawEntitiesLayer(
       screenX,
       screenY,
       tileSize,
-      torpedo.direction === "left" ? "<" : ">",
+      torpedo.direction === "left"
+        ? "<"
+        : torpedo.direction === "right"
+        ? ">"
+        : torpedo.direction === "up"
+        ? "^"
+        : "v",
       COLORS.torpedo,
       1,
     )
@@ -104,7 +112,7 @@ export function drawEntitiesLayer(
       exact ? COLORS.hostileSubmarine : COLORS.sonar,
       1,
     )
-  } else if (entityMemory === "hostile-submarine") {
+  } else if (entityMemory === "enemy") {
     drawEntityMemory(context, screenX, screenY, tileSize, entityMemory)
   }
 
