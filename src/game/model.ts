@@ -4,16 +4,25 @@ export type Direction = "up" | "down" | "left" | "right"
 export type HorizontalDirection = "left" | "right"
 export type VisibilityLevel = 0 | 1 | 2 | 3
 export type GameStatus = "playing" | "won" | "lost"
-export type HostileSubmarineMode = "patrol" | "investigate" | "attack"
-export type EntityMemoryKind = "item" | "hostile-submarine"
+export type HostileSubmarineMode =
+  | "patrol"
+  | "investigate"
+  | "attack"
+  | "retreat"
+export type HostileSubmarineArchetype = "scout" | "hunter" | "turtle"
+export type EntityMemoryKind = "item" | "enemy"
 
 export type RevealableEntityKind =
+  | "player"
   | "capsule"
   | "torpedo"
   | "depth-charge"
   | "boulder"
   | "item"
   | "hostile-submarine"
+
+export type EntityRevealKind = "player" | "capsule" | "enemy" | "item"
+export type SonarMessage = { kind: "player-location"; position: Point }
 
 export type PickupKind = "torpedo-cache" | "depth-charge-cache" | "map"
 
@@ -24,6 +33,8 @@ export interface Shockwave {
   damaging: boolean
   revealTerrain: boolean
   revealEntities: boolean
+  message?: SonarMessage
+  visibleToPlayer?: boolean
 }
 
 export interface TileReveal {
@@ -33,7 +44,7 @@ export interface TileReveal {
 
 export interface EntityReveal {
   index: number
-  kind: RevealableEntityKind
+  kind: EntityRevealKind
 }
 
 export interface RevealableEntity {
@@ -44,6 +55,8 @@ export interface RevealableEntity {
 export interface FadeCell {
   index: number
   alpha: number
+  drift?: "up"
+  requiresVisibility?: boolean
 }
 
 export interface CrackCell {
@@ -55,9 +68,10 @@ export interface CrackCell {
 export interface Torpedo {
   position: Point
   senderId: string
-  direction: HorizontalDirection
+  direction: Direction
   speed: number
   rangeRemaining: number
+  avoidFriendlyFire?: boolean
 }
 
 export interface DepthCharge {
@@ -65,6 +79,7 @@ export interface DepthCharge {
   senderId: string
   speed: number
   rangeRemaining: number
+  avoidFriendlyFire?: boolean
 }
 
 export interface FallingBoulder {
@@ -84,6 +99,15 @@ export interface HostileSubmarine {
   mode: HostileSubmarineMode
   target: Point | null
   reload: number
+  archetype?: HostileSubmarineArchetype
+  initialPosition?: Point
+  torpedoAmmo?: number
+  vlsAmmo?: number
+  depthChargeAmmo?: number
+  lastSonarTurn?: number
+  lastKnownPlayerPosition?: Point | null
+  lastKnownPlayerVector?: Point | null
+  lastKnownPlayerTurn?: number | null
 }
 
 export interface GameState {
@@ -107,12 +131,12 @@ export interface GameState {
   dust: FadeCell[]
   cracks: CrackCell[]
   fallingBoulders: FallingBoulder[]
-  logs: string[]
   facing: HorizontalDirection
   torpedoAmmo: number
   depthChargeAmmo: number
   screenShake: number
   message: string
+  logs: string[]
 }
 
 export interface GameOptions {
