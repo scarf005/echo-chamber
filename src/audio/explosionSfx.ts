@@ -49,14 +49,19 @@ export function getExplosionVolume(distance: number): number {
 }
 
 export function createExplosionSfx(): ExplosionSfxController {
-  const sampleUrls: string[] = Array.from(new Set([
-    ...NEAR_EXPLOSION_URLS,
-    ...MID_EXPLOSION_URLS,
-    ...FAR_EXPLOSION_URLS,
-  ]))
+  const sampleUrls: string[] = Array.from(
+    new Set([
+      ...NEAR_EXPLOSION_URLS,
+      ...MID_EXPLOSION_URLS,
+      ...FAR_EXPLOSION_URLS,
+    ]),
+  )
   const playersByUrl = new Map(sampleUrls.map((url) => [
     url,
-    Array.from({ length: CHANNELS_PER_SAMPLE }, () => createExplosionPlayer(url)),
+    Array.from(
+      { length: CHANNELS_PER_SAMPLE },
+      () => createExplosionPlayer(url),
+    ),
   ]))
   const nextPlayerIndexByUrl = new Map(sampleUrls.map((url) => [url, 0]))
   let unlocked = false

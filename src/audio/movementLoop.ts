@@ -1,3 +1,5 @@
+import { clampAudioLevel } from "./settings.ts"
+
 const MOVEMENT_LOOP_URL = "/audio/underwater-deep-water-loop.mp3"
 const MOVING_VOLUME = 1
 const IDLE_VOLUME = 0.5
@@ -8,6 +10,8 @@ const MOVEMENT_HOLD_MS = 240
 export type MovementLoopController = {
   ensureStarted: () => Promise<void>
   markMovement: () => void
+  setEnabled: (enabled: boolean) => void
+  setVolume: (volume: number) => void
   dispose: () => void
 }
 
@@ -34,7 +38,20 @@ export const createMovementLoop = (): MovementLoopController => {
   const audio = new Audio(MOVEMENT_LOOP_URL)
   audio.loop = true
   audio.preload = "auto"
-  audio.volume = IDLE_VOLUME
+  const state = {
+    enabled: true,
+    volume: 1,
+  }
+
+  const resolveTargetVolume = (baseVolume: number): number => {
+    if (!state.enabled) {
+      return 0
+    }
+
+    return clampAudioLevel(baseVolume * state.volume)
+  }
+
+  audio.volume = resolveTargetVolume(IDLE_VOLUME)
 
   let startingPlayback: Promise<void> | null = null
   let lastMovementAt = Number.NEGATIVE_INFINITY
@@ -50,17 +67,21 @@ export const createMovementLoop = (): MovementLoopController => {
   }
 
   const syncVolume = () => {
-    const targetVolume = getMovementTargetVolume(
+    const baseTargetVolume = getMovementTargetVolume(
       performance.now(),
       lastMovementAt,
     )
+    const targetVolume = resolveTargetVolume(baseTargetVolume)
     const nextVolume = stepVolumeTowards(audio.volume, targetVolume)
 
     if (nextVolume !== audio.volume) {
       audio.volume = nextVolume
     }
 
-    if (audio.volume === IDLE_VOLUME && targetVolume === IDLE_VOLUME) {
+    if (
+      audio.volume === targetVolume &&
+      (targetVolume === 0 || baseTargetVolume === IDLE_VOLUME)
+    ) {
       stopTicker()
     }
   }
@@ -98,6 +119,18 @@ export const createMovementLoop = (): MovementLoopController => {
     syncVolume()
   }
 
+  const setEnabled = (enabled: boolean) => {
+    state.enabled = enabled
+    ensureTicker()
+    syncVolume()
+  }
+
+  const setVolume = (volume: number) => {
+    state.volume = clampAudioLevel(volume)
+    ensureTicker()
+    syncVolume()
+  }
+
   const dispose = () => {
     stopTicker()
     audio.pause()
@@ -108,6 +141,8 @@ export const createMovementLoop = (): MovementLoopController => {
   return {
     ensureStarted,
     markMovement,
+    setEnabled,
+    setVolume,
     dispose,
   }
 }
