@@ -17,3 +17,11 @@ Build production assets:
 ```
 $ deno task build
 ```
+
+## Music Credit
+
+- Background music: `public/audio/unseen-presence.mp3`
+- Track: `SCP-x2x (Unseen Presence)` by Kevin MacLeod (`incompetech.com`)
+- Source: `https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2000008`
+- License: `Creative Commons Attribution 4.0`
+- License URL: `https://creativecommons.org/licenses/by/4.0/`
