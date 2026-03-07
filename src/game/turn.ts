@@ -41,7 +41,10 @@ import type { Point } from "./mapgen.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
 import { stepHostileSubmarines } from "./systems/hostiles.ts"
 import { stepDepthCharges, stepTorpedoes } from "./systems/projectiles.ts"
-import { stepShockwaves } from "./systems/shockwaves.ts"
+import {
+  previewShockwaveEntityReveals,
+  stepShockwaves,
+} from "./systems/shockwaves.ts"
 
 export function advanceTurn(
   game: GameState,
@@ -162,6 +165,34 @@ export function advanceTurn(
     ...(shouldEmitSonar ? [createSonarShockwave(nextPlayer)] : []),
   ]
   let hostileLaunchMessage: string | null = null
+  const revealableEntitiesBeforeHostiles = collectRevealableEntities(
+    nextPlayer,
+    map.capsule,
+    torpedoes,
+    depthCharges,
+    pickups,
+    fallingBoulders,
+    hostileSubmarines,
+  )
+  const preHostileEntityReveals = previewShockwaveEntityReveals(
+    map,
+    game.shockwaves,
+    spawnedShockwaves,
+    dust,
+    trails,
+    revealableEntitiesBeforeHostiles,
+  )
+  const playerSonarHitHostiles = new Set(
+    hostileSubmarines
+      .filter((hostileSubmarine) =>
+        preHostileEntityReveals.some((reveal) =>
+          reveal.sourceSenderId === "player" && reveal.kind === "enemy" &&
+          reveal.index ===
+            indexForPoint(map.width, hostileSubmarine.position)
+        )
+      )
+      .map((hostileSubmarine) => hostileSubmarine.id),
+  )
 
   if (!playerDestroyed) {
     const hostileStep = stepHostileSubmarines(
@@ -170,9 +201,10 @@ export function advanceTurn(
       {
         player: nextPlayer,
         previousPlayer: game.player,
-        shockwaves: spawnedShockwaves,
+        shockwaves: [...game.shockwaves, ...spawnedShockwaves],
         trails,
         memory: game.memory,
+        playerSonarHitHostiles,
       },
       game.seed,
       nextTurn,

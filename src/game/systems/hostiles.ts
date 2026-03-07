@@ -15,6 +15,7 @@ import {
   HOSTILE_TORPEDO_RANGE,
   HOSTILE_TURTLE_VISUAL_RADIUS,
   SONAR_ENTITY_IDENTIFY_RADIUS,
+  SONAR_SPEED,
   TORPEDO_SPEED,
 } from "../constants.ts"
 import { FOV } from "npm:rot-js@2.2.1"
@@ -59,6 +60,7 @@ interface HostileTurnContext {
   shockwaves: Shockwave[]
   trails: FadeCell[]
   memory: Array<"wall" | "water" | null>
+  playerSonarHitHostiles: ReadonlySet<string>
 }
 
 interface ResolvedHostileSubmarine extends HostileSubmarine {
@@ -71,12 +73,19 @@ interface ResolvedHostileSubmarine extends HostileSubmarine {
   lastKnownPlayerPosition: Point | null
   lastKnownPlayerVector: Point | null
   lastKnownPlayerTurn: number | null
+  plannedPath: Point[]
+  salvoShotsRemaining: number
+  salvoStepDirection: "up" | "down" | null
+  salvoMoveTarget: Point | null
 }
 
 interface HostileKnowledge {
   confirmedPlayerPosition: Point | null
   cluePosition: Point | null
   playerVector: Point | null
+  directDetection: boolean
+  detectedByPlayerSonar: boolean
+  receivedImmediateRelay: boolean
 }
 
 interface AttackResolution {
@@ -86,6 +95,9 @@ interface AttackResolution {
   torpedoAmmo: number
   vlsAmmo: number
   depthChargeAmmo: number
+  salvoShotsRemaining: number
+  salvoStepDirection: "up" | "down" | null
+  salvoMoveTarget: Point | null
 }
 
 interface Loadout {
@@ -179,6 +191,18 @@ export function stepHostileSubmarines(
   playerDestroyed: boolean
 } {
   const currentHostiles = hostileSubmarines.map(hydrateHostileSubmarine)
+  const availableShockwaves = context.shockwaves.map((shockwave) => ({
+    ...shockwave,
+    origin: { ...shockwave.origin },
+    ...(shockwave.message
+      ? {
+        message: {
+          ...shockwave.message,
+          position: { ...shockwave.message.position },
+        },
+      }
+      : {}),
+  }))
   const nextHostileSubmarines: HostileSubmarine[] = []
   const launchedTorpedoes: Torpedo[] = []
   const launchedDepthCharges: DepthCharge[] = []
@@ -188,6 +212,24 @@ export function stepHostileSubmarines(
       keyOfPoint(hostileSubmarine.position)
     ),
   )
+  const baseKnowledge = new Map(
+    currentHostiles.map((hostileSubmarine) => [
+      hostileSubmarine.id,
+      gatherKnowledge(
+        map,
+        hostileSubmarine,
+        currentHostiles,
+        {
+          ...context,
+          shockwaves: availableShockwaves,
+        },
+      ),
+    ]),
+  )
+  const relayedPlayerFixes = propagateImmediatePlayerFixes(
+    currentHostiles,
+    baseKnowledge,
+  )
   let playerDestroyed = false
 
   currentHostiles.forEach((hostileSubmarine, index) => {
@@ -196,12 +238,21 @@ export function stepHostileSubmarines(
     const random = createDeterministicRandom(
       `${seed}:hostile:${hostileSubmarine.id}:${turn}:${index}`,
     )
-    const knowledge = gatherKnowledge(
-      map,
-      hostileSubmarine,
-      currentHostiles,
-      context,
-    )
+    const base = baseKnowledge.get(hostileSubmarine.id)
+
+    if (!base) {
+      throw new Error(`Missing hostile knowledge for ${hostileSubmarine.id}`)
+    }
+
+    const relayFix = relayedPlayerFixes.get(hostileSubmarine.id)
+    const knowledge = relayFix && !base.confirmedPlayerPosition
+      ? {
+        ...base,
+        confirmedPlayerPosition: relayFix,
+        cluePosition: relayFix,
+        receivedImmediateRelay: true,
+      }
+      : base
     let archetype = hostileSubmarine.archetype
     let position = { ...hostileSubmarine.position }
     let facing = hostileSubmarine.facing
@@ -219,6 +270,14 @@ export function stepHostileSubmarines(
     let torpedoAmmo = hostileSubmarine.torpedoAmmo
     let vlsAmmo = hostileSubmarine.vlsAmmo
     let depthChargeAmmo = hostileSubmarine.depthChargeAmmo
+    let plannedPath = hostileSubmarine.plannedPath.map((point) => ({
+      ...point,
+    }))
+    let salvoShotsRemaining = hostileSubmarine.salvoShotsRemaining
+    let salvoStepDirection = hostileSubmarine.salvoStepDirection
+    let salvoMoveTarget = hostileSubmarine.salvoMoveTarget
+      ? { ...hostileSubmarine.salvoMoveTarget }
+      : null
 
     if (knowledge.confirmedPlayerPosition) {
       lastKnownPlayerVector = knowledge.playerVector ?? lastKnownPlayerVector
@@ -228,8 +287,9 @@ export function stepHostileSubmarines(
 
     if (
       archetype === "turtle" &&
-      chebyshevDistance(position, context.player) <=
-        HOSTILE_TURTLE_VISUAL_RADIUS
+      (knowledge.directDetection || knowledge.detectedByPlayerSonar ||
+        chebyshevDistance(position, context.player) <=
+          HOSTILE_TURTLE_VISUAL_RADIUS)
     ) {
       archetype = "hunter"
     }
@@ -257,12 +317,45 @@ export function stepHostileSubmarines(
       target = { ...knowledge.cluePosition }
     } else if (archetype === "scout") {
       mode = "investigate"
-      target = findNearestUnseenTile(map, context.memory, position, occupied) ??
-        choosePatrolStep(map, position, occupied, random)
+      target = target && shouldKeepScoutExplorationTarget(
+          map,
+          context.memory,
+          position,
+          target,
+          occupied,
+        )
+        ? target
+        : findScoutExplorationTarget(
+          map,
+          context.memory,
+          position,
+          occupied,
+          random,
+        ) ?? choosePatrolStep(map, position, occupied, random)
     } else {
       mode = "investigate"
       target = choosePatrolStep(map, position, occupied, random)
     }
+
+    if (
+      archetype === "hunter" &&
+      salvoShotsRemaining > 0 &&
+      salvoMoveTarget &&
+      !pointsEqual(position, salvoMoveTarget)
+    ) {
+      mode = "attack"
+      target = { ...salvoMoveTarget }
+    }
+
+    plannedPath = describePlannedPath(
+      map,
+      hostileSubmarine,
+      archetype,
+      position,
+      target,
+      occupied,
+      context.player,
+    )
 
     const nextStep = chooseNextStep(
       map,
@@ -301,6 +394,9 @@ export function stepHostileSubmarines(
       lastKnownPlayerTurn,
       random,
       turn,
+      salvoShotsRemaining,
+      salvoStepDirection,
+      salvoMoveTarget,
     )
     launchedTorpedoes.push(...attack.torpedoes)
     launchedDepthCharges.push(...attack.depthCharges)
@@ -308,17 +404,25 @@ export function stepHostileSubmarines(
     torpedoAmmo = attack.torpedoAmmo
     vlsAmmo = attack.vlsAmmo
     depthChargeAmmo = attack.depthChargeAmmo
+    salvoShotsRemaining = attack.salvoShotsRemaining
+    salvoStepDirection = attack.salvoStepDirection
+    salvoMoveTarget = attack.salvoMoveTarget
 
     const sonarInterval = sonarIntervalForHostile(
       archetype,
       Boolean(lastKnownPlayerPosition),
     )
-    const shouldEmitSonar = sonarInterval !== null &&
-      turn - lastSonarTurn >= sonarInterval
+    const shouldEmitSonar = knowledge.detectedByPlayerSonar ||
+      knowledge.receivedImmediateRelay ||
+      (sonarInterval !== null && turn - lastSonarTurn >= sonarInterval)
 
     if (shouldEmitSonar) {
       lastSonarTurn = turn
-      spawnedShockwaves.push({
+      const shouldBroadcastFix = knowledge.detectedByPlayerSonar ||
+        (lastKnownPlayerPosition && lastKnownPlayerTurn !== null &&
+          turn - lastKnownPlayerTurn <= 2 &&
+          shouldBroadcastPlayerPosition(archetype, random))
+      const sonarWave: Shockwave = {
         origin: { ...position },
         radius: 0,
         senderId: hostileSubmarine.id,
@@ -326,8 +430,7 @@ export function stepHostileSubmarines(
         revealTerrain: false,
         revealEntities: false,
         visibleToPlayer: hasLineOfSight(map, context.player, position),
-        ...(lastKnownPlayerPosition &&
-            shouldBroadcastPlayerPosition(archetype, random)
+        ...(lastKnownPlayerPosition && shouldBroadcastFix
           ? {
             message: {
               kind: "player-location" as const,
@@ -335,7 +438,9 @@ export function stepHostileSubmarines(
             },
           }
           : {}),
-      })
+      }
+      spawnedShockwaves.push(sonarWave)
+      availableShockwaves.push(sonarWave)
     }
 
     occupied.add(keyOfPoint(position))
@@ -355,6 +460,18 @@ export function stepHostileSubmarines(
       lastKnownPlayerPosition,
       lastKnownPlayerVector,
       lastKnownPlayerTurn,
+      plannedPath: describePlannedPath(
+        map,
+        hostileSubmarine,
+        archetype,
+        position,
+        salvoMoveTarget ?? target,
+        occupied,
+        context.player,
+      ),
+      salvoShotsRemaining,
+      salvoStepDirection,
+      salvoMoveTarget,
     })
   })
 
@@ -425,14 +542,19 @@ function hydrateHostileSubmarine(
     lastSonarTurn: hostileSubmarine.lastSonarTurn ?? 0,
     lastKnownPlayerPosition: hostileSubmarine.lastKnownPlayerPosition
       ? { ...hostileSubmarine.lastKnownPlayerPosition }
-      : hostileSubmarine.target
-      ? { ...hostileSubmarine.target }
       : null,
     lastKnownPlayerVector: hostileSubmarine.lastKnownPlayerVector
       ? { ...hostileSubmarine.lastKnownPlayerVector }
       : null,
-    lastKnownPlayerTurn: hostileSubmarine.lastKnownPlayerTurn ??
-      (hostileSubmarine.target ? 0 : null),
+    lastKnownPlayerTurn: hostileSubmarine.lastKnownPlayerTurn ?? null,
+    plannedPath: hostileSubmarine.plannedPath
+      ? hostileSubmarine.plannedPath.map((point) => ({ ...point }))
+      : [],
+    salvoShotsRemaining: hostileSubmarine.salvoShotsRemaining ?? 0,
+    salvoStepDirection: hostileSubmarine.salvoStepDirection ?? null,
+    salvoMoveTarget: hostileSubmarine.salvoMoveTarget
+      ? { ...hostileSubmarine.salvoMoveTarget }
+      : null,
   }
 }
 
@@ -457,6 +579,24 @@ function gatherKnowledge(
       confirmedPlayerPosition: { ...context.player },
       cluePosition: { ...context.player },
       playerVector,
+      directDetection: true,
+      detectedByPlayerSonar: false,
+      receivedImmediateRelay: false,
+    }
+  }
+
+  const playerSonarFix = context.playerSonarHitHostiles.has(hostileSubmarine.id)
+    ? { ...context.player }
+    : null
+
+  if (playerSonarFix) {
+    return {
+      confirmedPlayerPosition: playerSonarFix,
+      cluePosition: playerSonarFix,
+      playerVector,
+      directDetection: false,
+      detectedByPlayerSonar: true,
+      receivedImmediateRelay: false,
     }
   }
 
@@ -470,6 +610,9 @@ function gatherKnowledge(
       confirmedPlayerPosition: messagePosition,
       cluePosition: messagePosition,
       playerVector,
+      directDetection: false,
+      detectedByPlayerSonar: false,
+      receivedImmediateRelay: false,
     }
   }
 
@@ -488,7 +631,66 @@ function gatherKnowledge(
     confirmedPlayerPosition: null,
     cluePosition: pingPosition ?? trailPosition,
     playerVector,
+    directDetection: false,
+    detectedByPlayerSonar: false,
+    receivedImmediateRelay: false,
   }
+}
+
+function propagateImmediatePlayerFixes(
+  hostileSubmarines: ResolvedHostileSubmarine[],
+  knowledges: ReadonlyMap<string, HostileKnowledge>,
+): Map<string, Point> {
+  const hostileById = new Map(
+    hostileSubmarines.map((
+      hostileSubmarine,
+    ) => [hostileSubmarine.id, hostileSubmarine]),
+  )
+  const relayedFixes = new Map<string, Point>()
+  const queue = hostileSubmarines
+    .filter((hostileSubmarine) =>
+      knowledges.get(hostileSubmarine.id)?.detectedByPlayerSonar
+    )
+    .map((hostileSubmarine) => hostileSubmarine.id)
+  const visited = new Set(queue)
+
+  while (queue.length > 0) {
+    const senderId = queue.shift()
+
+    if (!senderId) {
+      continue
+    }
+
+    const sender = hostileById.get(senderId)
+    const senderKnowledge = knowledges.get(senderId)
+    const senderFix = relayedFixes.get(senderId) ??
+      senderKnowledge?.confirmedPlayerPosition
+
+    if (!sender || !senderFix) {
+      continue
+    }
+
+    for (const hostileSubmarine of hostileSubmarines) {
+      if (
+        hostileSubmarine.id === senderId ||
+        chebyshevDistance(sender.position, hostileSubmarine.position) >
+          HOSTILE_COMMUNICATION_RADIUS
+      ) {
+        continue
+      }
+
+      if (!relayedFixes.has(hostileSubmarine.id)) {
+        relayedFixes.set(hostileSubmarine.id, { ...senderFix })
+      }
+
+      if (!visited.has(hostileSubmarine.id)) {
+        visited.add(hostileSubmarine.id)
+        queue.push(hostileSubmarine.id)
+      }
+    }
+  }
+
+  return relayedFixes
 }
 
 function canDirectlyDetectPlayer(
@@ -692,6 +894,45 @@ function chooseNextStep(
   return findNextStepToward(map, position, target, occupied)
 }
 
+function describePlannedPath(
+  map: GeneratedMap,
+  hostileSubmarine: ResolvedHostileSubmarine,
+  archetype: HostileSubmarineArchetype,
+  position: Point,
+  target: Point | null,
+  occupied: Set<string>,
+  player: Point,
+): Point[] {
+  if (archetype === "turtle") {
+    return [{ ...position }]
+  }
+
+  if (
+    target && target.y === position.y &&
+    hasClearCardinalPath(map, position, target) &&
+    archetype !== "scout"
+  ) {
+    return [{ ...position }]
+  }
+
+  if (!target) {
+    return [{ ...position }]
+  }
+
+  if (archetype === "scout" && hostileSubmarine.lastKnownPlayerPosition) {
+    const retreatStep = chooseRetreatStep(
+      map,
+      position,
+      target,
+      occupied,
+      player,
+    )
+    return retreatStep ? [{ ...position }, retreatStep] : [{ ...position }]
+  }
+
+  return findPathToward(map, position, target, occupied)
+}
+
 function chooseRetreatStep(
   map: GeneratedMap,
   position: Point,
@@ -733,16 +974,33 @@ function resolveAttack(
   lastKnownPlayerTurn: number | null,
   random: () => number,
   turn: number,
+  salvoShotsRemaining: number,
+  salvoStepDirection: "up" | "down" | null,
+  salvoMoveTarget: Point | null,
 ): AttackResolution {
+  const noAttack = (nextReload = reload): AttackResolution => ({
+    torpedoes: [],
+    depthCharges: [],
+    reload: nextReload,
+    torpedoAmmo,
+    vlsAmmo,
+    depthChargeAmmo,
+    salvoShotsRemaining,
+    salvoStepDirection,
+    salvoMoveTarget,
+  })
+
   if (!lastKnownPlayerPosition || reload > 0) {
-    return {
-      torpedoes: [],
-      depthCharges: [],
-      reload,
-      torpedoAmmo,
-      vlsAmmo,
-      depthChargeAmmo,
-    }
+    return noAttack()
+  }
+
+  if (
+    archetype === "hunter" &&
+    salvoShotsRemaining > 0 &&
+    salvoMoveTarget &&
+    !pointsEqual(position, salvoMoveTarget)
+  ) {
+    return noAttack()
   }
 
   const guessRadius = archetype === "hunter" ? 2 : 1
@@ -765,28 +1023,19 @@ function resolveAttack(
   const turnAge = lastKnownPlayerTurn === null
     ? Number.POSITIVE_INFINITY
     : turn - lastKnownPlayerTurn
-  const confidence = archetype === "hunter" ? 0.45 : 0.8
+  const maxEvidenceAge = archetype === "hunter" ? 2 : 1
+  const confidence = archetype === "hunter"
+    ? turnAge === 0 ? 0.32 : 0.16
+    : turnAge === 0
+    ? 0.62
+    : 0.28
 
-  if (!directLane && turnAge > 4) {
-    return {
-      torpedoes: [],
-      depthCharges: [],
-      reload,
-      torpedoAmmo,
-      vlsAmmo,
-      depthChargeAmmo,
-    }
+  if (turnAge > maxEvidenceAge) {
+    return noAttack()
   }
 
-  if (!directLane && turnAge > 1 && random() > confidence) {
-    return {
-      torpedoes: [],
-      depthCharges: [],
-      reload,
-      torpedoAmmo,
-      vlsAmmo,
-      depthChargeAmmo,
-    }
+  if (!directLane && random() > confidence) {
+    return noAttack()
   }
 
   const avoidFriendlyFire = archetype === "scout"
@@ -795,93 +1044,82 @@ function resolveAttack(
     avoidFriendlyFire &&
     !isAttackLaneSafe(guessedTarget, hostileSubmarine, hostileSubmarines)
   ) {
-    return {
-      torpedoes: [],
-      depthCharges: [],
-      reload,
-      torpedoAmmo,
-      vlsAmmo,
-      depthChargeAmmo,
-    }
+    return noAttack()
   }
 
   const torpedoes: Torpedo[] = []
   const depthCharges: DepthCharge[] = []
-  const salvoCount = archetype === "hunter" && !directLane && random() < 0.7
-    ? 3
-    : 1
   let nextReload = HOSTILE_TORPEDO_COOLDOWN
   let nextTorpedoAmmo = torpedoAmmo
   let nextVlsAmmo = vlsAmmo
   let nextDepthChargeAmmo = depthChargeAmmo
+  let nextSalvoShotsRemaining = salvoShotsRemaining
+  let nextSalvoStepDirection = salvoStepDirection
+  let nextSalvoMoveTarget = salvoMoveTarget ? { ...salvoMoveTarget } : null
 
   if (guessedTarget.x !== position.x && nextTorpedoAmmo > 0) {
     const direction: Direction = guessedTarget.x < position.x ? "left" : "right"
-    for (
-      const launchPoint of buildLaunchPoints(
-        map,
-        position,
-        direction,
-        salvoCount,
-      )
-    ) {
-      if (nextTorpedoAmmo <= 0) {
-        break
-      }
-
-      torpedoes.push({
-        position: launchPoint,
-        senderId: hostileSubmarine.id,
-        direction,
-        speed: TORPEDO_SPEED,
-        rangeRemaining: HOSTILE_TORPEDO_RANGE,
-        avoidFriendlyFire,
-      })
-      nextTorpedoAmmo -= 1
-    }
-  }
-
-  if (guessedTarget.y < position.y && nextVlsAmmo > 0) {
-    for (
-      const launchPoint of buildLaunchPoints(map, position, "up", salvoCount)
-    ) {
-      if (nextVlsAmmo <= 0) {
-        break
-      }
-
-      torpedoes.push({
-        position: launchPoint,
-        senderId: hostileSubmarine.id,
-        direction: "up",
-        speed: TORPEDO_SPEED,
-        rangeRemaining: HOSTILE_TORPEDO_RANGE,
-        avoidFriendlyFire,
-      })
-      nextVlsAmmo -= 1
-    }
-  }
-
-  if (guessedTarget.y >= position.y && nextDepthChargeAmmo > 0) {
-    for (
-      const launchPoint of buildLaunchPoints(map, position, "down", salvoCount)
-    ) {
-      if (nextDepthChargeAmmo <= 0) {
-        break
-      }
-
-      depthCharges.push({
-        position: launchPoint,
-        senderId: hostileSubmarine.id,
-        speed: DEPTH_CHARGE_SPEED,
-        rangeRemaining: DEPTH_CHARGE_RANGE,
-        avoidFriendlyFire,
-      })
-      nextDepthChargeAmmo -= 1
-    }
+    torpedoes.push({
+      position: { ...position },
+      senderId: hostileSubmarine.id,
+      direction,
+      speed: TORPEDO_SPEED,
+      rangeRemaining: HOSTILE_TORPEDO_RANGE,
+      avoidFriendlyFire,
+    })
+    nextTorpedoAmmo -= 1
+  } else if (guessedTarget.y < position.y && nextVlsAmmo > 0) {
+    torpedoes.push({
+      position: { ...position },
+      senderId: hostileSubmarine.id,
+      direction: "up",
+      speed: TORPEDO_SPEED,
+      rangeRemaining: HOSTILE_TORPEDO_RANGE,
+      avoidFriendlyFire,
+    })
+    nextVlsAmmo -= 1
+  } else if (nextDepthChargeAmmo > 0) {
+    depthCharges.push({
+      position: { ...position },
+      senderId: hostileSubmarine.id,
+      speed: DEPTH_CHARGE_SPEED,
+      rangeRemaining: DEPTH_CHARGE_RANGE,
+      avoidFriendlyFire,
+    })
+    nextDepthChargeAmmo -= 1
   }
 
   if (torpedoes.length === 0 && depthCharges.length === 0) {
-    nextReload = Math.max(0, reload)
+    return noAttack(Math.max(0, reload))
+  }
+
+  if (archetype === "hunter") {
+    const continuingSalvo = salvoShotsRemaining > 0
+    const startingSalvo = !continuingSalvo && !directLane && random() < 0.45
+
+    if (continuingSalvo || startingSalvo) {
+      nextSalvoShotsRemaining = continuingSalvo ? salvoShotsRemaining - 1 : 2
+      nextSalvoStepDirection = continuingSalvo
+        ? salvoStepDirection
+        : chooseSalvoStepDirection(map, position, random)
+      nextSalvoMoveTarget =
+        nextSalvoShotsRemaining > 0 && nextSalvoStepDirection
+          ? createNextSalvoMoveTarget(map, position, nextSalvoStepDirection)
+          : null
+
+      if (!nextSalvoMoveTarget) {
+        nextSalvoShotsRemaining = 0
+        nextSalvoStepDirection = null
+      }
+    } else {
+      nextSalvoShotsRemaining = 0
+      nextSalvoStepDirection = null
+      nextSalvoMoveTarget = null
+    }
+  } else {
+    nextSalvoShotsRemaining = 0
+    nextSalvoStepDirection = null
+    nextSalvoMoveTarget = null
   }
 
   if (
@@ -898,37 +1136,46 @@ function resolveAttack(
     torpedoAmmo: nextTorpedoAmmo,
     vlsAmmo: nextVlsAmmo,
     depthChargeAmmo: nextDepthChargeAmmo,
+    salvoShotsRemaining: nextSalvoShotsRemaining,
+    salvoStepDirection: nextSalvoStepDirection,
+    salvoMoveTarget: nextSalvoMoveTarget,
   }
 }
 
-function buildLaunchPoints(
+function chooseSalvoStepDirection(
   map: GeneratedMap,
-  origin: Point,
-  direction: Direction,
-  salvoCount: number,
-): Point[] {
-  const sidewaysOffsets = direction === "left" || direction === "right"
-    ? [0, -2, 2, -1, 1]
-    : [0, -2, 2, -1, 1]
-  const points: Point[] = []
+  position: Point,
+  random: () => number,
+): "up" | "down" | null {
+  const directions = random() < 0.5
+    ? ["up", "down"] as const
+    : ["down", "up"] as const
 
-  for (const offset of sidewaysOffsets) {
-    const point = direction === "left" || direction === "right"
-      ? { x: origin.x, y: origin.y + offset }
-      : { x: origin.x + offset, y: origin.y }
-
-    if (!isPassableTile(tileAt(map, point.x, point.y))) {
-      continue
-    }
-
-    points.push(point)
-
-    if (points.length >= salvoCount) {
-      break
+  for (const direction of directions) {
+    if (createNextSalvoMoveTarget(map, position, direction)) {
+      return direction
     }
   }
 
-  return points
+  return null
+}
+
+function createNextSalvoMoveTarget(
+  map: GeneratedMap,
+  position: Point,
+  direction: "up" | "down",
+): Point | null {
+  const delta = direction === "up" ? -1 : 1
+  const target = { x: position.x, y: position.y + delta * 2 }
+
+  if (
+    isPassableTile(tileAt(map, target.x, target.y)) &&
+    isPassableTile(tileAt(map, position.x, position.y + delta))
+  ) {
+    return target
+  }
+
+  return null
 }
 
 function isAttackLaneSafe(
@@ -1035,15 +1282,19 @@ function choosePatrolStep(
   return options.length > 0 ? options[0] : null
 }
 
-function findNearestUnseenTile(
+function findScoutExplorationTarget(
   map: GeneratedMap,
   memory: Array<"wall" | "water" | null>,
   start: Point,
   occupied: Set<string>,
+  random: () => number,
 ): Point | null {
   const queue: Point[] = [{ ...start }]
   const parents = new Map<string, Point | null>()
   parents.set(keyOfPoint(start), null)
+  const candidates: Array<{ point: Point; score: number }> = []
+  let fallback: Point | null = null
+  let fallbackDistance = -1
 
   while (queue.length > 0) {
     const current = queue.shift()
@@ -1053,12 +1304,34 @@ function findNearestUnseenTile(
     }
 
     const currentIndex = indexForPoint(map.width, current)
+    const distance = distanceScore(current, start)
 
-    if (memory[currentIndex] === null && !pointsEqual(current, start)) {
-      return current
+    if (!pointsEqual(current, start)) {
+      if (distance > fallbackDistance) {
+        fallback = current
+        fallbackDistance = distance
+      }
+
+      const unseenNeighbors = countScoutUnseenNeighbors(map, memory, current)
+      const unexploredTile = memory[currentIndex] === null ? 1 : 0
+
+      if (unexploredTile > 0 || unseenNeighbors > 0) {
+        candidates.push({
+          point: current,
+          score: distance * 10 + unseenNeighbors * 25 + unexploredTile * 40,
+        })
+      }
     }
 
-    for (const next of orderedNeighbors(current, start)) {
+    for (
+      const next of shufflePoints(
+        CARDINAL_STEPS.map((step) => ({
+          x: current.x + step.x,
+          y: current.y + step.y,
+        })),
+        random,
+      )
+    ) {
       const key = keyOfPoint(next)
 
       if (
@@ -1074,7 +1347,62 @@ function findNearestUnseenTile(
     }
   }
 
-  return null
+  if (candidates.length > 0) {
+    candidates.sort((left, right) => right.score - left.score)
+    return candidates[0].point
+  }
+
+  return fallback
+}
+
+function shouldKeepScoutExplorationTarget(
+  map: GeneratedMap,
+  memory: Array<"wall" | "water" | null>,
+  start: Point,
+  target: Point,
+  occupied: Set<string>,
+): boolean {
+  if (
+    pointsEqual(start, target) ||
+    !isPassableTile(tileAt(map, target.x, target.y))
+  ) {
+    return false
+  }
+
+  const targetKey = keyOfPoint(target)
+
+  if (occupied.has(targetKey)) {
+    return false
+  }
+
+  const targetIndex = indexForPoint(map.width, target)
+
+  if (
+    memory[targetIndex] === null ||
+    countScoutUnseenNeighbors(map, memory, target) > 0
+  ) {
+    return findPathToward(map, start, target, occupied).length > 1
+  }
+
+  return false
+}
+
+function countScoutUnseenNeighbors(
+  map: GeneratedMap,
+  memory: Array<"wall" | "water" | null>,
+  point: Point,
+): number {
+  return CARDINAL_STEPS.reduce((count, step) => {
+    const neighbor = { x: point.x + step.x, y: point.y + step.y }
+
+    if (tileAt(map, neighbor.x, neighbor.y) === undefined) {
+      return count
+    }
+
+    return memory[indexForPoint(map.width, neighbor)] === null
+      ? count + 1
+      : count
+  }, 0)
 }
 
 function findNextStepToward(
@@ -1083,6 +1411,16 @@ function findNextStepToward(
   goal: Point,
   occupied: Set<string>,
 ): Point | null {
+  const path = findPathToward(map, start, goal, occupied)
+  return path.length > 1 ? path[1] : null
+}
+
+function findPathToward(
+  map: GeneratedMap,
+  start: Point,
+  goal: Point,
+  occupied: Set<string>,
+): Point[] {
   const queue: Point[] = [{ ...start }]
   const parents = new Map<string, Point | null>()
   parents.set(keyOfPoint(start), null)
@@ -1115,18 +1453,19 @@ function findNextStepToward(
   }
 
   if (!parents.has(keyOfPoint(goal))) {
-    return null
+    return [{ ...start }]
   }
 
-  let cursor = { ...goal }
-  let parent = parents.get(keyOfPoint(cursor)) ?? null
+  const path: Point[] = []
+  let cursor: Point | null = { ...goal }
 
-  while (parent && !pointsEqual(parent, start)) {
-    cursor = parent
-    parent = parents.get(keyOfPoint(cursor)) ?? null
+  while (cursor) {
+    path.push(cursor)
+    cursor = parents.get(keyOfPoint(cursor)) ?? null
   }
 
-  return pointsEqual(cursor, start) ? null : cursor
+  path.reverse()
+  return path
 }
 
 function orderedNeighbors(point: Point, goal: Point): Point[] {

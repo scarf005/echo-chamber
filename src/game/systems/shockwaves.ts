@@ -97,6 +97,61 @@ export function stepShockwaves(
   }
 }
 
+export function previewShockwaveEntityReveals(
+  map: GeneratedMap,
+  waves: Shockwave[],
+  spawnedWaves: Shockwave[],
+  dust: FadeCell[],
+  trails: FadeCell[],
+  revealableEntities: RevealableEntity[],
+): EntityReveal[] {
+  const revealedEntities = new Map<string, EntityReveal>()
+  const dustByIndex = indexAlphaLookup(dust)
+  const entitiesByIndex = buildEntitiesByIndex(map.width, revealableEntities)
+  const blockerIndexes = buildBlockerIndexes(
+    map.width,
+    revealableEntities,
+    trails,
+  )
+  const noopFront = new Map<number, FadeCell>()
+  const noopTiles = new Map<number, TileKind>()
+  const noopNextWaves: Shockwave[] = []
+
+  for (const wave of waves) {
+    advanceShockwave(
+      map,
+      wave,
+      dustByIndex,
+      entitiesByIndex,
+      blockerIndexes,
+      noopFront,
+      noopTiles,
+      revealedEntities,
+      noopNextWaves,
+      wave.senderId,
+      false,
+    )
+  }
+
+  for (const wave of spawnedWaves) {
+    advanceShockwave(
+      map,
+      wave,
+      dustByIndex,
+      entitiesByIndex,
+      blockerIndexes,
+      noopFront,
+      noopTiles,
+      revealedEntities,
+      noopNextWaves,
+      wave.senderId,
+      true,
+    )
+  }
+
+  return Array.from(revealedEntities.values())
+}
+
 function advanceShockwave(
   map: GeneratedMap,
   wave: Shockwave,

@@ -109,6 +109,10 @@ export interface HostileSubmarine {
   lastKnownPlayerPosition?: Point | null
   lastKnownPlayerVector?: Point | null
   lastKnownPlayerTurn?: number | null
+  plannedPath?: Point[]
+  salvoShotsRemaining?: number
+  salvoStepDirection?: "up" | "down" | null
+  salvoMoveTarget?: Point | null
 }
 
 export interface GameState {

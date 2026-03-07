@@ -48,12 +48,20 @@ Deno.test("sonar only identifies enemy and item contacts inside ten tiles", () =
   const game = createSonarIdentificationRangeGame()
   const nearItemIndex = game.map.width * 2 + 8
   const farItemIndex = game.map.width * 2 + 12
-  const nearEnemyIndex = game.map.width + 7
 
   let current = holdPosition(game)
+  let hostileIndex =
+    current.hostileSubmarines[0].position.y * current.map.width +
+    current.hostileSubmarines[0].position.x
 
   for (let step = 0; step < 8; step += 1) {
-    if (current.entityMemory?.[nearItemIndex] === "item") {
+    hostileIndex = current.hostileSubmarines[0].position.y * current.map.width +
+      current.hostileSubmarines[0].position.x
+
+    if (
+      current.entityMemory?.[nearItemIndex] === "item" &&
+      current.entityMemory?.[hostileIndex] === "enemy"
+    ) {
       break
     }
 
@@ -61,7 +69,7 @@ Deno.test("sonar only identifies enemy and item contacts inside ten tiles", () =
   }
 
   assertEquals(current.entityMemory?.[nearItemIndex], "item")
-  assertEquals(current.entityMemory?.[nearEnemyIndex], "enemy")
+  assertEquals(current.entityMemory?.[hostileIndex], "enemy")
   assertEquals(current.entityMemory?.[farItemIndex], null)
 })
 
