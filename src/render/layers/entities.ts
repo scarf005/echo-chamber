@@ -17,8 +17,26 @@ export function drawEntitiesLayer(
     boulders: Map<number, { position: { x: number; y: number } }>
   },
 ): void {
+  const visibility = game.visibility[index]
+
   if (x === game.map.capsule.x && y === game.map.capsule.y && game.capsuleKnown) {
     drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, 1)
+  }
+
+  if (visibility === 0) {
+    if (x === game.player.x && y === game.player.y) {
+      drawGlyph(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        game.facing === "left" ? "◄" : "►",
+        COLORS.player,
+        1,
+      )
+    }
+
+    return
   }
 
   const torpedo = entityMaps.torpedoes.get(index)
