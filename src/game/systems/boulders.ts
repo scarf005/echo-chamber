@@ -1,8 +1,8 @@
 import { BOULDER_DUST_ALPHA, BOULDER_IMPACT_DUST_ALPHA } from "../constants.ts"
-import { mergeFadeCell, mergeFadeCells } from "../effects.ts"
+import { createDustBurst, mergeFadeCell, mergeFadeCells } from "../effects.ts"
 import type { FadeCell, FallingBoulder } from "../model.ts"
 import { indexForPoint } from "../helpers.ts"
-import { tileAt, type GeneratedMap, type Point } from "../mapgen.ts"
+import { tileAt, type GeneratedMap } from "../mapgen.ts"
 
 export function stepFallingBoulders(
   map: GeneratedMap,
@@ -59,34 +59,4 @@ export function stepFallingBoulders(
     landings,
     screenShake: landings > 0 ? 0.75 : 0,
   }
-}
-
-export function createDustBurst(
-  map: GeneratedMap,
-  center: Point,
-  alpha: number,
-): FadeCell[] {
-  const cells: FadeCell[] = []
-
-  for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
-    for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
-      const point = {
-        x: center.x + offsetX,
-        y: center.y + offsetY,
-      }
-      const tile = tileAt(map, point.x, point.y)
-
-      if (!tile || tile === "wall") {
-        continue
-      }
-
-      const falloff = Math.max(0.32, 1 - Math.max(Math.abs(offsetX), Math.abs(offsetY)) * 0.35)
-      cells.push({
-        index: indexForPoint(map.width, point),
-        alpha: Number((alpha * falloff).toFixed(3)),
-      })
-    }
-  }
-
-  return cells
 }

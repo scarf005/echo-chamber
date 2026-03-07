@@ -1,5 +1,5 @@
 import { BOULDER_FALL_SPEED, TORPEDO_BLAST_RADIUS } from "../constants.ts"
-import { mergeFadeCells } from "../effects.ts"
+import { createDustBurst, mergeFadeCells } from "../effects.ts"
 import {
   createDeterministicRandom,
   indexForPoint,
@@ -10,7 +10,6 @@ import {
 } from "../helpers.ts"
 import type { CrackCell, FadeCell, FallingBoulder } from "../model.ts"
 import { carveDisc, tileAt, type GeneratedMap, type Point } from "../mapgen.ts"
-import { createDustBurst } from "./boulders.ts"
 
 const MAX_FLOATING_COMPONENT_TILES = 35
 const FLOATING_COMPONENT_RELEASE_DISTANCE = 4
