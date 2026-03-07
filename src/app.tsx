@@ -7,7 +7,6 @@ import {
   directionFromKey,
   dropDepthCharge,
   fireTorpedo,
-  holdPosition,
   movePlayer,
   SONAR_INTERVAL,
 } from "./game/game.ts"
@@ -17,9 +16,8 @@ import { FastilesViewport } from "./render/FastilesViewport.tsx"
 const DEFAULT_SEED = "echo-chamber"
 
 export function App() {
-  const [runSeed, setRunSeed] = useState(DEFAULT_SEED)
+  const [seedInput, setSeedInput] = useState(DEFAULT_SEED)
   const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
-  const runSeedRef = useRef(DEFAULT_SEED)
   const backgroundMusicRef = useRef<ReturnType<typeof createBackgroundMusic> | null>(null)
 
   useEffect(() => {
@@ -41,11 +39,10 @@ export function App() {
     }
   }, [])
 
-  const startRun = (rawSeed = runSeedRef.current) => {
+  const startRun = (rawSeed: string) => {
     void backgroundMusicRef.current?.ensureStarted()
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
-    runSeedRef.current = normalizedSeed
-    setRunSeed(normalizedSeed)
+    setSeedInput(normalizedSeed)
     setGame(createGame({ seed: normalizedSeed }))
   }
 
@@ -53,14 +50,11 @@ export function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target
 
-      if (event.metaKey || event.ctrlKey || event.altKey) {
-        return
-      }
+      if (target instanceof HTMLInputElement) {
+        if (event.key === "Enter") {
+          startRun(seedInput || createRandomSeed())
+        }
 
-      if (
-        target instanceof HTMLElement &&
-        target.closest("button, input, textarea, select, a")
-      ) {
         return
       }
 
@@ -81,12 +75,6 @@ export function App() {
         return
       }
 
-      if (event.key === ".") {
-        event.preventDefault()
-        setGame((current) => holdPosition(current))
-        return
-      }
-
       const direction = directionFromKey(event.key)
 
       if (!direction) {
@@ -99,79 +87,58 @@ export function App() {
 
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
-  }, [])
+  }, [seedInput])
 
   const sonarIn = ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
     SONAR_INTERVAL
-  const missionStatus = game.status === "won"
-    ? "capsule secured"
-    : game.status === "lost"
-    ? "submarine lost"
-    : "recover capsule"
 
   return (
     <main class="game-shell">
-      <section class="viewport-stage">
-        <FastilesViewport game={game} />
+      <FastilesViewport game={game} />
+
+      <section class="hud hud-top-left">
+        <label class="seed-field">
+          <span>seed</span>
+          <input
+            type="text"
+            value={seedInput}
+            onInput={(event) => setSeedInput(event.currentTarget.value)}
+          />
+        </label>
+
+        <button
+          type="button"
+          onClick={() => startRun(seedInput)}
+        >
+          new run
+        </button>
       </section>
 
-      <aside class="sidebar">
-        <section class="sidebar-panel sidebar-panel-primary">
-          <div class="sidebar-heading">mission status</div>
-          <div class="stat-row">
-            <span>turn</span>
-            <strong>{game.turn}</strong>
-          </div>
-          <div class="stat-row">
-            <span>sonar in</span>
-            <strong>{sonarIn}</strong>
-          </div>
-          <div class="stat-row">
-            <span>torpedoes</span>
-            <strong>{game.torpedoAmmo}</strong>
-          </div>
-          <div class="stat-row">
-            <span>depth charges</span>
-            <strong>{game.depthChargeAmmo}</strong>
-          </div>
-          <div class="stat-row">
-            <span>objective</span>
-            <strong>{missionStatus}</strong>
-          </div>
-        </section>
+      <section class="hud hud-top-right">
+        <div>turn {game.turn}</div>
+        <div>sonar in {sonarIn}</div>
+        <div>payload {game.torpedoesRemaining}</div>
+        <div>
+          {game.status === "won" ? "capsule secured" : "recover capsule"}
+        </div>
+      </section>
 
-        <section class="sidebar-panel">
-          <div class="sidebar-heading">command deck</div>
-          <div class="button-stack">
-            <button type="button" onClick={() => startRun()}>
-              restart mission
-            </button>
-            <button type="button" onClick={() => startRun(createRandomSeed())}>
-              random run
-            </button>
-          </div>
-        </section>
+      <section class="hud hud-bottom-left">
+        <div>{game.message}</div>
+        <div>move with WASD or arrows</div>
+        <div>launch torpedo with Z</div>
+        <div>drop depth charge with X</div>
+        <div>press R for random run</div>
+      </section>
 
-        <section class="sidebar-panel">
-          <div class="sidebar-heading">orders</div>
-          <div class="sidebar-copy">{game.message}</div>
-          <div class="sidebar-copy">move with WASD or arrows</div>
-          <div class="sidebar-copy">wait with .</div>
-          <div class="sidebar-copy">launch torpedo with Z</div>
-          <div class="sidebar-copy">drop depth charge with X</div>
-          <div class="sidebar-copy">press R for random run</div>
-        </section>
-
-        {game.status !== "playing"
-          ? (
-            <section class="sidebar-panel sidebar-panel-alert">
-              <div class="sidebar-heading">mission report</div>
-              <strong>{missionStatus}</strong>
-              <span>press R or use random run to redeploy</span>
-            </section>
-          )
-          : null}
-      </aside>
+      {game.status === "won"
+        ? (
+          <section class="hud hud-center">
+            <strong>capsule secured</strong>
+            <span>press R for a new run</span>
+          </section>
+        )
+        : null}
     </main>
   )
 }
