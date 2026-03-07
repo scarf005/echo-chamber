@@ -96,6 +96,13 @@ export function findAutoMovePath(game: GameState, destination: Point): Point[] {
   )
 }
 
+export function shouldHaltAutoMoveForAnomaly(
+  seenReasons: ReadonlySet<string>,
+  anomaly: AutoMoveAnomaly | null,
+): anomaly is AutoMoveAnomaly {
+  return anomaly !== null && !seenReasons.has(anomaly.reason)
+}
+
 export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
   const visibleHostile = firstVisiblePoint(
     game,
@@ -231,13 +238,6 @@ export function directionFromKey(key: string): Direction | null {
   }
 }
 
-export function movePlayer(game: GameState, direction: Direction): GameState {
-  if (game.status !== "playing") {
-    return game
-  }
-
-  const delta = deltaForDirection(direction)
-  const target = {
 export function isPlayerSonarEnabled(
   game: Pick<GameState, "playerSonarEnabled">,
 ): boolean {
@@ -260,6 +260,13 @@ export function togglePlayerSonar(game: GameState): GameState {
   )
 }
 
+export function movePlayer(game: GameState, direction: Direction): GameState {
+  if (game.status !== "playing") {
+    return game
+  }
+
+  const delta = deltaForDirection(direction)
+  const target = {
     x: game.player.x + delta.x,
     y: game.player.y + delta.y,
   }

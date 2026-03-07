@@ -14,9 +14,10 @@ import {
   formatGroupedLogMessage,
   groupLogMessages,
   holdPosition,
-  isPlayerSonarEnabled,
   isAutoMoveNavigable,
+  isPlayerSonarEnabled,
   movePlayer,
+  shouldHaltAutoMoveForAnomaly,
   SONAR_INTERVAL,
   togglePlayerSonar,
   withGameMessage,
@@ -26,10 +27,10 @@ import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
 import { createExplosionSfx } from "./audio/explosionSfx.ts"
 import { createMovementLoop } from "./audio/movementLoop.ts"
+import { createSonarContactSfx } from "./audio/sonarContactSfx.ts"
 import { createSonarLoop } from "./audio/sonarLoop.ts"
 import {
   type AudioSettings,
-import { createSonarContactSfx } from "./audio/sonarContactSfx.ts"
   levelToSliderPercent,
   readAudioSettings,
   sliderPercentToLevel,
@@ -61,8 +62,31 @@ export function App() {
   const movementLoopRef = useRef<ReturnType<typeof createMovementLoop> | null>(
     null,
   )
+  const sonarContactSfxRef = useRef<
+    ReturnType<typeof createSonarContactSfx> | null
+  >(null)
   const sonarLoopRef = useRef<ReturnType<typeof createSonarLoop> | null>(null)
   const playedExplosionCountsRef = useRef<Map<string, number>>(new Map())
+  const playedSonarContactCueCountRef = useRef(0)
+  const autoMoveSeenReasonsRef = useRef<Set<string>>(new Set())
+  const autoMoveSeenTargetRef = useRef<Point | null>(null)
+
+  const clearAutoMoveSeenReasons = () => {
+    autoMoveSeenReasonsRef.current = new Set()
+    autoMoveSeenTargetRef.current = null
+  }
+
+  const beginAutoMoveRoute = (point: Point) => {
+    if (
+      autoMoveSeenTargetRef.current &&
+      pointsEqual(autoMoveSeenTargetRef.current, point)
+    ) {
+      return
+    }
+
+    autoMoveSeenReasonsRef.current = new Set()
+    autoMoveSeenTargetRef.current = { ...point }
+  }
 
   useEffect(() => {
     isOptionsOpenRef.current = isOptionsOpen
@@ -72,20 +96,19 @@ export function App() {
     const backgroundMusic = createBackgroundMusic()
     const explosionSfx = createExplosionSfx()
     const movementLoop = createMovementLoop()
-  const sonarContactSfxRef = useRef<
-    ReturnType<typeof createSonarContactSfx> | null
-  >(null)
+    const sonarContactSfx = createSonarContactSfx()
     const sonarLoop = createSonarLoop()
     backgroundMusicRef.current = backgroundMusic
     explosionSfxRef.current = explosionSfx
-  const playedSonarContactCueCountRef = useRef(0)
     movementLoopRef.current = movementLoop
+    sonarContactSfxRef.current = sonarContactSfx
     sonarLoopRef.current = sonarLoop
 
     const startAudio = () => {
       void backgroundMusic.ensureStarted()
       void explosionSfx.ensureStarted()
       void movementLoop.ensureStarted()
+      void sonarContactSfx.ensureStarted()
       void sonarLoop.ensureStarted()
     }
 
@@ -98,23 +121,23 @@ export function App() {
       backgroundMusicRef.current = null
       explosionSfxRef.current = null
       movementLoopRef.current = null
+      sonarContactSfxRef.current = null
       sonarLoopRef.current = null
       backgroundMusic.dispose()
       explosionSfx.dispose()
       movementLoop.dispose()
+      sonarContactSfx.dispose()
       sonarLoop.dispose()
     }
   }, [])
 
   useEffect(() => {
     const nextCounts = new Map<string, number>()
-    const sonarContactSfx = createSonarContactSfx()
 
     for (const shockwave of game.shockwaves) {
       if (!shockwave.damaging) {
         continue
       }
-    sonarContactSfxRef.current = sonarContactSfx
 
       const key =
         `${shockwave.origin.x}:${shockwave.origin.y}:${shockwave.senderId}`
@@ -122,7 +145,6 @@ export function App() {
       nextCounts.set(key, nextCount)
 
       if (nextCount <= (playedExplosionCountsRef.current.get(key) ?? 0)) {
-      void sonarContactSfx.ensureStarted()
         continue
       }
 
@@ -136,46 +158,6 @@ export function App() {
     playedExplosionCountsRef.current = nextCounts
   }, [game])
 
-      sonarContactSfxRef.current = null
-  useEffect(() => {
-    backgroundMusicRef.current?.setVolume(audioSettings.musicVolume)
-    backgroundMusicRef.current?.setEnabled(audioSettings.musicEnabled)
-    movementLoopRef.current?.setVolume(audioSettings.sfxVolume)
-    movementLoopRef.current?.setEnabled(audioSettings.sfxEnabled)
-      sonarContactSfx.dispose()
-    sonarLoopRef.current?.setVolume(audioSettings.sfxVolume)
-    sonarLoopRef.current?.setEnabled(
-      audioSettings.sfxEnabled && isPlayerSonarEnabled(game) &&
-        game.status === "playing",
-    )
-    explosionSfxRef.current?.setVolume(audioSettings.sfxVolume)
-    explosionSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
-    writeAudioSettings(getBrowserStorage(), audioSettings)
-  }, [audioSettings, game])
-
-  const startRun = (rawSeed = runSeedRef.current) => {
-    void backgroundMusicRef.current?.ensureStarted()
-    void explosionSfxRef.current?.ensureStarted()
-    void movementLoopRef.current?.ensureStarted()
-    const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
-    runSeedRef.current = normalizedSeed
-    setRunSeed(normalizedSeed)
-    setPreviewTarget(null)
-    setAutoMoveTarget(null)
-    setGame(createGame({ seed: normalizedSeed }))
-  }
-
-  const previewPath = previewTarget ? findAutoMovePath(game, previewTarget) : []
-
-  useEffect(() => {
-    if (game.status === "playing") {
-      return
-    }
-
-    setPreviewTarget(null)
-    setAutoMoveTarget(null)
-  }, [game.status])
-
   useEffect(() => {
     const cueCount = game.playerSonarContactCueCount ?? 0
 
@@ -188,14 +170,63 @@ export function App() {
   }, [game.playerSonarContactCueCount])
 
   useEffect(() => {
+    backgroundMusicRef.current?.setVolume(audioSettings.musicVolume)
+    backgroundMusicRef.current?.setEnabled(audioSettings.musicEnabled)
+    movementLoopRef.current?.setVolume(audioSettings.sfxVolume)
+    movementLoopRef.current?.setEnabled(audioSettings.sfxEnabled)
+    sonarContactSfxRef.current?.setVolume(audioSettings.sfxVolume)
+    sonarContactSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
+    sonarLoopRef.current?.setVolume(audioSettings.sfxVolume)
+    sonarLoopRef.current?.setEnabled(
+      audioSettings.sfxEnabled && isPlayerSonarEnabled(game) &&
+        game.status === "playing",
+    )
+    explosionSfxRef.current?.setVolume(audioSettings.sfxVolume)
+    explosionSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
+    writeAudioSettings(getBrowserStorage(), audioSettings)
+  }, [audioSettings, game.playerSonarEnabled, game.status])
+
+  const startRun = (rawSeed = runSeedRef.current) => {
+    void backgroundMusicRef.current?.ensureStarted()
+    void explosionSfxRef.current?.ensureStarted()
+    void movementLoopRef.current?.ensureStarted()
+    void sonarContactSfxRef.current?.ensureStarted()
+    void sonarLoopRef.current?.ensureStarted()
+    playedSonarContactCueCountRef.current = 0
+    const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
+    runSeedRef.current = normalizedSeed
+    setRunSeed(normalizedSeed)
+    setPreviewTarget(null)
+    setAutoMoveTarget(null)
+    clearAutoMoveSeenReasons()
+    setGame(createGame({ seed: normalizedSeed }))
+  }
+
+  const previewPath = previewTarget ? findAutoMovePath(game, previewTarget) : []
+
+  useEffect(() => {
+    if (game.status === "playing") {
+      return
+    }
+
+    setPreviewTarget(null)
+    setAutoMoveTarget(null)
+    clearAutoMoveSeenReasons()
+  }, [game.status])
+
+  useEffect(() => {
     if (!autoMoveTarget) {
       return
     }
 
-    if (isOptionsOpen || game.status !== "playing") {
+    if (isOptionsOpen) {
       setAutoMoveTarget(null)
-    sonarContactSfxRef.current?.setVolume(audioSettings.sfxVolume)
-    sonarContactSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
+      return
+    }
+
+    if (game.status !== "playing") {
+      setAutoMoveTarget(null)
+      clearAutoMoveSeenReasons()
       return
     }
 
@@ -207,20 +238,23 @@ export function App() {
     const timeoutId = window.setTimeout(() => {
       setGame((current) => {
         if (current.status !== "playing") {
-  }, [audioSettings, game.playerSonarEnabled, game.status])
           setAutoMoveTarget(null)
+          clearAutoMoveSeenReasons()
           return current
         }
 
         const anomaly = findAutoMoveAnomaly(current)
 
-        if (anomaly) {
+        if (
+          shouldHaltAutoMoveForAnomaly(autoMoveSeenReasonsRef.current, anomaly)
+        ) {
+          autoMoveSeenReasonsRef.current = new Set([
+            ...autoMoveSeenReasonsRef.current,
+            anomaly.reason,
+          ])
           setAutoMoveTarget(null)
           return withGameMessage(
             {
-    void sonarContactSfxRef.current?.ensureStarted()
-    void sonarLoopRef.current?.ensureStarted()
-    playedSonarContactCueCountRef.current = 0
               ...current,
             },
             createAutoMoveStopMessage(
@@ -235,6 +269,7 @@ export function App() {
 
         if (path.length < 2) {
           setAutoMoveTarget(null)
+          clearAutoMoveSeenReasons()
           return withGameMessage(
             {
               ...current,
@@ -251,6 +286,7 @@ export function App() {
 
         if (!isPassableTile(tileAt(current.map, nextPoint.x, nextPoint.y))) {
           setAutoMoveTarget(null)
+          clearAutoMoveSeenReasons()
           return withGameMessage({
             ...current,
           }, createAutoMoveStopMessage("wall ahead", current.player, nextPoint))
@@ -260,6 +296,7 @@ export function App() {
 
         if (!direction) {
           setAutoMoveTarget(null)
+          clearAutoMoveSeenReasons()
           return current
         }
 
@@ -274,7 +311,16 @@ export function App() {
           ? findAutoMoveAnomaly(next)
           : null
 
-        if (nextAnomaly) {
+        if (
+          shouldHaltAutoMoveForAnomaly(
+            autoMoveSeenReasonsRef.current,
+            nextAnomaly,
+          )
+        ) {
+          autoMoveSeenReasonsRef.current = new Set([
+            ...autoMoveSeenReasonsRef.current,
+            nextAnomaly.reason,
+          ])
           setAutoMoveTarget(null)
           return withGameMessage(
             {
@@ -293,6 +339,7 @@ export function App() {
           next.status !== "playing"
         ) {
           setAutoMoveTarget(null)
+          clearAutoMoveSeenReasons()
         }
 
         return next
@@ -314,6 +361,7 @@ export function App() {
     if (!isAutoMoveNavigable(game, point)) {
       setPreviewTarget(null)
       setAutoMoveTarget(null)
+      clearAutoMoveSeenReasons()
       setGame((current) =>
         withGameMessage(
           {
@@ -333,6 +381,7 @@ export function App() {
     void movementLoopRef.current?.ensureStarted()
 
     if (previewTarget && pointsEqual(previewTarget, point)) {
+      beginAutoMoveRoute(point)
       setAutoMoveTarget({ ...point })
       setGame((current) =>
         withGameMessage({
@@ -344,6 +393,7 @@ export function App() {
 
     const nextPreviewPath = findAutoMovePath(game, point)
 
+    beginAutoMoveRoute(point)
     setPreviewTarget({ ...point })
     setAutoMoveTarget(null)
     setGame((current) =>
@@ -401,6 +451,7 @@ export function App() {
         event.preventDefault()
         setPreviewTarget(null)
         setAutoMoveTarget(null)
+        clearAutoMoveSeenReasons()
         setGame((current) => fireTorpedo(current))
         return
       }
@@ -409,6 +460,7 @@ export function App() {
         event.preventDefault()
         setPreviewTarget(null)
         setAutoMoveTarget(null)
+        clearAutoMoveSeenReasons()
         setGame((current) => dropDepthCharge(current))
         return
       }
@@ -417,6 +469,7 @@ export function App() {
         event.preventDefault()
         setPreviewTarget(null)
         setAutoMoveTarget(null)
+        clearAutoMoveSeenReasons()
         setGame((current) => holdPosition(current))
         return
       }
@@ -430,6 +483,7 @@ export function App() {
       event.preventDefault()
       setPreviewTarget(null)
       setAutoMoveTarget(null)
+      clearAutoMoveSeenReasons()
       setGame((current) => {
         const next = movePlayer(current, direction)
 
@@ -500,6 +554,7 @@ export function App() {
     }))
   }
 
+
   return (
     <main class="game-shell">
       <section class="viewport-stage">
@@ -566,6 +621,7 @@ export function App() {
             </div>
           ))}
         </section>
+
       </aside>
 
       {isOptionsOpen
@@ -776,19 +832,3 @@ function formatBearing(from: Point, to: Point): string {
 function getBrowserStorage(): Storage | null {
   return typeof window === "undefined" ? null : window.localStorage
 }
-                <a
-                  class="credit-link"
-                  href="https://freesound.org/people/KIZILSUNGUR/sounds/70299/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Sonar.wav by KIZILSUNGUR (CC0-1.0)
-                </a>
-                <a
-                  class="credit-link"
-                  href="https://freesound.org/people/digit-al/sounds/90340/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  sonar.wav by digit-al (CC0-1.0)
-                </a>
