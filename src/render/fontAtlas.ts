@@ -1,3 +1,5 @@
+import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
+
 const GLYPHS = [
   " ",
   ".",
@@ -55,7 +57,7 @@ export function createFontAtlas(tileSize: number): HTMLCanvasElement {
   context.fillStyle = "black"
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.fillStyle = "white"
-  context.font = `${tileSize - 2}px "IBM Plex Mono", monospace`
+  context.font = `${tileSize - 2}px ${TERMINAL_FONT_STACK}`
   context.textAlign = "center"
   context.textBaseline = "middle"
 

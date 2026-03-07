@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "preact/hooks"
 
 import type { GameState } from "../game/game.ts"
+import { TERMINAL_FONT_LOAD } from "./fontFamily.ts"
 import { drawGame } from "./renderer.ts"
 
 export function FastilesViewport(props: { game: GameState }) {
@@ -27,6 +28,17 @@ export function FastilesViewport(props: { game: GameState }) {
     const resize = () => drawGame(canvas, container, gameRef.current)
 
     resize()
+    if ("fonts" in document) {
+      void document.fonts.load(TERMINAL_FONT_LOAD)
+        .then(() => {
+          if (canvasRef.current === canvas && containerRef.current === container) {
+            resize()
+          }
+        })
+        .catch((error: unknown) => {
+          console.warn("Failed to load IBM3270 font", error)
+        })
+    }
     window.addEventListener("resize", resize)
 
     return () => {

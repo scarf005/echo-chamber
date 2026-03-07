@@ -1,5 +1,6 @@
 import type { CrackCell, GameState } from "../game/game.ts"
 import { COLORS } from "./colors.ts"
+import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
 import { calculateTileSize, screenShakeOffset } from "./helpers/draw.ts"
 import { buildEntityMaps, indexAlphaMap, indexCrackMap } from "./helpers/selectors.ts"
 import { drawEntitiesLayer } from "./layers/entities.ts"
@@ -39,7 +40,7 @@ export function drawGame(
   context.clearRect(-tileSize, -tileSize, cssWidth + tileSize * 2, cssHeight + tileSize * 2)
   context.fillStyle = COLORS.background
   context.fillRect(-tileSize, -tileSize, cssWidth + tileSize * 2, cssHeight + tileSize * 2)
-  context.font = `${Math.max(8, tileSize - 2)}px "IBM Plex Mono", monospace`
+  context.font = `${Math.max(8, tileSize - 2)}px ${TERMINAL_FONT_STACK}`
   context.textAlign = "center"
   context.textBaseline = "middle"
 
