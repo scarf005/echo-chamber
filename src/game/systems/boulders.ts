@@ -33,6 +33,7 @@ export function stepFallingBoulders(
       const tile = tileAt(map, nextPoint.x, nextPoint.y)
 
       if (!tile || tile === "wall") {
+        map.tiles[indexForPoint(map.width, current)] = "wall"
         nextDust = mergeFadeCells(
           nextDust,
           createDustBurst(map, current, BOULDER_IMPACT_DUST_ALPHA),
