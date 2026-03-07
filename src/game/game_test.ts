@@ -55,14 +55,27 @@ Deno.test("holdPosition consumes a turn without moving the submarine", () => {
   assertEquals(next.message, "Holding position.")
 })
 
-Deno.test("holdPosition still triggers sonar on the fifth turn", () => {
-  const game = createCapsuleSonarGame()
+Deno.test("holdPosition does not emit sonar before the fifth turn", () => {
+  const game = createFlatGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.turn, 1)
+  assertEquals(next.player, game.player)
+  assertEquals(next.lastSonarTurn, 0)
+})
+
+Deno.test("holdPosition emits sonar when it lands on the fifth turn", () => {
+  const game = {
+    ...createFlatGame(),
+    turn: 4,
+    lastSonarTurn: 0,
+  }
   const next = holdPosition(game)
 
   assertEquals(next.turn, 5)
   assertEquals(next.player, game.player)
   assertEquals(next.lastSonarTurn, 5)
-  assertEquals(next.capsuleKnown, true)
+  assertEquals(next.shockwaves.some((wave) => wave.radius === 2 && wave.senderId === "player"), true)
 })
 
 Deno.test("sonar emits on the fifth successful move", () => {
@@ -468,6 +481,7 @@ function createFlatGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -509,6 +523,7 @@ function createSonarWallGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -550,6 +565,7 @@ function createTorpedoTestGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -591,6 +607,7 @@ function createLeftTorpedoTestGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -632,6 +649,7 @@ function createTorpedoProximityGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -681,6 +699,7 @@ function createDepthChargeTestGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -723,6 +742,7 @@ function createDepthChargeProximityGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -771,6 +791,7 @@ function createCapsuleSonarGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -817,6 +838,7 @@ function createCaveInTestGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -863,6 +885,7 @@ function createLargeDetachedChunkGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -906,6 +929,7 @@ function createDustSonarGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -947,6 +971,7 @@ function createHostileInvestigationGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -995,6 +1020,7 @@ function createHostileAttackGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -1042,6 +1068,7 @@ function createHostileRamGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -1088,6 +1115,7 @@ function createHostileCapsuleCollisionGame(): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
@@ -1140,6 +1168,7 @@ function createPickupGame(
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
     shockwaves: [],
