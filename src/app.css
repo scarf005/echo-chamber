@@ -158,6 +158,26 @@
   line-height: 1.5;
 }
 
+.credit-list {
+  display: grid;
+  gap: 0.45rem;
+  text-transform: none;
+}
+
+.credit-link {
+  color: rgba(217, 255, 249, 0.9);
+  line-height: 1.5;
+  text-decoration-color: rgba(124, 208, 214, 0.45);
+  word-break: break-word;
+}
+
+.credit-link:hover,
+.credit-link:focus-visible {
+  color: #f2fffd;
+  text-decoration-color: rgba(186, 243, 247, 0.7);
+  outline: none;
+}
+
 @media (max-width: 920px) {
   .game-shell {
     grid-template-columns: minmax(0, 1fr);

@@ -12,6 +12,7 @@ import {
   SONAR_INTERVAL,
 } from "./game/game.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
+import { createMovementLoop } from "./audio/movementLoop.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 
 const DEFAULT_SEED = "echo-chamber"
@@ -22,7 +23,12 @@ export function App() {
   const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
-  const backgroundMusicRef = useRef<ReturnType<typeof createBackgroundMusic> | null>(null)
+  const backgroundMusicRef = useRef<
+    ReturnType<typeof createBackgroundMusic> | null
+  >(null)
+  const movementLoopRef = useRef<ReturnType<typeof createMovementLoop> | null>(
+    null,
+  )
 
   useEffect(() => {
     isOptionsOpenRef.current = isOptionsOpen
@@ -30,25 +36,31 @@ export function App() {
 
   useEffect(() => {
     const backgroundMusic = createBackgroundMusic()
+    const movementLoop = createMovementLoop()
     backgroundMusicRef.current = backgroundMusic
+    movementLoopRef.current = movementLoop
 
-    const startBackgroundMusic = () => {
+    const startAudio = () => {
       void backgroundMusic.ensureStarted()
+      void movementLoop.ensureStarted()
     }
 
-    window.addEventListener("keydown", startBackgroundMusic, { passive: true })
-    window.addEventListener("pointerdown", startBackgroundMusic, { passive: true })
+    window.addEventListener("keydown", startAudio, { passive: true })
+    window.addEventListener("pointerdown", startAudio, { passive: true })
 
     return () => {
-      window.removeEventListener("keydown", startBackgroundMusic)
-      window.removeEventListener("pointerdown", startBackgroundMusic)
+      window.removeEventListener("keydown", startAudio)
+      window.removeEventListener("pointerdown", startAudio)
       backgroundMusicRef.current = null
+      movementLoopRef.current = null
       backgroundMusic.dispose()
+      movementLoop.dispose()
     }
   }, [])
 
   const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
+    void movementLoopRef.current?.ensureStarted()
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
     runSeedRef.current = normalizedSeed
     setRunSeed(normalizedSeed)
@@ -109,14 +121,26 @@ export function App() {
       }
 
       event.preventDefault()
-      setGame((current) => movePlayer(current, direction))
+      setGame((current) => {
+        const next = movePlayer(current, direction)
+
+        if (
+          next.player.x !== current.player.x ||
+          next.player.y !== current.player.y
+        ) {
+          movementLoopRef.current?.markMovement()
+        }
+
+        return next
+      })
     }
 
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [])
 
-  const sonarIn = ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
+  const sonarIn =
+    ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
     SONAR_INTERVAL
 
   return (
@@ -210,6 +234,33 @@ export function App() {
                 >
                   random run
                 </button>
+              </div>
+              <div class="sidebar-heading">credits</div>
+              <div class="credit-list">
+                <a
+                  class="credit-link"
+                  href="https://github.com/rbanffy/3270font"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  IBM 3270 by Ricardo Banffy and contributors (BSD-3-Clause)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://incompetech.com/music/royalty-free/index.html?isrc=USUAN2000008"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  SCP-x2x (Unseen Presence) by Kevin MacLeod (CC-BY-4.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/Department64/sounds/651743/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Underwater Deep Water Loop by Department64 (CC-BY-4.0)
+                </a>
               </div>
             </section>
           </div>
