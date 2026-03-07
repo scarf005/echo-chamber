@@ -7,6 +7,8 @@ import {
   directionFromKey,
   dropDepthCharge,
   fireTorpedo,
+  formatGroupedLogMessage,
+  groupLogMessages,
   holdPosition,
   movePlayer,
   SONAR_INTERVAL,
@@ -16,6 +18,7 @@ import { createMovementLoop } from "./audio/movementLoop.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 
 const DEFAULT_SEED = "echo-chamber"
+const LOG_PANEL_LINES = 6
 
 export function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
@@ -142,6 +145,9 @@ export function App() {
   const sonarIn =
     ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
     SONAR_INTERVAL
+  const visibleLogMessages = groupLogMessages(game.logs)
+    .slice(-LOG_PANEL_LINES)
+    .map(formatGroupedLogMessage)
 
   return (
     <main class="game-shell">
@@ -186,12 +192,11 @@ export function App() {
 
         <section class="sidebar-panel">
           <div class="sidebar-heading">orders</div>
-          <div class="sidebar-copy">{game.message}</div>
-          <div class="sidebar-copy">move with WASD or arrows</div>
-          <div class="sidebar-copy">wait with .</div>
-          <div class="sidebar-copy">launch torpedo with Z</div>
-          <div class="sidebar-copy">drop depth charge with X</div>
-          <div class="sidebar-copy">press R for random run</div>
+          {visibleLogMessages.map((message, index) => (
+            <div class="sidebar-copy" key={`${index}:${message}`}>
+              {message}
+            </div>
+          ))}
         </section>
       </aside>
 
