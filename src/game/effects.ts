@@ -1,6 +1,6 @@
 import { indexForPoint } from "./helpers.ts"
 import type { CrackCell, FadeCell } from "./model.ts"
-import { tileAt, type GeneratedMap, type Point } from "./mapgen.ts"
+import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 
 export function decayCracks(cracks: CrackCell[], amount: number): CrackCell[] {
   return cracks
@@ -11,7 +11,10 @@ export function decayCracks(cracks: CrackCell[], amount: number): CrackCell[] {
     .filter((crack) => crack.alpha > 0.05)
 }
 
-export function mergeCrackCells(existing: CrackCell[], incoming: CrackCell[]): CrackCell[] {
+export function mergeCrackCells(
+  existing: CrackCell[],
+  incoming: CrackCell[],
+): CrackCell[] {
   let next = existing
 
   for (const crack of incoming) {
@@ -32,7 +35,10 @@ export function mergeCrackCells(existing: CrackCell[], incoming: CrackCell[]): C
   return next
 }
 
-export function mergeFadeCells(cells: FadeCell[], incoming: FadeCell[]): FadeCell[] {
+export function mergeFadeCells(
+  cells: FadeCell[],
+  incoming: FadeCell[],
+): FadeCell[] {
   let next = cells
 
   for (const cell of incoming) {
@@ -80,11 +86,49 @@ export function indexAlphaLookup(cells: FadeCell[]): Map<number, number> {
 
 export function decayCells(cells: FadeCell[], amount: number): FadeCell[] {
   return cells
-    .map((cell) => ({ ...cell, alpha: Number((cell.alpha - amount).toFixed(3)) }))
+    .map((cell) => ({
+      ...cell,
+      alpha: Number((cell.alpha - amount).toFixed(3)),
+    }))
     .filter((cell) => cell.alpha > 0.05)
 }
 
-export function mergeFadeCell(cells: FadeCell[], index: number, alpha: number): FadeCell[] {
+export function decayTrailCells(
+  map: GeneratedMap,
+  cells: FadeCell[],
+  amount: number,
+): FadeCell[] {
+  return cells.flatMap((cell) => {
+    const alpha = Number((cell.alpha - amount).toFixed(3))
+
+    if (alpha < 0.05) {
+      return []
+    }
+
+    if (cell.drift !== "up") {
+      return [{ ...cell, alpha }]
+    }
+
+    const point = {
+      x: cell.index % map.width,
+      y: Math.floor(cell.index / map.width),
+    }
+    const nextPoint = { x: point.x, y: point.y - 1 }
+    const tile = tileAt(map, nextPoint.x, nextPoint.y)
+
+    if (!tile || tile === "wall") {
+      return []
+    }
+
+    return [{ ...cell, index: indexForPoint(map.width, nextPoint), alpha }]
+  })
+}
+
+export function mergeFadeCell(
+  cells: FadeCell[],
+  index: number,
+  alpha: number,
+): FadeCell[] {
   const existing = cells.find((cell) => cell.index === index)
 
   if (existing) {
@@ -93,6 +137,23 @@ export function mergeFadeCell(cells: FadeCell[], index: number, alpha: number): 
   }
 
   return [...cells, { index, alpha }]
+}
+
+export function mergeTrailCell(
+  cells: FadeCell[],
+  index: number,
+  alpha: number,
+  drift?: "up",
+): FadeCell[] {
+  const existing = cells.find((cell) => cell.index === index)
+
+  if (existing) {
+    existing.alpha = Math.max(existing.alpha, alpha)
+    existing.drift = drift ?? existing.drift
+    return cells
+  }
+
+  return [...cells, { index, alpha, ...(drift ? { drift } : {}) }]
 }
 
 export function createDustBurst(
@@ -114,7 +175,10 @@ export function createDustBurst(
         continue
       }
 
-      const falloff = Math.max(0.32, 1 - Math.max(Math.abs(offsetX), Math.abs(offsetY)) * 0.35)
+      const falloff = Math.max(
+        0.32,
+        1 - Math.max(Math.abs(offsetX), Math.abs(offsetY)) * 0.35,
+      )
       cells.push({
         index: indexForPoint(map.width, point),
         alpha: Number((alpha * falloff).toFixed(3)),

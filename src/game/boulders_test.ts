@@ -1,8 +1,8 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assert, assertEquals } from "jsr:@std/assert"
 
-import { holdPosition, type GameState } from "./game.ts"
+import { type GameState, holdPosition } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
 
 Deno.test("falling boulders settle into wall debris when they hit the bottom", () => {
@@ -13,6 +13,37 @@ Deno.test("falling boulders settle into wall debris when they hit the bottom", (
   assertEquals(next.fallingBoulders.length, 0)
   assertEquals(next.map.tiles[landingIndex], "wall")
   assertEquals(next.message, "Cave-in debris slams through the silt.")
+})
+
+Deno.test("falling boulders send bubbles upward until they hit a wall", () => {
+  const game = createBoulderLandingGame()
+  const landed = holdPosition(game)
+
+  assert(landed.trails.some((cell) => cell.index === 2 * landed.map.width + 3))
+  assert(landed.trails.some((cell) => cell.index === 3 * landed.map.width + 3))
+
+  const floated = holdPosition(landed)
+
+  assertEquals(
+    floated.trails.some((cell) => cell.index === 3 * floated.map.width + 3),
+    false,
+  )
+  assert(floated.trails.some((cell) => cell.index === floated.map.width + 3))
+  assert(
+    floated.trails.some((cell) => cell.index === 2 * floated.map.width + 3),
+  )
+
+  const blocked = holdPosition(floated)
+
+  assertEquals(blocked.trails.length, 1)
+  assert(blocked.trails.some((cell) => cell.index === blocked.map.width + 3))
+
+  const cleared = holdPosition(blocked)
+
+  assertEquals(
+    cleared.trails.some((cell) => cell.index === cleared.map.width + 3),
+    false,
+  )
 })
 
 function createBoulderLandingGame(): GameState {

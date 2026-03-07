@@ -1,20 +1,28 @@
 import { BOULDER_DUST_ALPHA, BOULDER_IMPACT_DUST_ALPHA } from "../constants.ts"
-import { createDustBurst, mergeFadeCell, mergeFadeCells } from "../effects.ts"
+import {
+  createDustBurst,
+  mergeFadeCell,
+  mergeFadeCells,
+  mergeTrailCell,
+} from "../effects.ts"
 import type { FadeCell, FallingBoulder } from "../model.ts"
 import { indexForPoint } from "../helpers.ts"
-import { tileAt, type GeneratedMap } from "../mapgen.ts"
+import { type GeneratedMap, tileAt } from "../mapgen.ts"
 
 export function stepFallingBoulders(
   map: GeneratedMap,
   boulders: FallingBoulder[],
+  trails: FadeCell[],
   dust: FadeCell[],
 ): {
   fallingBoulders: FallingBoulder[]
+  trails: FadeCell[]
   dust: FadeCell[]
   landings: number
   screenShake: number
 } {
   const nextBoulders: FallingBoulder[] = []
+  let nextTrails = trails
   let nextDust = dust
   let landings = 0
 
@@ -23,6 +31,12 @@ export function stepFallingBoulders(
     let landed = false
 
     for (let step = 0; step < boulder.speed; step += 1) {
+      nextTrails = mergeTrailCell(
+        nextTrails,
+        indexForPoint(map.width, current),
+        1,
+        "up",
+      )
       nextDust = mergeFadeCell(
         nextDust,
         indexForPoint(map.width, current),
@@ -56,6 +70,7 @@ export function stepFallingBoulders(
 
   return {
     fallingBoulders: nextBoulders,
+    trails: nextTrails,
     dust: nextDust,
     landings,
     screenShake: landings > 0 ? 0.75 : 0,
