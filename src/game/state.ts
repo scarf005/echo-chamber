@@ -1,9 +1,9 @@
 import {
   DEFAULT_HOSTILE_SUBMARINE_COUNT,
   START_DEPTH_CHARGES,
-import { createInitialLogs, createInitialMissionMessage } from "./log.ts"
   START_TORPEDOES,
 } from "./constants.ts"
+import { createInitialLogs, createInitialMissionMessage } from "./log.ts"
 import { createCornerPickups } from "./items.ts"
 import type { GameOptions, GameState } from "./model.ts"
 import { refreshPerception } from "./perception.ts"
@@ -38,6 +38,7 @@ export function createGame(options: GameOptions = {}): GameState {
     seed: map.seed,
     turn: 0,
     status: "playing",
+    playerSonarEnabled: true,
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
     entityMemory: Array.from({ length: map.tiles.length }, () => null),
@@ -46,6 +47,7 @@ export function createGame(options: GameOptions = {}): GameState {
       () => 0,
     ),
     lastSonarTurn: 0,
+    playerSonarContactCueCount: 0,
     shockwaves: [],
     shockwaveFront: [],
     torpedoes: [],

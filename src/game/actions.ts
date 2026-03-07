@@ -238,6 +238,28 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
 
   const delta = deltaForDirection(direction)
   const target = {
+export function isPlayerSonarEnabled(
+  game: Pick<GameState, "playerSonarEnabled">,
+): boolean {
+  return game.playerSonarEnabled ?? true
+}
+
+export function togglePlayerSonar(game: GameState): GameState {
+  if (game.status !== "playing") {
+    return game
+  }
+
+  const enabled = !isPlayerSonarEnabled(game)
+
+  return withGameMessage(
+    {
+      ...game,
+      playerSonarEnabled: enabled,
+    },
+    enabled ? "Player sonar enabled." : "Player sonar disabled.",
+  )
+}
+
     x: game.player.x + delta.x,
     y: game.player.y + delta.y,
   }

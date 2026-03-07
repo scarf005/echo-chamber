@@ -45,6 +45,7 @@ export interface TileReveal {
 export interface EntityReveal {
   index: number
   kind: EntityRevealKind
+  sourceSenderId?: string
 }
 
 export interface RevealableEntity {
@@ -116,11 +117,13 @@ export interface GameState {
   seed: string
   turn: number
   status: GameStatus
+  playerSonarEnabled?: boolean
   capsuleKnown: boolean
   memory: Array<TileKind | null>
   entityMemory?: Array<EntityMemoryKind | null>
   visibility: VisibilityLevel[]
   lastSonarTurn: number
+  playerSonarContactCueCount?: number
   shockwaves: Shockwave[]
   shockwaveFront: FadeCell[]
   torpedoes: Torpedo[]

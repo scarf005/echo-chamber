@@ -58,6 +58,7 @@ export function stepShockwaves(
       revealedTiles,
       revealedEntities,
       nextWaves,
+      wave.senderId,
       false,
     )
   }
@@ -80,6 +81,7 @@ export function stepShockwaves(
       revealedTiles,
       revealedEntities,
       nextWaves,
+      wave.senderId,
       true,
     )
   }
@@ -105,6 +107,7 @@ function advanceShockwave(
   revealedTiles: Map<number, TileKind>,
   revealedEntities: Map<string, EntityReveal>,
   nextWaves: Shockwave[],
+  senderId: string,
   spawnedThisTurn: boolean,
 ): void {
   const nextRadius = Math.min(MAX_SONAR_RADIUS, wave.radius + SONAR_SPEED)
@@ -126,7 +129,11 @@ function advanceShockwave(
 
   trace.revealedEntities.forEach((kind, key) => {
     const [indexText] = key.split(":")
-    revealedEntities.set(key, { index: Number(indexText), kind })
+    revealedEntities.set(`${senderId}:${key}`, {
+      index: Number(indexText),
+      kind,
+      sourceSenderId: senderId,
+    })
   })
 
   if (nextRadius < MAX_SONAR_RADIUS && trace.front.size > 0) {

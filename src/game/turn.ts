@@ -26,6 +26,7 @@ import {
   indexForPoint,
   pointsEqual,
 } from "./helpers.ts"
+import { isPlayerSonarEnabled } from "./actions.ts"
 import { withGameMessage } from "./log.ts"
 import { collectPickups } from "./items.ts"
 import type {
@@ -153,7 +154,8 @@ export function advanceTurn(
   dust = boulderStep.dust
   screenShake = Math.max(screenShake, boulderStep.screenShake)
 
-  const shouldEmitSonar = nextTurn % SONAR_INTERVAL === 0
+  const playerSonarEnabled = isPlayerSonarEnabled(game)
+  const shouldEmitSonar = playerSonarEnabled && nextTurn % SONAR_INTERVAL === 0
   const spawnedShockwaves: Shockwave[] = [
     ...torpedoStep.shockwaves,
     ...depthChargeStep.shockwaves,
@@ -206,6 +208,9 @@ export function advanceTurn(
       hostileSubmarines,
     ),
   )
+  const playerSonarMadeContact = shockwaveStep.revealedEntities.some(
+    (reveal) => reveal.sourceSenderId === "player" && reveal.kind !== "player",
+  )
   const pickupStep = collectPickups(
     {
       ...game,
@@ -252,7 +257,11 @@ export function advanceTurn(
         player: { ...nextPlayer },
         turn: nextTurn,
         status: playerDestroyed ? "lost" : won ? "won" : "playing",
+        playerSonarEnabled,
         lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
+        playerSonarContactCueCount: playerSonarMadeContact
+          ? (game.playerSonarContactCueCount ?? 0) + 1
+          : (game.playerSonarContactCueCount ?? 0),
         shockwaves: shockwaveStep.waves,
         shockwaveFront: shockwaveStep.front,
         torpedoes,

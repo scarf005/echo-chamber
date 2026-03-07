@@ -14,8 +14,10 @@ import {
   fireTorpedo,
   type GameState,
   holdPosition,
+  isPlayerSonarEnabled,
   isAutoMoveNavigable,
   movePlayer,
+  togglePlayerSonar,
 } from "./game.ts"
 import {
   type GeneratedMap,
@@ -199,12 +201,56 @@ Deno.test("holdPosition emits sonar when it lands on the fifth turn", () => {
   assertEquals(next.turn, 5)
   assertEquals(next.player, game.player)
   assertEquals(next.lastSonarTurn, 5)
+  assertEquals(next.playerSonarContactCueCount, 0)
   assertEquals(
     next.shockwaves.some((wave) =>
       wave.radius === 2 && wave.senderId === "player"
     ),
     true,
   )
+})
+
+Deno.test("player sonar contact cue fires when the expanding wave hits the capsule", () => {
+  const emitted = holdPosition({
+    ...createFlatGame(),
+    turn: 4,
+    lastSonarTurn: 0,
+  })
+  const contacted = holdPosition(emitted)
+
+  assertEquals(emitted.playerSonarContactCueCount, 0)
+  assertEquals(contacted.playerSonarContactCueCount, 1)
+})
+
+Deno.test("togglePlayerSonar flips the player sonar state without consuming a turn", () => {
+  const game = createFlatGame()
+  const toggled = togglePlayerSonar(game)
+
+  assertEquals(isPlayerSonarEnabled(game), true)
+  assertEquals(isPlayerSonarEnabled(toggled), false)
+  assertEquals(toggled.turn, game.turn)
+  assertEquals(toggled.message, "Player sonar disabled.")
+  assertEquals(toggled.logs.at(-1), "Player sonar disabled.")
+
+  const restored = togglePlayerSonar(toggled)
+
+  assertEquals(isPlayerSonarEnabled(restored), true)
+  assertEquals(restored.message, "Player sonar enabled.")
+})
+
+Deno.test("disabled player sonar skips the fifth-turn sonar pulse", () => {
+  const game = togglePlayerSonar({
+    ...createFlatGame(),
+    turn: 4,
+    lastSonarTurn: 0,
+  })
+  const next = holdPosition(game)
+
+  assertEquals(next.turn, 5)
+  assertEquals(isPlayerSonarEnabled(next), false)
+  assertEquals(next.lastSonarTurn, 0)
+  assertEquals(next.playerSonarContactCueCount, 0)
+  assertEquals(next.shockwaves.some((wave) => wave.senderId === "player"), false)
 })
 
 Deno.test("sonar emits on the fifth successful move", () => {
