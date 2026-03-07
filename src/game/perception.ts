@@ -1,6 +1,12 @@
 import { PASSIVE_DETECTED_RADIUS, PASSIVE_EXACT_RADIUS } from "./constants.ts"
-import { chebyshevDistance } from "./helpers.ts"
-import type { EntityReveal, GameState, TileReveal, VisibilityLevel } from "./model.ts"
+import { chebyshevDistance, indexForPoint } from "./helpers.ts"
+import type {
+  EntityMemoryKind,
+  EntityReveal,
+  GameState,
+  TileReveal,
+  VisibilityLevel,
+} from "./model.ts"
 import { tileAt } from "./mapgen.ts"
 
 export function refreshPerception(
@@ -9,6 +15,10 @@ export function refreshPerception(
   entityReveals: EntityReveal[],
 ): GameState {
   const memory = game.memory.slice()
+  const entityMemory = game.entityMemory?.slice() ?? Array.from(
+    { length: game.map.tiles.length },
+    () => null,
+  )
   const visibility = Array.from(
     { length: game.map.tiles.length },
     () => 0 as VisibilityLevel,
@@ -30,12 +40,14 @@ export function refreshPerception(
 
       if (distance <= PASSIVE_EXACT_RADIUS) {
         memory[index] = tile
+        clearEntityMemory(entityMemory, index)
         setVisibility(visibility, index, 3)
         continue
       }
 
       if (distance <= PASSIVE_DETECTED_RADIUS) {
         memory[index] = tile
+        clearEntityMemory(entityMemory, index)
         setVisibility(visibility, index, 2)
       }
     }
@@ -43,6 +55,7 @@ export function refreshPerception(
 
   for (const reveal of tileReveals) {
     memory[reveal.index] = reveal.tile
+    clearEntityMemory(entityMemory, reveal.index)
     setVisibility(visibility, reveal.index, 1)
   }
 
@@ -51,14 +64,58 @@ export function refreshPerception(
       capsuleKnown = true
     }
 
+    if (isRememberedEntity(reveal.kind)) {
+      entityMemory[reveal.index] = reveal.kind
+    }
+
     setVisibility(visibility, reveal.index, 1)
+  }
+
+  for (const pickup of game.pickups) {
+    rememberVisibleEntity(entityMemory, visibility, game.map.width, pickup.position, "item")
+  }
+
+  for (const hostileSubmarine of game.hostileSubmarines) {
+    rememberVisibleEntity(
+      entityMemory,
+      visibility,
+      game.map.width,
+      hostileSubmarine.position,
+      "hostile-submarine",
+    )
   }
 
   return {
     ...game,
     capsuleKnown,
     memory,
+    entityMemory,
     visibility,
+  }
+}
+
+function clearEntityMemory(
+  entityMemory: Array<EntityMemoryKind | null>,
+  index: number,
+): void {
+  entityMemory[index] = null
+}
+
+function isRememberedEntity(kind: EntityReveal["kind"]): kind is EntityMemoryKind {
+  return kind === "item" || kind === "hostile-submarine"
+}
+
+function rememberVisibleEntity(
+  entityMemory: Array<EntityMemoryKind | null>,
+  visibility: VisibilityLevel[],
+  width: number,
+  position: { x: number; y: number },
+  kind: EntityMemoryKind,
+): void {
+  const index = indexForPoint(width, position)
+
+  if (visibility[index] >= 2) {
+    entityMemory[index] = kind
   }
 }
 

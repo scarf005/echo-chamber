@@ -5,6 +5,7 @@ export type HorizontalDirection = "left" | "right"
 export type VisibilityLevel = 0 | 1 | 2 | 3
 export type GameStatus = "playing" | "won" | "lost"
 export type HostileSubmarineMode = "patrol" | "investigate" | "attack"
+export type EntityMemoryKind = "item" | "hostile-submarine"
 
 export type RevealableEntityKind =
   | "capsule"
@@ -93,6 +94,7 @@ export interface GameState {
   status: GameStatus
   capsuleKnown: boolean
   memory: Array<TileKind | null>
+  entityMemory?: Array<EntityMemoryKind | null>
   visibility: VisibilityLevel[]
   lastSonarTurn: number
   shockwaves: Shockwave[]

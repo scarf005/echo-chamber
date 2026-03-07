@@ -39,6 +39,7 @@ export function createGame(options: GameOptions = {}): GameState {
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from(
       { length: map.tiles.length },
       () => 0,
