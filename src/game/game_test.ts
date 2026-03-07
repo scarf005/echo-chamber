@@ -7,9 +7,12 @@ import {
   createGame,
   type Direction,
   dropDepthCharge,
+  findAutoMoveAnomaly,
+  findPath as findAStarPath,
   fireTorpedo,
   type GameState,
   holdPosition,
+  isAutoMoveNavigable,
   movePlayer,
 } from "./game.ts"
 import {
@@ -36,6 +39,76 @@ Deno.test("movePlayer advances into an adjacent passable cell", () => {
 
   assertEquals(next.turn, 1)
   assert(next.player.x !== game.player.x || next.player.y !== game.player.y)
+})
+
+Deno.test("findPath returns an empty route for an impassable destination", () => {
+  const game = createFlatGame()
+
+  assertEquals(findAStarPath(game.map, game.player, { x: 0, y: 0 }), [])
+})
+
+Deno.test("auto-move navigates into unknown tiles but rejects charted walls", () => {
+  const game = createFlatGame()
+  const unknownWall = { x: 0, y: 0 }
+  const chartedWallGame = {
+    ...game,
+    memory: game.memory.slice(),
+  }
+
+  chartedWallGame.memory[0] = "wall"
+
+  assertEquals(isAutoMoveNavigable(game, unknownWall), true)
+  assertEquals(isAutoMoveNavigable(chartedWallGame, unknownWall), false)
+})
+
+Deno.test("auto-move anomalies keep partial hostile contacts generic", () => {
+  const game = createFlatGame()
+  const contact = { x: 4, y: 2 }
+  const index = contact.y * game.map.width + contact.x
+  const current = {
+    ...game,
+    visibility: game.visibility.slice(),
+    hostileSubmarines: [{
+      id: "hostile-1",
+      position: contact,
+      facing: "left" as const,
+      mode: "patrol" as const,
+      target: null,
+      reload: 0,
+    }],
+  }
+
+  current.visibility[index] = 2
+
+  assertEquals(findAutoMoveAnomaly(current), {
+    point: contact,
+    reason: "sonar contact",
+  })
+})
+
+Deno.test("auto-move anomalies report exact hostile contact at full visibility", () => {
+  const game = createFlatGame()
+  const contact = { x: 4, y: 2 }
+  const index = contact.y * game.map.width + contact.x
+  const current = {
+    ...game,
+    visibility: game.visibility.slice(),
+    hostileSubmarines: [{
+      id: "hostile-1",
+      position: contact,
+      facing: "left" as const,
+      mode: "patrol" as const,
+      target: null,
+      reload: 0,
+    }],
+  }
+
+  current.visibility[index] = 3
+
+  assertEquals(findAutoMoveAnomaly(current), {
+    point: contact,
+    reason: "hostile submarine in sight",
+  })
 })
 
 Deno.test("moving submarines leave bubble trails at their previous position", () => {
