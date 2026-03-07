@@ -1,5 +1,6 @@
 import type {
   DepthCharge,
+  EntityMemoryKind,
   GameState,
   HostileSubmarine,
   PickupItem,
@@ -26,6 +27,7 @@ export function drawEntitiesLayer(
   },
 ): void {
   const visibility = game.visibility[index]
+  const entityMemory = game.entityMemory?.[index] ?? null
 
   if (x === game.map.capsule.x && y === game.map.capsule.y && game.capsuleKnown) {
     drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, 1)
@@ -44,6 +46,10 @@ export function drawEntitiesLayer(
       )
     }
 
+    if (entityMemory) {
+      drawEntityMemory(context, screenX, screenY, tileSize, entityMemory)
+    }
+
     return
   }
 
@@ -59,6 +65,8 @@ export function drawEntitiesLayer(
       exact ? colorForPickup(pickup) : COLORS.pickup,
       1,
     )
+  } else if (entityMemory === "item") {
+    drawEntityMemory(context, screenX, screenY, tileSize, entityMemory)
   }
 
   const torpedo = entityMaps.torpedoes.get(index)
@@ -96,6 +104,8 @@ export function drawEntitiesLayer(
       exact ? COLORS.hostileSubmarine : COLORS.sonar,
       1,
     )
+  } else if (entityMemory === "hostile-submarine") {
+    drawEntityMemory(context, screenX, screenY, tileSize, entityMemory)
   }
 
   if (x === game.player.x && y === game.player.y) {
@@ -131,4 +141,22 @@ function colorForPickup(pickup: PickupItem): string {
     case "map":
       return COLORS.pickup
   }
+}
+
+function drawEntityMemory(
+  context: CanvasRenderingContext2D,
+  screenX: number,
+  screenY: number,
+  tileSize: number,
+  kind: EntityMemoryKind,
+): void {
+  drawGlyph(
+    context,
+    screenX,
+    screenY,
+    tileSize,
+    "?",
+    kind === "item" ? COLORS.pickup : COLORS.sonar,
+    1,
+  )
 }
