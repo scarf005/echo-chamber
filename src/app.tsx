@@ -8,7 +8,6 @@ import {
   dropDepthCharge,
   fireTorpedo,
   holdPosition,
-  holdPosition,
   movePlayer,
   SONAR_INTERVAL,
 } from "./game/game.ts"
@@ -96,12 +95,6 @@ export function App() {
         setGame((current) => dropDepthCharge(current))
         return
       }
-      if (event.key === ".") {
-        event.preventDefault()
-        setGame((current) => holdPosition(current))
-        return
-      }
-
 
       if (event.key === ".") {
         event.preventDefault()

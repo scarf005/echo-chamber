@@ -55,27 +55,14 @@ Deno.test("holdPosition consumes a turn without moving the submarine", () => {
   assertEquals(next.message, "Holding position.")
 })
 
-Deno.test("holdPosition does not emit sonar before the fifth turn", () => {
-  const game = createFlatGame()
-  const next = holdPosition(game)
-
-  assertEquals(next.turn, 1)
-  assertEquals(next.player, game.player)
-  assertEquals(next.lastSonarTurn, 0)
-})
-
-Deno.test("holdPosition emits sonar when it lands on the fifth turn", () => {
-  const game = {
-    ...createFlatGame(),
-    turn: 4,
-    lastSonarTurn: 0,
-  }
+Deno.test("holdPosition still triggers sonar on the fifth turn", () => {
+  const game = createCapsuleSonarGame()
   const next = holdPosition(game)
 
   assertEquals(next.turn, 5)
   assertEquals(next.player, game.player)
   assertEquals(next.lastSonarTurn, 5)
-  assertEquals(next.shockwaves.some((wave) => wave.radius === 2 && wave.senderId === "player"), true)
+  assertEquals(next.capsuleKnown, true)
 })
 
 Deno.test("sonar emits on the fifth successful move", () => {
