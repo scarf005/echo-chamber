@@ -4,6 +4,7 @@ import type { GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
 import { TERMINAL_FONT_LOAD } from "./fontFamily.ts"
 import { screenShakeOffset } from "./helpers/draw.ts"
+import type { RenderOptions } from "./options.ts"
 import { drawGame } from "./renderer.ts"
 
 export function FastilesViewport(
@@ -12,6 +13,8 @@ export function FastilesViewport(
     selectedTarget: Point | null
     previewPath: Point[]
     onTileClick: (point: Point) => void
+    onTileHover: (point: Point | null) => void
+    renderOptions?: RenderOptions
   },
 ) {
   const containerRef = useRef<HTMLDivElement | null>(null)
@@ -20,6 +23,10 @@ export function FastilesViewport(
   const selectedTargetRef = useRef<Point | null>(props.selectedTarget)
   const previewPathRef = useRef<Point[]>(props.previewPath)
   const onTileClickRef = useRef(props.onTileClick)
+  const onTileHoverRef = useRef(props.onTileHover)
+  const renderOptionsRef = useRef<RenderOptions | undefined>(
+    props.renderOptions,
+  )
 
   useEffect(() => {
     gameRef.current = props.game
@@ -36,6 +43,14 @@ export function FastilesViewport(
   useEffect(() => {
     onTileClickRef.current = props.onTileClick
   }, [props.onTileClick])
+
+  useEffect(() => {
+    onTileHoverRef.current = props.onTileHover
+  }, [props.onTileHover])
+
+  useEffect(() => {
+    renderOptionsRef.current = props.renderOptions
+  }, [props.renderOptions])
 
   useEffect(() => {
     const container = containerRef.current
@@ -56,6 +71,7 @@ export function FastilesViewport(
         gameRef.current,
         selectedTargetRef.current,
         previewPathRef.current,
+        renderOptionsRef.current,
       )
     }
 
@@ -65,6 +81,16 @@ export function FastilesViewport(
       if (point) {
         onTileClickRef.current(point)
       }
+    }
+
+    const onCanvasPointerMove = (event: PointerEvent) => {
+      onTileHoverRef.current(
+        pointFromMouseEvent(canvas, gameRef.current, event),
+      )
+    }
+
+    const onCanvasPointerLeave = () => {
+      onTileHoverRef.current(null)
     }
 
     resize()
@@ -83,10 +109,14 @@ export function FastilesViewport(
     }
     window.addEventListener("resize", resize)
     canvas.addEventListener("click", onCanvasClick)
+    canvas.addEventListener("pointermove", onCanvasPointerMove)
+    canvas.addEventListener("pointerleave", onCanvasPointerLeave)
 
     return () => {
       window.removeEventListener("resize", resize)
       canvas.removeEventListener("click", onCanvasClick)
+      canvas.removeEventListener("pointermove", onCanvasPointerMove)
+      canvas.removeEventListener("pointerleave", onCanvasPointerLeave)
       canvas.remove()
       canvasRef.current = null
     }
@@ -106,8 +136,9 @@ export function FastilesViewport(
       props.game,
       props.selectedTarget,
       props.previewPath,
+      props.renderOptions,
     )
-  }, [props.game, props.selectedTarget, props.previewPath])
+  }, [props.game, props.selectedTarget, props.previewPath, props.renderOptions])
 
   return <div class="viewport" ref={containerRef} />
 }

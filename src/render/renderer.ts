@@ -3,6 +3,7 @@ import type { Point } from "../game/mapgen.ts"
 import { COLORS } from "./colors.ts"
 import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
 import { calculateTileSize, screenShakeOffset } from "./helpers/draw.ts"
+import type { RenderOptions } from "./options.ts"
 import {
   buildEntityMaps,
   indexAlphaMap,
@@ -19,6 +20,7 @@ export function drawGame(
   game: GameState,
   selectedTarget: Point | null = null,
   previewPath: Point[] = [],
+  renderOptions: RenderOptions = {},
 ): void {
   const context = canvas.getContext("2d")
 
@@ -94,6 +96,7 @@ export function drawGame(
       drawEntitiesLayer(
         context,
         game,
+        renderOptions,
         tileSize,
         screenX,
         screenY,
@@ -116,6 +119,10 @@ export function drawGame(
 
   if (previewPath.length > 1) {
     drawPathPreview(context, previewPath, tileSize)
+  }
+
+  if (renderOptions.debugPlannedPaths) {
+    drawHostilePlannedPaths(context, game, tileSize)
   }
 
   if (selectedTarget) {
@@ -174,5 +181,42 @@ function drawTargetHighlight(
   context.moveTo(x + lineWidth, y + size / 2)
   context.lineTo(x + size - lineWidth, y + size / 2)
   context.stroke()
+  context.restore()
+}
+
+function drawHostilePlannedPaths(
+  context: CanvasRenderingContext2D,
+  game: GameState,
+  tileSize: number,
+): void {
+  context.save()
+  context.strokeStyle = COLORS.hostileSubmarine
+  context.globalAlpha = 0.35
+  context.lineWidth = Math.max(1, tileSize * 0.12)
+
+  for (const hostileSubmarine of game.hostileSubmarines) {
+    const path = hostileSubmarine.plannedPath ?? []
+
+    if (path.length < 2) {
+      continue
+    }
+
+    context.beginPath()
+
+    for (let index = 0; index < path.length; index += 1) {
+      const point = path[index]
+      const centerX = point.x * tileSize + tileSize / 2
+      const centerY = point.y * tileSize + tileSize / 2
+
+      if (index === 0) {
+        context.moveTo(centerX, centerY)
+      } else {
+        context.lineTo(centerX, centerY)
+      }
+    }
+
+    context.stroke()
+  }
+
   context.restore()
 }
