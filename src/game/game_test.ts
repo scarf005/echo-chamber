@@ -36,6 +36,14 @@ Deno.test("movePlayer advances into an adjacent passable cell", () => {
   assert(next.player.x !== game.player.x || next.player.y !== game.player.y)
 })
 
+Deno.test("moving submarines leave bubble trails at their previous position", () => {
+  const game = createFlatGame()
+  const next = movePlayer(game, "right")
+  const trailIndex = game.player.y * game.map.width + game.player.x
+
+  assert(next.trails.some((cell) => cell.index === trailIndex && cell.alpha >= 0.68))
+})
+
 Deno.test("sonar emits on the fifth successful move", () => {
   const game = createGame({ seed: "sonar-seed", width: 48, height: 24 })
   const path = findPath(game.map, game.player, game.map.capsule)

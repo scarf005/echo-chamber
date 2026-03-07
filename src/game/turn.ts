@@ -9,8 +9,20 @@ import {
   TORPEDO_SPEED,
   TRAIL_DECAY,
 } from "./constants.ts"
-import { decayCells, decayCracks, decayShake, resolveImpactMessage } from "./effects.ts"
-import { cloneBoulder, cloneDepthCharge, cloneMap, cloneTorpedo } from "./helpers.ts"
+import {
+  decayCells,
+  decayCracks,
+  decayShake,
+  mergeFadeCell,
+  resolveImpactMessage,
+} from "./effects.ts"
+import {
+  cloneBoulder,
+  cloneDepthCharge,
+  cloneMap,
+  cloneTorpedo,
+  indexForPoint,
+} from "./helpers.ts"
 import type { GameState, HorizontalDirection, TurnAction } from "./model.ts"
 import { refreshPerception } from "./perception.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
@@ -35,6 +47,10 @@ export function advanceTurn(
   let fallingBoulders = game.fallingBoulders.map(cloneBoulder)
   let torpedoesRemaining = game.torpedoesRemaining
   let screenShake = decayShake(game.screenShake, SHAKE_DECAY)
+
+  if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
+    trails = mergeFadeCell(trails, indexForPoint(map.width, game.player), 0.68)
+  }
 
   if (action?.kind === "torpedo") {
     torpedoes.push({
