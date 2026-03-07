@@ -1,20 +1,36 @@
 import "./app.css"
-import { useEffect, useMemo, useRef, useState } from "preact/hooks"
+import type { JSX } from "preact"
+import { useEffect, useRef, useState } from "preact/hooks"
 
 import {
   createGame,
   createRandomSeed,
+  directionBetweenPoints,
   directionFromKey,
   dropDepthCharge,
+  findAutoMoveAnomaly,
+  findPath,
   fireTorpedo,
   formatGroupedLogMessage,
   groupLogMessages,
   holdPosition,
+  isAutoMoveNavigable,
   movePlayer,
   SONAR_INTERVAL,
+  withGameMessage,
 } from "./game/game.ts"
+import { pointsEqual } from "./game/helpers.ts"
+import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
+import { createExplosionSfx } from "./audio/explosionSfx.ts"
 import { createMovementLoop } from "./audio/movementLoop.ts"
+import {
+  levelToSliderPercent,
+  readAudioSettings,
+  sliderPercentToLevel,
+  writeAudioSettings,
+  type AudioSettings,
+} from "./audio/settings.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 
 const DEFAULT_SEED = "echo-chamber"
@@ -27,14 +43,21 @@ export function App() {
   const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
   const [previewTarget, setPreviewTarget] = useState<Point | null>(null)
   const [autoMoveTarget, setAutoMoveTarget] = useState<Point | null>(null)
+  const [audioSettings, setAudioSettings] = useState<AudioSettings>(() =>
+    readAudioSettings(getBrowserStorage())
+  )
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
   const backgroundMusicRef = useRef<
     ReturnType<typeof createBackgroundMusic> | null
   >(null)
+  const explosionSfxRef = useRef<ReturnType<typeof createExplosionSfx> | null>(
+    null,
+  )
   const movementLoopRef = useRef<ReturnType<typeof createMovementLoop> | null>(
     null,
   )
+  const playedExplosionCountsRef = useRef<Map<string, number>>(new Map())
 
   useEffect(() => {
     isOptionsOpenRef.current = isOptionsOpen
@@ -42,12 +65,15 @@ export function App() {
 
   useEffect(() => {
     const backgroundMusic = createBackgroundMusic()
+    const explosionSfx = createExplosionSfx()
     const movementLoop = createMovementLoop()
     backgroundMusicRef.current = backgroundMusic
+    explosionSfxRef.current = explosionSfx
     movementLoopRef.current = movementLoop
 
     const startAudio = () => {
       void backgroundMusic.ensureStarted()
+      void explosionSfx.ensureStarted()
       void movementLoop.ensureStarted()
     }
 
@@ -58,14 +84,53 @@ export function App() {
       window.removeEventListener("keydown", startAudio)
       window.removeEventListener("pointerdown", startAudio)
       backgroundMusicRef.current = null
+      explosionSfxRef.current = null
       movementLoopRef.current = null
       backgroundMusic.dispose()
+      explosionSfx.dispose()
       movementLoop.dispose()
     }
   }, [])
 
+  useEffect(() => {
+    const nextCounts = new Map<string, number>()
+
+    for (const shockwave of game.shockwaves) {
+      if (!shockwave.damaging) {
+        continue
+      }
+
+      const key = `${shockwave.origin.x}:${shockwave.origin.y}:${shockwave.senderId}`
+      const nextCount = (nextCounts.get(key) ?? 0) + 1
+      nextCounts.set(key, nextCount)
+
+      if (nextCount <= (playedExplosionCountsRef.current.get(key) ?? 0)) {
+        continue
+      }
+
+      const distance = Math.hypot(
+        shockwave.origin.x - game.player.x,
+        shockwave.origin.y - game.player.y,
+      )
+      void explosionSfxRef.current?.playExplosion(distance)
+    }
+
+    playedExplosionCountsRef.current = nextCounts
+  }, [game])
+
+  useEffect(() => {
+    backgroundMusicRef.current?.setVolume(audioSettings.musicVolume)
+    backgroundMusicRef.current?.setEnabled(audioSettings.musicEnabled)
+    movementLoopRef.current?.setVolume(audioSettings.sfxVolume)
+    movementLoopRef.current?.setEnabled(audioSettings.sfxEnabled)
+    explosionSfxRef.current?.setVolume(audioSettings.sfxVolume)
+    explosionSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
+    writeAudioSettings(getBrowserStorage(), audioSettings)
+  }, [audioSettings])
+
   const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
+    void explosionSfxRef.current?.ensureStarted()
     void movementLoopRef.current?.ensureStarted()
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
     runSeedRef.current = normalizedSeed
@@ -75,18 +140,14 @@ export function App() {
     setGame(createGame({ seed: normalizedSeed }))
   }
 
-  const previewPath = useMemo(() => {
-    if (!previewTarget) {
-      return []
-    }
-
-    return findPath(
+  const previewPath = previewTarget
+    ? findPath(
       game.map,
       game.player,
       previewTarget,
       (point) => isAutoMoveNavigable(game, point),
     )
-  }, [game, previewTarget])
+    : []
 
   useEffect(() => {
     if (!autoMoveTarget) {
@@ -114,14 +175,16 @@ export function App() {
 
         if (anomaly) {
           setAutoMoveTarget(null)
-          return {
-            ...current,
-            message: createAutoMoveStopMessage(
+          return withGameMessage(
+            {
+              ...current,
+            },
+            createAutoMoveStopMessage(
               anomaly.reason,
               current.player,
               anomaly.point,
             ),
-          }
+          )
         }
 
         const path = findPath(
@@ -133,28 +196,25 @@ export function App() {
 
         if (path.length < 2) {
           setAutoMoveTarget(null)
-          return {
-            ...current,
-            message: createAutoMoveStopMessage(
+          return withGameMessage(
+            {
+              ...current,
+            },
+            createAutoMoveStopMessage(
               "no plotted course",
               current.player,
               autoMoveTarget,
             ),
-          }
+          )
         }
 
         const nextPoint = path[1]
 
         if (!isPassableTile(tileAt(current.map, nextPoint.x, nextPoint.y))) {
           setAutoMoveTarget(null)
-          return {
+          return withGameMessage({
             ...current,
-            message: createAutoMoveStopMessage(
-              "wall ahead",
-              current.player,
-              nextPoint,
-            ),
-          }
+          }, createAutoMoveStopMessage("wall ahead", current.player, nextPoint))
         }
 
         const direction = directionBetweenPoints(path[0], nextPoint)
@@ -177,14 +237,16 @@ export function App() {
 
         if (nextAnomaly) {
           setAutoMoveTarget(null)
-          return {
-            ...next,
-            message: createAutoMoveStopMessage(
+          return withGameMessage(
+            {
+              ...next,
+            },
+            createAutoMoveStopMessage(
               nextAnomaly.reason,
               next.player,
               nextAnomaly.point,
             ),
-          }
+          )
         }
 
         if (
@@ -209,14 +271,18 @@ export function App() {
     if (!isAutoMoveNavigable(game, point)) {
       setPreviewTarget(null)
       setAutoMoveTarget(null)
-      setGame((current) => ({
-        ...current,
-        message: createAutoMoveStopMessage(
-          "charted wall at destination",
-          current.player,
-          point,
-        ),
-      }))
+      setGame((current) =>
+        withGameMessage(
+          {
+            ...current,
+          },
+          createAutoMoveStopMessage(
+            "charted wall at destination",
+            current.player,
+            point,
+          ),
+        )
+      )
       return
     }
 
@@ -225,10 +291,11 @@ export function App() {
 
     if (previewTarget && pointsEqual(previewTarget, point)) {
       setAutoMoveTarget({ ...point })
-      setGame((current) => ({
-        ...current,
-        message: `Auto-nav engaged to ${formatPoint(point)}.`,
-      }))
+      setGame((current) =>
+        withGameMessage({
+          ...current,
+        }, `Auto-nav engaged to ${formatPoint(point)}.`)
+      )
       return
     }
 
@@ -241,16 +308,20 @@ export function App() {
 
     setPreviewTarget({ ...point })
     setAutoMoveTarget(null)
-    setGame((current) => ({
-      ...current,
-      message: nextPreviewPath.length >= 2
-        ? `Course plotted to ${formatPoint(point)}. Click again to engage.`
-        : createAutoMoveStopMessage(
-          "no plotted course",
-          current.player,
-          point,
-        ),
-    }))
+    setGame((current) =>
+      withGameMessage(
+        {
+          ...current,
+        },
+        nextPreviewPath.length >= 2
+          ? `Course plotted to ${formatPoint(point)}. Click again to engage.`
+          : createAutoMoveStopMessage(
+            "no plotted course",
+            current.player,
+            point,
+          ),
+      )
+    )
   }
 
   useEffect(() => {
@@ -472,6 +543,38 @@ export function App() {
                 >
                   Underwater Deep Water Loop by Department64 (CC-BY-4.0)
                 </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/Akkaittou/sounds/819743/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  UnderWater_Explosion1 by Akkaittou (CC-BY-4.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/Akkaittou/sounds/819744/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  UnderWater_Explosion2 by Akkaittou (CC-BY-4.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/Akkaittou/sounds/819745/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  UnderWater_Explosion3 by Akkaittou (CC-BY-4.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/Akkaittou/sounds/819746/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  UnderWater_ExplosionFar by Akkaittou (CC-BY-4.0)
+                </a>
               </div>
             </section>
           </div>
@@ -487,7 +590,9 @@ function createAutoMoveStopMessage(
   point: Point,
 ): string {
   const bearing = formatBearing(origin, point)
-  return `Auto-nav halted: ${reason} at ${formatPoint(point)}${bearing ? ` ${bearing}` : ""}.`
+  return `Auto-nav halted: ${reason} at ${formatPoint(point)}${
+    bearing ? ` ${bearing}` : ""
+  }.`
 }
 
 function formatPoint(point: Point): string {
