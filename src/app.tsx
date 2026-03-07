@@ -1,5 +1,5 @@
 import "./app.css"
-import { useEffect, useRef, useState } from "preact/hooks"
+import { useEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
   createGame,
@@ -18,12 +18,15 @@ import { createMovementLoop } from "./audio/movementLoop.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 
 const DEFAULT_SEED = "echo-chamber"
+const AUTO_MOVE_DELAY_MS = 70
 const LOG_PANEL_LINES = 6
 
 export function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
   const [runSeed, setRunSeed] = useState(DEFAULT_SEED)
   const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
+  const [previewTarget, setPreviewTarget] = useState<Point | null>(null)
+  const [autoMoveTarget, setAutoMoveTarget] = useState<Point | null>(null)
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
   const backgroundMusicRef = useRef<
@@ -67,7 +70,187 @@ export function App() {
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
     runSeedRef.current = normalizedSeed
     setRunSeed(normalizedSeed)
+    setPreviewTarget(null)
+    setAutoMoveTarget(null)
     setGame(createGame({ seed: normalizedSeed }))
+  }
+
+  const previewPath = useMemo(() => {
+    if (!previewTarget) {
+      return []
+    }
+
+    return findPath(
+      game.map,
+      game.player,
+      previewTarget,
+      (point) => isAutoMoveNavigable(game, point),
+    )
+  }, [game, previewTarget])
+
+  useEffect(() => {
+    if (!autoMoveTarget) {
+      return
+    }
+
+    if (isOptionsOpen || game.status !== "playing") {
+      setAutoMoveTarget(null)
+      return
+    }
+
+    if (pointsEqual(game.player, autoMoveTarget)) {
+      setAutoMoveTarget(null)
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setGame((current) => {
+        if (current.status !== "playing") {
+          setAutoMoveTarget(null)
+          return current
+        }
+
+        const anomaly = findAutoMoveAnomaly(current)
+
+        if (anomaly) {
+          setAutoMoveTarget(null)
+          return {
+            ...current,
+            message: createAutoMoveStopMessage(
+              anomaly.reason,
+              current.player,
+              anomaly.point,
+            ),
+          }
+        }
+
+        const path = findPath(
+          current.map,
+          current.player,
+          autoMoveTarget,
+          (point) => isAutoMoveNavigable(current, point),
+        )
+
+        if (path.length < 2) {
+          setAutoMoveTarget(null)
+          return {
+            ...current,
+            message: createAutoMoveStopMessage(
+              "no plotted course",
+              current.player,
+              autoMoveTarget,
+            ),
+          }
+        }
+
+        const nextPoint = path[1]
+
+        if (!isPassableTile(tileAt(current.map, nextPoint.x, nextPoint.y))) {
+          setAutoMoveTarget(null)
+          return {
+            ...current,
+            message: createAutoMoveStopMessage(
+              "wall ahead",
+              current.player,
+              nextPoint,
+            ),
+          }
+        }
+
+        const direction = directionBetweenPoints(path[0], nextPoint)
+
+        if (!direction) {
+          setAutoMoveTarget(null)
+          return current
+        }
+
+        const next = movePlayer(current, direction)
+        const moved = !pointsEqual(next.player, current.player)
+
+        if (moved) {
+          movementLoopRef.current?.markMovement()
+        }
+
+        const nextAnomaly = next.status === "playing"
+          ? findAutoMoveAnomaly(next)
+          : null
+
+        if (nextAnomaly) {
+          setAutoMoveTarget(null)
+          return {
+            ...next,
+            message: createAutoMoveStopMessage(
+              nextAnomaly.reason,
+              next.player,
+              nextAnomaly.point,
+            ),
+          }
+        }
+
+        if (
+          !moved || pointsEqual(next.player, autoMoveTarget) ||
+          next.status !== "playing"
+        ) {
+          setAutoMoveTarget(null)
+        }
+
+        return next
+      })
+    }, AUTO_MOVE_DELAY_MS)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [autoMoveTarget, game, isOptionsOpen])
+
+  const handleViewportTileClick = (point: Point) => {
+    if (isOptionsOpenRef.current) {
+      return
+    }
+
+    if (!isAutoMoveNavigable(game, point)) {
+      setPreviewTarget(null)
+      setAutoMoveTarget(null)
+      setGame((current) => ({
+        ...current,
+        message: createAutoMoveStopMessage(
+          "charted wall at destination",
+          current.player,
+          point,
+        ),
+      }))
+      return
+    }
+
+    void backgroundMusicRef.current?.ensureStarted()
+    void movementLoopRef.current?.ensureStarted()
+
+    if (previewTarget && pointsEqual(previewTarget, point)) {
+      setAutoMoveTarget({ ...point })
+      setGame((current) => ({
+        ...current,
+        message: `Auto-nav engaged to ${formatPoint(point)}.`,
+      }))
+      return
+    }
+
+    const nextPreviewPath = findPath(
+      game.map,
+      game.player,
+      point,
+      (candidate) => isAutoMoveNavigable(game, candidate),
+    )
+
+    setPreviewTarget({ ...point })
+    setAutoMoveTarget(null)
+    setGame((current) => ({
+      ...current,
+      message: nextPreviewPath.length >= 2
+        ? `Course plotted to ${formatPoint(point)}. Click again to engage.`
+        : createAutoMoveStopMessage(
+          "no plotted course",
+          current.player,
+          point,
+        ),
+    }))
   }
 
   useEffect(() => {
@@ -101,18 +284,24 @@ export function App() {
 
       if (event.key === "z" || event.key === "Z") {
         event.preventDefault()
+        setPreviewTarget(null)
+        setAutoMoveTarget(null)
         setGame((current) => fireTorpedo(current))
         return
       }
 
       if (event.key === "x" || event.key === "X") {
         event.preventDefault()
+        setPreviewTarget(null)
+        setAutoMoveTarget(null)
         setGame((current) => dropDepthCharge(current))
         return
       }
 
       if (event.key === ".") {
         event.preventDefault()
+        setPreviewTarget(null)
+        setAutoMoveTarget(null)
         setGame((current) => holdPosition(current))
         return
       }
@@ -124,6 +313,8 @@ export function App() {
       }
 
       event.preventDefault()
+      setPreviewTarget(null)
+      setAutoMoveTarget(null)
       setGame((current) => {
         const next = movePlayer(current, direction)
 
@@ -145,6 +336,8 @@ export function App() {
   const sonarIn =
     ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
     SONAR_INTERVAL
+  const playerCoordinates = formatPoint(game.player)
+  const targetCoordinates = previewTarget ? formatPoint(previewTarget) : "--"
   const visibleLogMessages = groupLogMessages(game.logs)
     .slice(-LOG_PANEL_LINES)
     .map(formatGroupedLogMessage)
@@ -152,7 +345,12 @@ export function App() {
   return (
     <main class="game-shell">
       <section class="viewport-stage">
-        <FastilesViewport game={game} />
+        <FastilesViewport
+          game={game}
+          selectedTarget={previewTarget}
+          previewPath={previewPath}
+          onTileClick={handleViewportTileClick}
+        />
       </section>
 
       <aside class="sidebar">
@@ -187,6 +385,14 @@ export function App() {
           <div class="stat-row">
             <span>depth charges</span>
             <strong>{game.depthChargeAmmo}</strong>
+          </div>
+          <div class="stat-row">
+            <span>position</span>
+            <strong>{playerCoordinates}</strong>
+          </div>
+          <div class="stat-row">
+            <span>target</span>
+            <strong>{targetCoordinates}</strong>
           </div>
         </section>
 
@@ -273,4 +479,43 @@ export function App() {
         : null}
     </main>
   )
+}
+
+function createAutoMoveStopMessage(
+  reason: string,
+  origin: Point,
+  point: Point,
+): string {
+  const bearing = formatBearing(origin, point)
+  return `Auto-nav halted: ${reason} at ${formatPoint(point)}${bearing ? ` ${bearing}` : ""}.`
+}
+
+function formatPoint(point: Point): string {
+  return `${point.x},${point.y}`
+}
+
+function formatBearing(from: Point, to: Point): string {
+  const dx = Math.sign(to.x - from.x)
+  const dy = Math.sign(to.y - from.y)
+
+  switch (`${dx},${dy}`) {
+    case "0,-1":
+      return "↑"
+    case "1,-1":
+      return "↗"
+    case "1,0":
+      return "→"
+    case "1,1":
+      return "↘"
+    case "0,1":
+      return "↓"
+    case "-1,1":
+      return "↙"
+    case "-1,0":
+      return "←"
+    case "-1,-1":
+      return "↖"
+    default:
+      return ""
+  }
 }

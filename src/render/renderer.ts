@@ -1,4 +1,5 @@
 import type { CrackCell, GameState } from "../game/game.ts"
+import type { Point } from "../game/mapgen.ts"
 import { COLORS } from "./colors.ts"
 import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
 import { calculateTileSize, screenShakeOffset } from "./helpers/draw.ts"
@@ -11,6 +12,8 @@ export function drawGame(
   canvas: HTMLCanvasElement,
   container: HTMLDivElement,
   game: GameState,
+  selectedTarget: Point | null = null,
+  previewPath: Point[] = [],
 ): void {
   const context = canvas.getContext("2d")
 
@@ -69,4 +72,65 @@ export function drawGame(
       drawShockwaveLayer(context, tileSize, screenX, screenY, index, effectMaps)
     }
   }
+
+  if (previewPath.length > 1) {
+    drawPathPreview(context, previewPath, tileSize)
+  }
+
+  if (selectedTarget) {
+    drawTargetHighlight(context, selectedTarget, tileSize)
+  }
+}
+
+function drawPathPreview(
+  context: CanvasRenderingContext2D,
+  previewPath: Point[],
+  tileSize: number,
+): void {
+  context.save()
+  context.strokeStyle = COLORS.sonar
+  context.globalAlpha = 0.75
+  context.lineWidth = Math.max(1, tileSize * 0.16)
+  context.beginPath()
+
+  for (let index = 0; index < previewPath.length; index += 1) {
+    const point = previewPath[index]
+    const centerX = point.x * tileSize + tileSize / 2
+    const centerY = point.y * tileSize + tileSize / 2
+
+    if (index === 0) {
+      context.moveTo(centerX, centerY)
+    } else {
+      context.lineTo(centerX, centerY)
+    }
+  }
+
+  context.stroke()
+  context.restore()
+}
+
+function drawTargetHighlight(
+  context: CanvasRenderingContext2D,
+  target: Point,
+  tileSize: number,
+): void {
+  const inset = Math.max(1, tileSize * 0.12)
+  const lineWidth = Math.max(1, tileSize * 0.08)
+  const x = target.x * tileSize + inset
+  const y = target.y * tileSize + inset
+  const size = Math.max(1, tileSize - inset * 2)
+
+  context.save()
+  context.strokeStyle = COLORS.player
+  context.lineWidth = lineWidth
+  context.shadowColor = COLORS.sonarGlow
+  context.shadowBlur = tileSize * 0.4
+  context.strokeRect(x, y, size, size)
+  context.beginPath()
+  context.moveTo(x + size / 2, y + lineWidth)
+  context.lineTo(x + size / 2, y + size - lineWidth)
+  context.moveTo(x + lineWidth, y + size / 2)
+  context.lineTo(x + size - lineWidth, y + size / 2)
+  context.stroke()
+  context.restore()
 }
