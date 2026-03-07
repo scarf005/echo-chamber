@@ -1,4 +1,10 @@
-import type { DepthCharge, GameState, Torpedo } from "../../game/game.ts"
+import type {
+  DepthCharge,
+  GameState,
+  HostileSubmarine,
+  PickupItem,
+  Torpedo,
+} from "../../game/game.ts"
 import { COLORS } from "../colors.ts"
 import { drawGlyph } from "../helpers/draw.ts"
 
@@ -15,6 +21,8 @@ export function drawEntitiesLayer(
     torpedoes: Map<number, Torpedo>
     depthCharges: Map<number, DepthCharge>
     boulders: Map<number, { position: { x: number; y: number } }>
+    hostileSubmarines: Map<number, HostileSubmarine>
+    pickups: Map<number, PickupItem>
   },
 ): void {
   const visibility = game.visibility[index]
@@ -37,6 +45,20 @@ export function drawEntitiesLayer(
     }
 
     return
+  }
+
+  const pickup = entityMaps.pickups.get(index)
+  if (pickup) {
+    const exact = visibility >= 3
+    drawGlyph(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      exact ? glyphForPickup(pickup) : "?",
+      exact ? colorForPickup(pickup) : COLORS.pickup,
+      1,
+    )
   }
 
   const torpedo = entityMaps.torpedoes.get(index)
@@ -62,6 +84,20 @@ export function drawEntitiesLayer(
     drawGlyph(context, screenX, screenY, tileSize, "O", COLORS.boulder, 1)
   }
 
+  const hostileSubmarine = entityMaps.hostileSubmarines.get(index)
+  if (hostileSubmarine) {
+    const exact = visibility >= 3
+    drawGlyph(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      exact ? hostileSubmarine.facing === "left" ? "◄" : "►" : "?",
+      exact ? COLORS.hostileSubmarine : COLORS.sonar,
+      1,
+    )
+  }
+
   if (x === game.player.x && y === game.player.y) {
     drawGlyph(
       context,
@@ -72,5 +108,27 @@ export function drawEntitiesLayer(
       COLORS.player,
       1,
     )
+  }
+}
+
+function glyphForPickup(pickup: PickupItem): string {
+  switch (pickup.kind) {
+    case "torpedo-cache":
+      return "T"
+    case "depth-charge-cache":
+      return "D"
+    case "map":
+      return "M"
+  }
+}
+
+function colorForPickup(pickup: PickupItem): string {
+  switch (pickup.kind) {
+    case "torpedo-cache":
+      return COLORS.torpedo
+    case "depth-charge-cache":
+      return COLORS.depthCharge
+    case "map":
+      return COLORS.pickup
   }
 }

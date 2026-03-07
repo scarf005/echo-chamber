@@ -4,6 +4,8 @@ import type {
   FadeCell,
   FallingBoulder,
   GameState,
+  HostileSubmarine,
+  PickupItem,
   Torpedo,
 } from "../../game/game.ts"
 
@@ -35,11 +37,15 @@ export function buildEntityMaps(game: GameState): {
   torpedoes: Map<number, Torpedo>
   depthCharges: Map<number, DepthCharge>
   boulders: Map<number, FallingBoulder>
+  hostileSubmarines: Map<number, HostileSubmarine>
+  pickups: Map<number, PickupItem>
 } {
   return {
     torpedoes: buildEntityMap(game.torpedoes, game.map.width),
     depthCharges: buildEntityMap(game.depthCharges, game.map.width),
     boulders: buildEntityMap(game.fallingBoulders, game.map.width),
+    hostileSubmarines: buildEntityMap(game.hostileSubmarines, game.map.width),
+    pickups: buildEntityMap(game.pickups, game.map.width),
   }
 }
 

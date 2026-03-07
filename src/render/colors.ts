@@ -6,6 +6,7 @@ export const COLORS = {
   visibleWall: "#d7fff8",
   player: "#ffc857",
   capsule: "#ff6b6b",
+  hostileSubmarine: "#ff8c69",
   trail: "#9ad9ff",
   dust: "#8c7a5b",
   dustGlow: "#382e23",
@@ -13,6 +14,7 @@ export const COLORS = {
   sonarGlow: "#123348",
   torpedo: "#ffe28a",
   depthCharge: "#ff9f6e",
+  pickup: "#b7ff8a",
   crack: "#f7deb3",
   boulder: "#c7b48f",
 } as const

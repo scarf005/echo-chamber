@@ -3,6 +3,7 @@ import type {
   DepthCharge,
   Direction,
   FallingBoulder,
+  HostileSubmarine,
   HorizontalDirection,
   Torpedo,
 } from "./model.ts"
@@ -38,6 +39,14 @@ export function cloneBoulder(boulder: FallingBoulder): FallingBoulder {
   return {
     ...boulder,
     position: { ...boulder.position },
+  }
+}
+
+export function cloneHostileSubmarine(hostileSubmarine: HostileSubmarine): HostileSubmarine {
+  return {
+    ...hostileSubmarine,
+    position: { ...hostileSubmarine.position },
+    target: hostileSubmarine.target ? { ...hostileSubmarine.target } : null,
   }
 }
 
@@ -183,4 +192,12 @@ export function isNearObstacleBelow(map: GeneratedMap, point: Point): boolean {
     const tile = tileAt(map, probe.x, probe.y)
     return !tile || tile === "wall"
   })
+}
+
+export function pointsEqual(a: Point, b: Point): boolean {
+  return a.x === b.x && a.y === b.y
+}
+
+export function keyOfPoint(point: Point): string {
+  return `${point.x}:${point.y}`
 }

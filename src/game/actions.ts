@@ -63,11 +63,11 @@ export function fireTorpedo(
     return game
   }
 
-  if (game.torpedoesRemaining <= 0) {
+  if (game.torpedoAmmo <= 0) {
     return {
       ...game,
       facing: direction,
-      message: "No ordnance remaining.",
+      message: "No torpedoes remaining.",
     }
   }
 
@@ -85,10 +85,10 @@ export function dropDepthCharge(game: GameState): GameState {
     return game
   }
 
-  if (game.torpedoesRemaining <= 0) {
+  if (game.depthChargeAmmo <= 0) {
     return {
       ...game,
-      message: "No ordnance remaining.",
+      message: "No depth charges remaining.",
     }
   }
 

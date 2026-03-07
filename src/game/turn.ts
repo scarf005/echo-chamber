@@ -9,8 +9,23 @@ import {
   TORPEDO_SPEED,
   TRAIL_DECAY,
 } from "./constants.ts"
-import { decayCells, decayCracks, decayShake, resolveImpactMessage } from "./effects.ts"
-import { cloneBoulder, cloneDepthCharge, cloneMap, cloneTorpedo } from "./helpers.ts"
+import {
+  decayCells,
+  decayCracks,
+  decayShake,
+  mergeFadeCell,
+  resolveImpactMessage,
+} from "./effects.ts"
+import {
+  cloneBoulder,
+  cloneDepthCharge,
+  cloneHostileSubmarine,
+  cloneMap,
+  cloneTorpedo,
+  indexForPoint,
+  pointsEqual,
+} from "./helpers.ts"
+import { collectPickups } from "./items.ts"
 import type {
   GameState,
   HorizontalDirection,
@@ -19,10 +34,11 @@ import type {
   TurnAction,
 } from "./model.ts"
 import { refreshPerception } from "./perception.ts"
+import type { Point } from "./mapgen.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
+import { stepHostileSubmarines } from "./systems/hostiles.ts"
 import { stepDepthCharges, stepTorpedoes } from "./systems/projectiles.ts"
 import { stepShockwaves } from "./systems/shockwaves.ts"
-import type { Point } from "./mapgen.ts"
 
 export function advanceTurn(
   game: GameState,
@@ -35,12 +51,28 @@ export function advanceTurn(
   const map = cloneMap(game.map)
   let torpedoes = game.torpedoes.map(cloneTorpedo)
   let depthCharges = game.depthCharges.map(cloneDepthCharge)
+  let hostileSubmarines = game.hostileSubmarines.map(cloneHostileSubmarine)
+  let pickups = game.pickups.map((pickup) => ({
+    ...pickup,
+    position: { ...pickup.position },
+  }))
   let trails = decayCells(game.trails, TRAIL_DECAY)
   let dust = decayCells(game.dust, DUST_DECAY)
   let cracks = decayCracks(game.cracks, CRACK_DECAY)
   let fallingBoulders = game.fallingBoulders.map(cloneBoulder)
-  let torpedoesRemaining = game.torpedoesRemaining
+  let torpedoAmmo = game.torpedoAmmo
+  let depthChargeAmmo = game.depthChargeAmmo
   let screenShake = decayShake(game.screenShake, SHAKE_DECAY)
+  let playerDestroyed = hostileSubmarines.some((hostileSubmarine) =>
+    pointsEqual(hostileSubmarine.position, nextPlayer)
+  )
+  let hostileMessage: string | null = playerDestroyed
+    ? "A hostile submarine rams your hull. Press R for a new run."
+    : null
+
+  if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
+    trails = mergeFadeCell(trails, indexForPoint(map.width, game.player), 0.68)
+  }
 
   if (action?.kind === "torpedo") {
     torpedoes.push({
@@ -50,7 +82,7 @@ export function advanceTurn(
       speed: TORPEDO_SPEED,
       rangeRemaining: TORPEDO_RANGE,
     })
-    torpedoesRemaining -= 1
+    torpedoAmmo -= 1
   }
 
   if (action?.kind === "depth-charge") {
@@ -60,7 +92,7 @@ export function advanceTurn(
       speed: DEPTH_CHARGE_SPEED,
       rangeRemaining: DEPTH_CHARGE_RANGE,
     })
-    torpedoesRemaining -= 1
+    depthChargeAmmo -= 1
   }
 
   const torpedoStep = stepTorpedoes(
@@ -69,6 +101,8 @@ export function advanceTurn(
     trails,
     cracks,
     dust,
+    hostileSubmarines,
+    nextPlayer,
     game.seed,
     nextTurn,
   )
@@ -76,8 +110,14 @@ export function advanceTurn(
   trails = torpedoStep.trails
   cracks = torpedoStep.cracks
   dust = torpedoStep.dust
+  hostileSubmarines = torpedoStep.hostileSubmarines
   fallingBoulders = [...fallingBoulders, ...torpedoStep.fallingBoulders]
   screenShake = Math.max(screenShake, torpedoStep.screenShake)
+  playerDestroyed = playerDestroyed || torpedoStep.playerDestroyed
+
+  if (torpedoStep.playerDestroyed) {
+    hostileMessage = "A hostile torpedo tears through your hull. Press R for a new run."
+  }
 
   const depthChargeStep = stepDepthCharges(
     map,
@@ -85,6 +125,8 @@ export function advanceTurn(
     trails,
     cracks,
     dust,
+    hostileSubmarines,
+    nextPlayer,
     game.seed,
     nextTurn,
   )
@@ -92,8 +134,14 @@ export function advanceTurn(
   trails = depthChargeStep.trails
   cracks = depthChargeStep.cracks
   dust = depthChargeStep.dust
+  hostileSubmarines = depthChargeStep.hostileSubmarines
   fallingBoulders = [...fallingBoulders, ...depthChargeStep.fallingBoulders]
   screenShake = Math.max(screenShake, depthChargeStep.screenShake)
+  playerDestroyed = playerDestroyed || depthChargeStep.playerDestroyed
+
+  if (depthChargeStep.playerDestroyed) {
+    hostileMessage = "A hostile blast caves in your hull. Press R for a new run."
+  }
 
   const boulderStep = stepFallingBoulders(map, fallingBoulders, dust)
   fallingBoulders = boulderStep.fallingBoulders
@@ -106,16 +154,61 @@ export function advanceTurn(
     ...depthChargeStep.shockwaves,
     ...(shouldEmitSonar ? [createSonarShockwave(nextPlayer)] : []),
   ]
+  let hostileLaunchMessage: string | null = null
+
+  if (!playerDestroyed) {
+    const hostileStep = stepHostileSubmarines(
+      map,
+      hostileSubmarines,
+      nextPlayer,
+      spawnedShockwaves,
+      game.seed,
+      nextTurn,
+    )
+
+    hostileSubmarines = hostileStep.hostileSubmarines
+    torpedoes = [...torpedoes, ...hostileStep.launchedTorpedoes]
+    playerDestroyed = hostileStep.playerDestroyed
+
+    if (hostileStep.playerDestroyed) {
+      hostileMessage = "A hostile submarine rams your hull. Press R for a new run."
+    } else if (hostileStep.launchedTorpedoes.length > 0) {
+      hostileLaunchMessage = "Hostile contact. Incoming torpedo."
+    }
+  }
+
   const shockwaveStep = stepShockwaves(
     map,
     game.shockwaves,
     spawnedShockwaves,
     dust,
-    collectRevealableEntities(map.capsule, torpedoes, depthCharges, fallingBoulders),
+    collectRevealableEntities(
+      map.capsule,
+      torpedoes,
+      depthCharges,
+      pickups,
+      fallingBoulders,
+      hostileSubmarines,
+    ),
   )
-  const won =
-    nextPlayer.x === map.capsule.x && nextPlayer.y === map.capsule.y
+  const pickupStep = collectPickups(
+    {
+      ...game,
+      map,
+      player: { ...nextPlayer },
+      turn: nextTurn,
+      pickups,
+      torpedoAmmo,
+      depthChargeAmmo,
+    },
+    nextPlayer,
+    pickups,
+  )
+  pickups = pickupStep.pickups
+  torpedoAmmo = pickupStep.torpedoAmmo
+  depthChargeAmmo = pickupStep.depthChargeAmmo
 
+  const won = nextPlayer.x === map.capsule.x && nextPlayer.y === map.capsule.y
   const impactMessage = resolveImpactMessage(
     torpedoStep.impacts,
     depthChargeStep.impacts,
@@ -129,26 +222,35 @@ export function advanceTurn(
       map,
       player: { ...nextPlayer },
       turn: nextTurn,
-      status: won ? "won" : "playing",
+      status: playerDestroyed ? "lost" : won ? "won" : "playing",
       lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
       shockwaves: shockwaveStep.waves,
       shockwaveFront: shockwaveStep.front,
       torpedoes,
       depthCharges,
+      pickups,
       trails,
       dust,
       cracks,
       fallingBoulders,
+      hostileSubmarines,
       facing,
-      torpedoesRemaining,
+      torpedoAmmo,
+      depthChargeAmmo,
       screenShake,
-      message: won
+      message: playerDestroyed
+        ? hostileMessage ?? "Your submarine is destroyed. Press R for a new run."
+        : won
         ? "Capsule secured. Press R for a new run."
+        : pickupStep.message !== null
+        ? pickupStep.message
         : impactMessage !== null
         ? impactMessage
+        : hostileLaunchMessage !== null
+        ? hostileLaunchMessage
         : fallbackMessage,
     },
-    shockwaveStep.revealedTiles,
+    [...shockwaveStep.revealedTiles, ...pickupStep.tileReveals],
     shockwaveStep.revealedEntities,
   )
 }
@@ -168,12 +270,31 @@ function collectRevealableEntities(
   capsule: Point,
   torpedoes: GameState["torpedoes"],
   depthCharges: GameState["depthCharges"],
+  pickups: GameState["pickups"],
   fallingBoulders: GameState["fallingBoulders"],
+  hostileSubmarines: GameState["hostileSubmarines"],
 ): RevealableEntity[] {
   return [
     { kind: "capsule", position: { ...capsule } },
-    ...torpedoes.map((torpedo) => ({ kind: "torpedo" as const, position: { ...torpedo.position } })),
-    ...depthCharges.map((depthCharge) => ({ kind: "depth-charge" as const, position: { ...depthCharge.position } })),
-    ...fallingBoulders.map((boulder) => ({ kind: "boulder" as const, position: { ...boulder.position } })),
+    ...torpedoes.map((torpedo) => ({
+      kind: "torpedo" as const,
+      position: { ...torpedo.position },
+    })),
+    ...depthCharges.map((depthCharge) => ({
+      kind: "depth-charge" as const,
+      position: { ...depthCharge.position },
+    })),
+    ...pickups.map((pickup) => ({
+      kind: "item" as const,
+      position: { ...pickup.position },
+    })),
+    ...fallingBoulders.map((boulder) => ({
+      kind: "boulder" as const,
+      position: { ...boulder.position },
+    })),
+    ...hostileSubmarines.map((hostileSubmarine) => ({
+      kind: "hostile-submarine" as const,
+      position: { ...hostileSubmarine.position },
+    })),
   ]
 }

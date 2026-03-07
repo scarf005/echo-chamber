@@ -1,7 +1,13 @@
-import { MAX_TORPEDOES } from "./constants.ts"
+import {
+  DEFAULT_HOSTILE_SUBMARINE_COUNT,
+  START_DEPTH_CHARGES,
+  START_TORPEDOES,
+} from "./constants.ts"
+import { createCornerPickups } from "./items.ts"
 import type { GameOptions, GameState } from "./model.ts"
 import { refreshPerception } from "./perception.ts"
 import { generateMap } from "./mapgen.ts"
+import { spawnHostileSubmarines } from "./systems/hostiles.ts"
 
 export function createGame(options: GameOptions = {}): GameState {
   const map = generateMap({
@@ -12,6 +18,19 @@ export function createGame(options: GameOptions = {}): GameState {
     topology: 8,
     wallProbability: 0.45,
   })
+  const hostileSubmarines = spawnHostileSubmarines(
+    map,
+    map.seed,
+    options.hostileSubmarineCount ?? DEFAULT_HOSTILE_SUBMARINE_COUNT,
+  )
+  const occupiedByHostiles = new Set(
+    hostileSubmarines.map((hostileSubmarine) =>
+      `${hostileSubmarine.position.x}:${hostileSubmarine.position.y}`
+    ),
+  )
+  const pickups = createCornerPickups(map, map.seed).filter((pickup) =>
+    !occupiedByHostiles.has(`${pickup.position.x}:${pickup.position.y}`)
+  )
   const game: GameState = {
     map,
     player: { ...map.spawn },
@@ -29,14 +48,17 @@ export function createGame(options: GameOptions = {}): GameState {
     shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
+    pickups,
+    hostileSubmarines,
     trails: [],
     dust: [],
     cracks: [],
     fallingBoulders: [],
     facing: "right",
-    torpedoesRemaining: MAX_TORPEDOES,
+    torpedoAmmo: START_TORPEDOES,
+    depthChargeAmmo: START_DEPTH_CHARGES,
     screenShake: 0,
-    message: "Recover the capsule. Sonar cycles every 5 turns.",
+    message: "Recover the capsule. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
   }
 
   return refreshPerception(game, [], [])
