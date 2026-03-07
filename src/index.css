@@ -1,5 +1,14 @@
+@font-face {
+  font-family: "IBM3270";
+  src: url("/fonts/3270-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  font-family: "IBM Plex Mono", "Fira Mono", "SFMono-Regular", monospace;
+  --font-terminal: "IBM3270", "IBM Plex Mono", "Fira Mono", "SFMono-Regular", monospace;
+  font-family: var(--font-terminal);
   line-height: 1.4;
   font-weight: 400;
   color: #d9fff9;
