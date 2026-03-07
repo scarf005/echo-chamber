@@ -1,33 +1,103 @@
-import './app.css'
-import { useState } from 'preact/hooks'
-import preactLogo from './assets/preact.svg'
+import "./app.css"
+import { useEffect, useState } from "preact/hooks"
+
+import {
+  createGame,
+  createRandomSeed,
+  directionFromKey,
+  movePlayer,
+} from "./game/game.ts"
+import { FastilesViewport } from "./render/FastilesViewport.tsx"
+
+const DEFAULT_SEED = "echo-chamber"
 
 export function App() {
-  const [count, setCount] = useState(0)
+  const [seedInput, setSeedInput] = useState(DEFAULT_SEED)
+  const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
+
+  const startRun = (rawSeed: string) => {
+    const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
+    setSeedInput(normalizedSeed)
+    setGame(createGame({ seed: normalizedSeed }))
+  }
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target
+
+      if (target instanceof HTMLInputElement) {
+        if (event.key === "Enter") {
+          startRun(seedInput || createRandomSeed())
+        }
+
+        return
+      }
+
+      if (event.key === "r" || event.key === "R") {
+        startRun(createRandomSeed())
+        return
+      }
+
+      const direction = directionFromKey(event.key)
+
+      if (!direction) {
+        return
+      }
+
+      event.preventDefault()
+      setGame((current) => movePlayer(current, direction))
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [seedInput])
+
+  const sonarIn = ((3 - (game.turn % 3)) % 3) || 3
 
   return (
-    <>
-      <img src="/vite-deno.svg" alt="Vite with Deno" />
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" class="logo" alt="Vite logo" />
-        </a>
-        <a href="https://preactjs.com" target="_blank">
-          <img src={preactLogo} class="logo preact" alt="Preact logo" />
-        </a>
-      </div>
-      <h1>Vite + Preact</h1>
-      <div class="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <main class="game-shell">
+      <FastilesViewport game={game} />
+
+      <section class="hud hud-top-left">
+        <label class="seed-field">
+          <span>seed</span>
+          <input
+            type="text"
+            value={seedInput}
+            onInput={(event) => setSeedInput(event.currentTarget.value)}
+          />
+        </label>
+
+        <button
+          type="button"
+          onClick={() => startRun(seedInput)}
+        >
+          new run
         </button>
-        <p>
-          Edit <code>src/app.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p class="read-the-docs">
-        Click on the Vite and Preact logos to learn more
-      </p>
-    </>
+      </section>
+
+      <section class="hud hud-top-right">
+        <div>turn {game.turn}</div>
+        <div>sonar in {sonarIn}</div>
+        <div>
+          {game.status === "won" ? "capsule secured" : "recover capsule"}
+        </div>
+      </section>
+
+      <section class="hud hud-bottom-left">
+        <div>{game.message}</div>
+        <div>move with WASD or arrows</div>
+        <div>press R for random run</div>
+      </section>
+
+      {game.status === "won"
+        ? (
+          <section class="hud hud-center">
+            <strong>capsule secured</strong>
+            <span>press R for a new run</span>
+          </section>
+        )
+        : null}
+    </main>
   )
 }

@@ -1,25 +1,91 @@
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+.game-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #02070c;
+}
+
+.viewport {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+.game-canvas {
+  image-rendering: pixelated;
+}
+
+.hud {
+  position: absolute;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem 0.9rem;
+  background: rgba(3, 8, 12, 0.8);
+  border: 1px solid rgba(124, 208, 214, 0.28);
+  color: #d9fff9;
+  text-transform: lowercase;
+}
+
+.hud-top-left {
+  top: 1rem;
+  left: 1rem;
+}
+
+.hud-top-right {
+  top: 1rem;
+  right: 1rem;
+  text-align: right;
+}
+
+.hud-bottom-left {
+  left: 1rem;
+  bottom: 1rem;
+}
+
+.hud-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.preact:hover {
-  filter: drop-shadow(0 0 2em #673ab8aa);
+.seed-field {
+  display: grid;
+  gap: 0.25rem;
 }
 
-.card {
-  padding: 2em;
+.seed-field input,
+.hud button {
+  font: inherit;
+  color: inherit;
+  background: rgba(1, 17, 24, 0.92);
+  border: 1px solid rgba(124, 208, 214, 0.35);
+  padding: 0.45rem 0.55rem;
 }
 
-.read-the-docs {
-  color: #888;
+.seed-field input {
+  min-width: 12rem;
+}
+
+@media (max-width: 720px) {
+  .hud {
+    font-size: 0.85rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .hud-top-right {
+    top: auto;
+    right: 1rem;
+    bottom: 1rem;
+  }
+
+  .hud-bottom-left {
+    bottom: 5.8rem;
+  }
+
+  .seed-field input {
+    min-width: 10rem;
+  }
 }
