@@ -36,6 +36,12 @@ $ deno task build
 - [UnderWater_Explosion3 by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819745/)
 - `public/audio/underwater-explosion-far.mp3`
 - [UnderWater_ExplosionFar by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819746/)
+- `public/audio/sonar-tuned-to-f.mp3`
+- [Sonar (tuned to F).wav by kwahmah_02 (CC-BY-3.0)](https://freesound.org/people/kwahmah_02/sounds/268835/)
+- `public/audio/sonar-contact-kizilsungur.mp3`
+- [Sonar.wav by KIZILSUNGUR (CC0-1.0)](https://freesound.org/people/KIZILSUNGUR/sounds/70299/)
+- `public/audio/sonar-contact-digital.mp3`
+- [sonar.wav by digit-al (CC0-1.0)](https://freesound.org/people/digit-al/sounds/90340/)
 
 ### Font
 
