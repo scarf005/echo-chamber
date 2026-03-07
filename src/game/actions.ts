@@ -1,9 +1,12 @@
+import { Path } from "npm:rot-js@2.2.1"
+
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
+import { pointsEqual } from "./helpers.ts"
 import { withGameMessage } from "./log.ts"
 import type { Direction, GameState, HorizontalDirection } from "./model.ts"
 import { isPassableTile } from "./mapgen.ts"
 import { advanceTurn } from "./turn.ts"
-import { tileAt } from "./mapgen.ts"
+import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 
 export interface AutoMoveAnomaly {
   point: Point
@@ -36,7 +39,10 @@ export function findPath(
   return path
 }
 
-export function directionBetweenPoints(from: Point, to: Point): Direction | null {
+export function directionBetweenPoints(
+  from: Point,
+  to: Point,
+): Direction | null {
   if (pointsEqual(from, to)) {
     return null
   }
@@ -75,6 +81,19 @@ export function isAutoMoveNavigable(game: GameState, point: Point): boolean {
   }
 
   return game.memory[index] !== "wall"
+}
+
+export function findAutoMovePath(game: GameState, destination: Point): Point[] {
+  if (game.status !== "playing") {
+    return []
+  }
+
+  return findPath(
+    game.map,
+    game.player,
+    destination,
+    (point) => isAutoMoveNavigable(game, point),
+  )
 }
 
 export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {

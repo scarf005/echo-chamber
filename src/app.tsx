@@ -9,7 +9,7 @@ import {
   directionFromKey,
   dropDepthCharge,
   findAutoMoveAnomaly,
-  findPath,
+  findAutoMovePath,
   fireTorpedo,
   formatGroupedLogMessage,
   groupLogMessages,
@@ -141,13 +141,17 @@ export function App() {
   }
 
   const previewPath = previewTarget
-    ? findPath(
-      game.map,
-      game.player,
-      previewTarget,
-      (point) => isAutoMoveNavigable(game, point),
-    )
+    ? findAutoMovePath(game, previewTarget)
     : []
+
+  useEffect(() => {
+    if (game.status === "playing") {
+      return
+    }
+
+    setPreviewTarget(null)
+    setAutoMoveTarget(null)
+  }, [game.status])
 
   useEffect(() => {
     if (!autoMoveTarget) {
@@ -187,12 +191,7 @@ export function App() {
           )
         }
 
-        const path = findPath(
-          current.map,
-          current.player,
-          autoMoveTarget,
-          (point) => isAutoMoveNavigable(current, point),
-        )
+        const path = findAutoMovePath(current, autoMoveTarget)
 
         if (path.length < 2) {
           setAutoMoveTarget(null)
@@ -268,6 +267,10 @@ export function App() {
       return
     }
 
+    if (game.status !== "playing") {
+      return
+    }
+
     if (!isAutoMoveNavigable(game, point)) {
       setPreviewTarget(null)
       setAutoMoveTarget(null)
@@ -299,12 +302,7 @@ export function App() {
       return
     }
 
-    const nextPreviewPath = findPath(
-      game.map,
-      game.player,
-      point,
-      (candidate) => isAutoMoveNavigable(game, candidate),
-    )
+    const nextPreviewPath = findAutoMovePath(game, point)
 
     setPreviewTarget({ ...point })
     setAutoMoveTarget(null)
