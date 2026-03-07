@@ -2,8 +2,10 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/assert@*": "1.0.19",
+    "jsr:@std/assert@1": "1.0.19",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/random@*": "0.1.5",
+    "jsr:@std/random@0.1.5": "0.1.5",
     "npm:@deno/vite-plugin@^1.0.5": "1.0.6_vite@7.3.1",
     "npm:@preact/preset-vite@^2.10.2": "2.10.3_@babel+core@7.29.0_vite@7.3.1_preact@10.28.4",
     "npm:preact@^10.28.0": "10.28.4",
