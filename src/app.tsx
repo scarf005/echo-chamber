@@ -23,6 +23,7 @@ import {
   togglePlayerSonar,
   withGameMessage,
 } from "./game/game.ts"
+import type { GameState, HostileSubmarine } from "./game/game.ts"
 import { pointsEqual } from "./game/helpers.ts"
 import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
@@ -38,10 +39,13 @@ import {
   writeAudioSettings,
 } from "./audio/settings.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
+import type { RenderOptions } from "./render/options.ts"
 
 const DEFAULT_SEED = "echo-chamber"
 const AUTO_MOVE_DELAY_MS = 70
 const LOG_PANEL_LINES = 6
+const DEV_ENTITY_OVERLAY_STORAGE_KEY = "echo-chamber:dev-entity-overlay"
+const IS_DEV_BUILD = import.meta.env.DEV
 
 export function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
@@ -49,6 +53,10 @@ export function App() {
   const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
   const [previewTarget, setPreviewTarget] = useState<Point | null>(null)
   const [autoMoveTarget, setAutoMoveTarget] = useState<Point | null>(null)
+  const [hoveredTile, setHoveredTile] = useState<Point | null>(null)
+  const [showDevEntityOverlay, setShowDevEntityOverlay] = useState(() =>
+    readDevEntityOverlaySetting(getBrowserStorage())
+  )
   const [audioSettings, setAudioSettings] = useState<AudioSettings>(() =>
     readAudioSettings(getBrowserStorage())
   )
@@ -183,6 +191,10 @@ export function App() {
     writeAudioSettings(getBrowserStorage(), audioSettings)
   }, [audioSettings, game.playerSonarEnabled, game.status])
 
+  useEffect(() => {
+    writeDevEntityOverlaySetting(getBrowserStorage(), showDevEntityOverlay)
+  }, [showDevEntityOverlay])
+
   const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
     void explosionSfxRef.current?.ensureStarted()
@@ -195,6 +207,7 @@ export function App() {
     setRunSeed(normalizedSeed)
     setPreviewTarget(null)
     setAutoMoveTarget(null)
+    setHoveredTile(null)
     resetAutoMoveSeenAnomalies()
     setGame(createGame({ seed: normalizedSeed }))
   }
@@ -208,6 +221,7 @@ export function App() {
 
     setPreviewTarget(null)
     setAutoMoveTarget(null)
+    setHoveredTile(null)
     resetAutoMoveSeenAnomalies()
   }, [game.status])
 
@@ -510,6 +524,13 @@ export function App() {
   const visibleLogMessages = groupLogMessages(game.logs)
     .slice(-LOG_PANEL_LINES)
     .map(formatGroupedLogMessage)
+  const renderOptions: RenderOptions = {
+    debugEntityOverlay: IS_DEV_BUILD && showDevEntityOverlay,
+    debugPlannedPaths: IS_DEV_BUILD,
+  }
+  const hoveredInspectorRows = IS_DEV_BUILD
+    ? describeHoveredTile(game, hoveredTile)
+    : null
 
   const handleMusicEnabledChange = (
     event: JSX.TargetedEvent<HTMLInputElement>,
@@ -551,6 +572,11 @@ export function App() {
     }))
   }
 
+  const handleDevEntityOverlayChange = (
+    event: JSX.TargetedEvent<HTMLInputElement>,
+  ) => {
+    setShowDevEntityOverlay(event.currentTarget.checked)
+  }
 
   return (
     <main class="game-shell">
@@ -560,6 +586,8 @@ export function App() {
           selectedTarget={previewTarget}
           previewPath={previewPath}
           onTileClick={handleViewportTileClick}
+          onTileHover={setHoveredTile}
+          renderOptions={renderOptions}
         />
       </section>
 
@@ -612,13 +640,36 @@ export function App() {
 
         <section class="sidebar-panel">
           <div class="sidebar-heading">orders</div>
-          {visibleLogMessages.map((message, index) => (
-            <div class="sidebar-copy" key={`${index}:${message}`}>
-              {message}
-            </div>
-          ))}
+          <div class="sidebar-text-block">{visibleLogMessages.join("\n")}</div>
         </section>
 
+        {IS_DEV_BUILD
+          ? (
+            <section class="sidebar-panel">
+              <div class="sidebar-heading">inspector</div>
+              <div class="stat-row">
+                <span>hover tile</span>
+                <strong>{hoveredTile ? formatPoint(hoveredTile) : "--"}</strong>
+              </div>
+              {hoveredInspectorRows
+                ? (
+                  <div class="dev-inspector-grid">
+                    {hoveredInspectorRows.map((row) => (
+                      <div class="stat-row" key={row.label}>
+                        <span>{row.label}</span>
+                        <strong>{row.value}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )
+                : (
+                  <div class="sidebar-text-block">
+                    hover any tile to inspect terrain and entities.
+                  </div>
+                )}
+            </section>
+          )
+          : null}
       </aside>
 
       {isOptionsOpen
@@ -710,6 +761,31 @@ export function App() {
                   </div>
                 </div>
               </div>
+              {IS_DEV_BUILD
+                ? (
+                  <>
+                    <div class="sidebar-heading">dev</div>
+                    <div class="audio-controls">
+                      <div class="audio-setting">
+                        <span>map overlay</span>
+                        <div class="audio-setting-row">
+                          <span>
+                            show exact entities at 50% opacity
+                          </span>
+                          <input
+                            class="audio-toggle"
+                            type="checkbox"
+                            checked={showDevEntityOverlay}
+                            aria-label="show dev entity overlay"
+                            onChange={handleDevEntityOverlayChange}
+                          />
+                          <strong>{showDevEntityOverlay ? "ON" : "OFF"}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )
+                : null}
               <div class="sidebar-heading">credits</div>
               <div class="credit-list">
                 <a
@@ -776,6 +852,22 @@ export function App() {
                 >
                   Sonar (tuned to F).wav by kwahmah_02 (CC-BY-3.0)
                 </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/KIZILSUNGUR/sounds/70299/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Sonar.wav by KIZILSUNGUR (CC0-1.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/digit-al/sounds/90340/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  sonar.wav by digit-al (CC0-1.0)
+                </a>
               </div>
             </section>
           </div>
@@ -824,6 +916,208 @@ function formatBearing(from: Point, to: Point): string {
     default:
       return ""
   }
+}
+
+function formatVector(vector: Point): string {
+  return `${vector.x},${vector.y}`
+}
+
+type InspectorRow = {
+  label: string
+  value: string
+}
+
+function describeHostileIntent(hostileSubmarine: HostileSubmarine): string {
+  switch (hostileSubmarine.mode) {
+    case "retreat":
+      return hostileSubmarine.target
+        ? `retreating to ${formatPoint(hostileSubmarine.target)}`
+        : "retreating"
+    case "attack":
+      return hostileSubmarine.target
+        ? `pressing attack at ${formatPoint(hostileSubmarine.target)}`
+        : "pressing attack"
+    case "investigate":
+      return hostileSubmarine.target
+        ? `investigating ${formatPoint(hostileSubmarine.target)}`
+        : "investigating"
+    case "patrol":
+      return hostileSubmarine.target
+        ? `holding near ${formatPoint(hostileSubmarine.target)}`
+        : "patrolling"
+  }
+}
+
+function describeHoveredTile(
+  game: GameState,
+  point: Point | null,
+): InspectorRow[] | null {
+  if (!point) {
+    return null
+  }
+
+  const index = point.y * game.map.width + point.x
+  const rows: InspectorRow[] = [
+    { label: "terrain", value: tileAt(game.map, point.x, point.y) ?? "void" },
+    { label: "visibility", value: String(game.visibility[index] ?? 0) },
+    { label: "memory", value: game.memory[index] ?? "unknown" },
+    { label: "entity memory", value: game.entityMemory?.[index] ?? "--" },
+  ]
+
+  if (point.x === game.player.x && point.y === game.player.y) {
+    rows.push({ label: "entity", value: "player submarine" })
+    rows.push({ label: "facing", value: game.facing })
+  }
+
+  if (point.x === game.map.capsule.x && point.y === game.map.capsule.y) {
+    rows.push({ label: "objective", value: "capsule" })
+  }
+
+  const hostileSubmarine = game.hostileSubmarines.find((candidate) =>
+    candidate.position.x === point.x && candidate.position.y === point.y
+  )
+
+  if (hostileSubmarine) {
+    rows.push({ label: "entity", value: "enemy submarine" })
+    rows.push({ label: "enemy id", value: hostileSubmarine.id })
+    rows.push({ label: "ai", value: hostileSubmarine.archetype ?? "hunter" })
+    rows.push({ label: "mode", value: hostileSubmarine.mode })
+    rows.push({
+      label: "intent",
+      value: describeHostileIntent(hostileSubmarine),
+    })
+    rows.push({
+      label: "initial",
+      value: hostileSubmarine.initialPosition
+        ? formatPoint(hostileSubmarine.initialPosition)
+        : "--",
+    })
+    rows.push({
+      label: "target",
+      value: hostileSubmarine.target
+        ? formatPoint(hostileSubmarine.target)
+        : "--",
+    })
+    rows.push({
+      label: "last known player",
+      value: hostileSubmarine.lastKnownPlayerPosition
+        ? formatPoint(hostileSubmarine.lastKnownPlayerPosition)
+        : "--",
+    })
+    rows.push({
+      label: "player vector",
+      value: hostileSubmarine.lastKnownPlayerVector
+        ? formatVector(hostileSubmarine.lastKnownPlayerVector)
+        : "--",
+    })
+    rows.push({
+      label: "last known turn",
+      value: String(hostileSubmarine.lastKnownPlayerTurn ?? "--"),
+    })
+    rows.push({ label: "reload", value: String(hostileSubmarine.reload) })
+    rows.push({
+      label: "torpedoes",
+      value: String(hostileSubmarine.torpedoAmmo ?? "--"),
+    })
+    rows.push({ label: "vls", value: String(hostileSubmarine.vlsAmmo ?? "--") })
+    rows.push({
+      label: "depth charges",
+      value: String(hostileSubmarine.depthChargeAmmo ?? "--"),
+    })
+    rows.push({
+      label: "last sonar",
+      value: String(hostileSubmarine.lastSonarTurn ?? "--"),
+    })
+    rows.push({
+      label: "planned path",
+      value:
+        hostileSubmarine.plannedPath && hostileSubmarine.plannedPath.length > 1
+          ? hostileSubmarine.plannedPath.map(formatPoint).join(" -> ")
+          : "--",
+    })
+  }
+
+  const pickup = game.pickups.find((candidate) =>
+    candidate.position.x === point.x && candidate.position.y === point.y
+  )
+
+  if (pickup) {
+    rows.push({ label: "entity", value: "item" })
+    rows.push({ label: "item kind", value: pickup.kind })
+  }
+
+  const torpedo = game.torpedoes.find((candidate) =>
+    candidate.position.x === point.x && candidate.position.y === point.y
+  )
+
+  if (torpedo) {
+    rows.push({ label: "entity", value: "torpedo" })
+    rows.push({ label: "direction", value: torpedo.direction })
+    rows.push({ label: "sender", value: torpedo.senderId })
+    rows.push({ label: "range", value: String(torpedo.rangeRemaining) })
+  }
+
+  const depthCharge = game.depthCharges.find((candidate) =>
+    candidate.position.x === point.x && candidate.position.y === point.y
+  )
+
+  if (depthCharge) {
+    rows.push({ label: "entity", value: "depth charge" })
+    rows.push({ label: "sender", value: depthCharge.senderId })
+    rows.push({ label: "range", value: String(depthCharge.rangeRemaining) })
+  }
+
+  if (
+    game.fallingBoulders.some((candidate) =>
+      candidate.position.x === point.x && candidate.position.y === point.y
+    )
+  ) {
+    rows.push({ label: "entity", value: "falling boulder" })
+  }
+
+  if (game.shockwaveFront.some((cell) => cell.index === index)) {
+    rows.push({ label: "effect", value: "shockwave front" })
+  }
+
+  if (game.trails.some((cell) => cell.index === index)) {
+    rows.push({ label: "effect", value: "bubble trail" })
+  }
+
+  if (game.dust.some((cell) => cell.index === index)) {
+    rows.push({ label: "effect", value: "dust" })
+  }
+
+  if (game.cracks.some((cell) => cell.index === index)) {
+    rows.push({ label: "effect", value: "crack" })
+  }
+
+  return rows
+}
+
+function readDevEntityOverlaySetting(
+  storage: Pick<Storage, "getItem"> | null,
+): boolean {
+  if (!IS_DEV_BUILD || !storage) {
+    return IS_DEV_BUILD
+  }
+
+  try {
+    const raw = storage.getItem(DEV_ENTITY_OVERLAY_STORAGE_KEY)
+    return raw === null ? true : raw === "true"
+  } catch {
+    return true
+  }
+}
+
+function writeDevEntityOverlaySetting(
+  storage: Pick<Storage, "setItem"> | null,
+  enabled: boolean,
+): void {
+  if (!IS_DEV_BUILD || !storage) {
+    return
+  }
+
+  storage.setItem(DEV_ENTITY_OVERLAY_STORAGE_KEY, String(enabled))
 }
 
 function getBrowserStorage(): Storage | null {
