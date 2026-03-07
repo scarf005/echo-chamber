@@ -1,15 +1,26 @@
-import { MAX_SONAR_RADIUS, SONAR_DUST_BLOCK_THRESHOLD, SONAR_SPEED } from "../constants.ts"
+import {
+  MAX_SONAR_RADIUS,
+  SONAR_DUST_BLOCK_THRESHOLD,
+  SONAR_ENTITY_IDENTIFY_RADIUS,
+  SONAR_SPEED,
+} from "../constants.ts"
 import { indexAlphaLookup } from "../effects.ts"
 import { bresenhamLine, euclideanDistance, indexForPoint } from "../helpers.ts"
 import type {
   EntityReveal,
+  EntityRevealKind,
   FadeCell,
   RevealableEntity,
   RevealableEntityKind,
   Shockwave,
   TileReveal,
 } from "../model.ts"
-import { tileAt, type GeneratedMap, type Point, type TileKind } from "../mapgen.ts"
+import {
+  type GeneratedMap,
+  type Point,
+  tileAt,
+  type TileKind,
+} from "../mapgen.ts"
 
 export function stepShockwaves(
   map: GeneratedMap,
@@ -24,12 +35,16 @@ export function stepShockwaves(
   revealedTiles: TileReveal[]
   revealedEntities: EntityReveal[]
 } {
-  const front = new Map<number, number>()
+  const front = new Map<number, FadeCell>()
   const revealedTiles = new Map<number, TileKind>()
   const revealedEntities = new Map<string, EntityReveal>()
   const dustByIndex = indexAlphaLookup(dust)
   const entitiesByIndex = buildEntitiesByIndex(map.width, revealableEntities)
-  const blockerIndexes = buildBlockerIndexes(map.width, revealableEntities, trails)
+  const blockerIndexes = buildBlockerIndexes(
+    map.width,
+    revealableEntities,
+    trails,
+  )
   const nextWaves: Shockwave[] = []
 
   for (const wave of waves) {
@@ -48,7 +63,13 @@ export function stepShockwaves(
   }
 
   for (const wave of spawnedWaves) {
-    front.set(indexForPoint(map.width, wave.origin), 1)
+    mergeFrontCell(
+      front,
+      indexForPoint(map.width, wave.origin),
+      1,
+      wave.senderId !== "player",
+    )
+
     advanceShockwave(
       map,
       wave,
@@ -65,8 +86,11 @@ export function stepShockwaves(
 
   return {
     waves: nextWaves,
-    front: Array.from(front, ([index, alpha]) => ({ index, alpha })),
-    revealedTiles: Array.from(revealedTiles, ([index, tile]) => ({ index, tile })),
+    front: Array.from(front.values()),
+    revealedTiles: Array.from(
+      revealedTiles,
+      ([index, tile]) => ({ index, tile }),
+    ),
     revealedEntities: Array.from(revealedEntities.values()),
   }
 }
@@ -77,7 +101,7 @@ function advanceShockwave(
   dustByIndex: Map<number, number>,
   entitiesByIndex: Map<number, RevealableEntityKind[]>,
   blockerIndexes: Set<number>,
-  front: Map<number, number>,
+  front: Map<number, FadeCell>,
   revealedTiles: Map<number, TileKind>,
   revealedEntities: Map<string, EntityReveal>,
   nextWaves: Shockwave[],
@@ -95,7 +119,7 @@ function advanceShockwave(
   )
 
   for (const [index, alpha] of trace.front) {
-    front.set(index, Math.max(front.get(index) ?? 0, alpha))
+    mergeFrontCell(front, index, alpha, wave.senderId !== "player")
   }
 
   trace.revealedTiles.forEach((tile, index) => revealedTiles.set(index, tile))
@@ -121,11 +145,11 @@ function traceWaveBand(
 ): {
   front: Map<number, number>
   revealedTiles: Map<number, TileKind>
-  revealedEntities: Map<string, RevealableEntityKind>
+  revealedEntities: Map<string, EntityRevealKind>
 } {
   const front = new Map<number, number>()
   const revealedTiles = new Map<number, TileKind>()
-  const revealedEntities = new Map<string, RevealableEntityKind>()
+  const revealedEntities = new Map<string, EntityRevealKind>()
   const rayCount = Math.max(64, Math.ceil(nextRadius * 18))
 
   for (let index = 0; index < rayCount; index += 1) {
@@ -155,7 +179,10 @@ function traceWaveBand(
 
       if (dustAlpha >= SONAR_DUST_BLOCK_THRESHOLD) {
         if (distance > previousRadius) {
-          front.set(mapIndex, Math.max(front.get(mapIndex) ?? 0, waveAlpha(distance) * 0.6))
+          front.set(
+            mapIndex,
+            Math.max(front.get(mapIndex) ?? 0, waveAlpha(distance) * 0.6),
+          )
         }
 
         break
@@ -168,7 +195,12 @@ function traceWaveBand(
           }
 
           if (wave.revealEntities) {
-            revealEntitiesAtIndex(revealedEntities, entitiesByIndex.get(mapIndex), mapIndex)
+            revealEntitiesAtIndex(
+              revealedEntities,
+              entitiesByIndex.get(mapIndex),
+              mapIndex,
+              distance,
+            )
           }
 
           front.set(mapIndex, waveAlpha(distance))
@@ -183,7 +215,12 @@ function traceWaveBand(
         }
 
         if (wave.revealEntities) {
-          revealEntitiesAtIndex(revealedEntities, entitiesByIndex.get(mapIndex), mapIndex)
+          revealEntitiesAtIndex(
+            revealedEntities,
+            entitiesByIndex.get(mapIndex),
+            mapIndex,
+            distance,
+          )
         }
 
         front.set(mapIndex, waveAlpha(distance))
@@ -233,19 +270,66 @@ function buildEntitiesByIndex(
 }
 
 function revealEntitiesAtIndex(
-  reveals: Map<string, RevealableEntityKind>,
+  reveals: Map<string, EntityRevealKind>,
   kinds: RevealableEntityKind[] | undefined,
   index: number,
+  distance: number,
 ): void {
-  if (!kinds) {
+  if (!kinds || distance >= SONAR_ENTITY_IDENTIFY_RADIUS) {
     return
   }
 
   for (const kind of kinds) {
-    reveals.set(`${index}:${kind}`, kind)
+    const revealedKind = toEntityRevealKind(kind)
+
+    if (!revealedKind) {
+      continue
+    }
+
+    reveals.set(`${index}:${revealedKind}`, revealedKind)
+  }
+}
+
+function toEntityRevealKind(
+  kind: RevealableEntityKind,
+): EntityRevealKind | null {
+  switch (kind) {
+    case "player":
+      return "player"
+    case "capsule":
+      return "capsule"
+    case "item":
+      return "item"
+    case "hostile-submarine":
+      return "enemy"
+    default:
+      return null
   }
 }
 
 function waveAlpha(distance: number): number {
-  return Math.max(0.18, Number((1 - distance / (MAX_SONAR_RADIUS + 1)).toFixed(3)))
+  return Math.max(
+    0.18,
+    Number((1 - distance / (MAX_SONAR_RADIUS + 1)).toFixed(3)),
+  )
+}
+
+function mergeFrontCell(
+  front: Map<number, FadeCell>,
+  index: number,
+  alpha: number,
+  requiresVisibility: boolean,
+): void {
+  const current = front.get(index)
+
+  if (!current) {
+    front.set(index, { index, alpha, requiresVisibility })
+    return
+  }
+
+  front.set(index, {
+    index,
+    alpha: Math.max(current.alpha, alpha),
+    requiresVisibility: current.requiresVisibility && requiresVisibility,
+  })
 }

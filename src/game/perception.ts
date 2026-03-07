@@ -72,7 +72,13 @@ export function refreshPerception(
   }
 
   for (const pickup of game.pickups) {
-    rememberVisibleEntity(entityMemory, visibility, game.map.width, pickup.position, "item")
+    rememberVisibleEntity(
+      entityMemory,
+      visibility,
+      game.map.width,
+      pickup.position,
+      "item",
+    )
   }
 
   for (const hostileSubmarine of game.hostileSubmarines) {
@@ -81,7 +87,7 @@ export function refreshPerception(
       visibility,
       game.map.width,
       hostileSubmarine.position,
-      "hostile-submarine",
+      "enemy",
     )
   }
 
@@ -101,8 +107,10 @@ function clearEntityMemory(
   entityMemory[index] = null
 }
 
-function isRememberedEntity(kind: EntityReveal["kind"]): kind is EntityMemoryKind {
-  return kind === "item" || kind === "hostile-submarine"
+function isRememberedEntity(
+  kind: EntityReveal["kind"],
+): kind is EntityMemoryKind {
+  return kind === "item" || kind === "enemy"
 }
 
 function rememberVisibleEntity(
