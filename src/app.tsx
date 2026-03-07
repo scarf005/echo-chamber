@@ -29,6 +29,7 @@ import { createMovementLoop } from "./audio/movementLoop.ts"
 import { createSonarLoop } from "./audio/sonarLoop.ts"
 import {
   type AudioSettings,
+import { createSonarContactSfx } from "./audio/sonarContactSfx.ts"
   levelToSliderPercent,
   readAudioSettings,
   sliderPercentToLevel,
@@ -71,9 +72,13 @@ export function App() {
     const backgroundMusic = createBackgroundMusic()
     const explosionSfx = createExplosionSfx()
     const movementLoop = createMovementLoop()
+  const sonarContactSfxRef = useRef<
+    ReturnType<typeof createSonarContactSfx> | null
+  >(null)
     const sonarLoop = createSonarLoop()
     backgroundMusicRef.current = backgroundMusic
     explosionSfxRef.current = explosionSfx
+  const playedSonarContactCueCountRef = useRef(0)
     movementLoopRef.current = movementLoop
     sonarLoopRef.current = sonarLoop
 
@@ -103,11 +108,13 @@ export function App() {
 
   useEffect(() => {
     const nextCounts = new Map<string, number>()
+    const sonarContactSfx = createSonarContactSfx()
 
     for (const shockwave of game.shockwaves) {
       if (!shockwave.damaging) {
         continue
       }
+    sonarContactSfxRef.current = sonarContactSfx
 
       const key =
         `${shockwave.origin.x}:${shockwave.origin.y}:${shockwave.senderId}`
@@ -115,6 +122,7 @@ export function App() {
       nextCounts.set(key, nextCount)
 
       if (nextCount <= (playedExplosionCountsRef.current.get(key) ?? 0)) {
+      void sonarContactSfx.ensureStarted()
         continue
       }
 
@@ -128,14 +136,17 @@ export function App() {
     playedExplosionCountsRef.current = nextCounts
   }, [game])
 
+      sonarContactSfxRef.current = null
   useEffect(() => {
     backgroundMusicRef.current?.setVolume(audioSettings.musicVolume)
     backgroundMusicRef.current?.setEnabled(audioSettings.musicEnabled)
     movementLoopRef.current?.setVolume(audioSettings.sfxVolume)
     movementLoopRef.current?.setEnabled(audioSettings.sfxEnabled)
+      sonarContactSfx.dispose()
     sonarLoopRef.current?.setVolume(audioSettings.sfxVolume)
     sonarLoopRef.current?.setEnabled(
-      audioSettings.sfxEnabled && isPlayerSonarEnabled(game),
+      audioSettings.sfxEnabled && isPlayerSonarEnabled(game) &&
+        game.status === "playing",
     )
     explosionSfxRef.current?.setVolume(audioSettings.sfxVolume)
     explosionSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
@@ -166,12 +177,25 @@ export function App() {
   }, [game.status])
 
   useEffect(() => {
+    const cueCount = game.playerSonarContactCueCount ?? 0
+
+    if (cueCount <= playedSonarContactCueCountRef.current) {
+      return
+    }
+
+    playedSonarContactCueCountRef.current = cueCount
+    void sonarContactSfxRef.current?.playContactPing()
+  }, [game.playerSonarContactCueCount])
+
+  useEffect(() => {
     if (!autoMoveTarget) {
       return
     }
 
     if (isOptionsOpen || game.status !== "playing") {
       setAutoMoveTarget(null)
+    sonarContactSfxRef.current?.setVolume(audioSettings.sfxVolume)
+    sonarContactSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
       return
     }
 
@@ -183,6 +207,7 @@ export function App() {
     const timeoutId = window.setTimeout(() => {
       setGame((current) => {
         if (current.status !== "playing") {
+  }, [audioSettings, game.playerSonarEnabled, game.status])
           setAutoMoveTarget(null)
           return current
         }
@@ -193,6 +218,9 @@ export function App() {
           setAutoMoveTarget(null)
           return withGameMessage(
             {
+    void sonarContactSfxRef.current?.ensureStarted()
+    void sonarLoopRef.current?.ensureStarted()
+    playedSonarContactCueCountRef.current = 0
               ...current,
             },
             createAutoMoveStopMessage(
@@ -748,3 +776,19 @@ function formatBearing(from: Point, to: Point): string {
 function getBrowserStorage(): Storage | null {
   return typeof window === "undefined" ? null : window.localStorage
 }
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/KIZILSUNGUR/sounds/70299/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Sonar.wav by KIZILSUNGUR (CC0-1.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/digit-al/sounds/90340/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  sonar.wav by digit-al (CC0-1.0)
+                </a>
