@@ -61,9 +61,10 @@ Deno.test("sonar emits on the fifth successful move", () => {
 
   assertEquals(current.turn, 5)
   assertEquals(current.lastSonarTurn, 5)
-  assertEquals(current.sonarWaves.length > 0, true)
+  assertEquals(current.shockwaves.length > 0, true)
+  assertEquals(current.shockwaves.some((wave) => wave.radius === 2 && wave.senderId === "player"), true)
   assertEquals(
-    current.sonarFront.some((cell) =>
+    current.shockwaveFront.some((cell) =>
       cell.index === current.player.y * current.map.width + current.player.x
     ),
     true,
@@ -102,8 +103,7 @@ Deno.test("passive visibility uses 1 tile exact and 2 tiles coarse", () => {
 Deno.test("sonar wave stops at walls and does not reveal behind them", () => {
   const game = createSonarWallGame()
   const emitted = movePlayer(game, "right")
-  const propagated = movePlayer(emitted, "right")
-  const next = movePlayer(propagated, "right")
+  const next = movePlayer(emitted, "right")
   const wallIndex = emitted.player.y * emitted.map.width + 6
   const hiddenIndex = emitted.player.y * emitted.map.width + 7
 
@@ -112,6 +112,14 @@ Deno.test("sonar wave stops at walls and does not reveal behind them", () => {
   assert(next.visibility[wallIndex] > 0)
   assertEquals(next.memory[hiddenIndex], null)
   assertEquals(next.visibility[hiddenIndex], 0)
+})
+
+Deno.test("sonar reveals the capsule entity without requiring exact passive vision", () => {
+  const game = createCapsuleSonarGame()
+  const next = movePlayer(game, "right")
+
+  assertEquals(next.lastSonarTurn, 5)
+  assertEquals(next.capsuleKnown, true)
 })
 
 Deno.test("fireTorpedo uses facing, deforms walls, and emits a shockwave", () => {
@@ -123,7 +131,10 @@ Deno.test("fireTorpedo uses facing, deforms walls, and emits a shockwave", () =>
   assertEquals(next.torpedoesRemaining, 5)
   assertEquals(next.map.tiles[impactIndex], "water")
   assert(next.trails.length > 0)
-  assert(next.sonarFront.some((cell) => cell.index === impactIndex))
+  assert(next.shockwaveFront.some((cell) => cell.index === impactIndex))
+  assertEquals(next.shockwaves.some((wave) => wave.radius === 2 && wave.damaging), true)
+  assertEquals(next.shockwaves.some((wave) => wave.senderId === "player"), true)
+  assertEquals(next.memory[impactIndex], null)
   assert(next.screenShake > 0)
   assertEquals(next.torpedoes.length, 0)
 })
@@ -177,7 +188,7 @@ Deno.test("depth charge falls with bubbles and detonates near obstacles", () => 
 
   assertEquals(settled.depthCharges.length, 0)
   assertEquals(settled.map.tiles[obstacleIndex], "water")
-  assert(settled.sonarFront.some((cell) => cell.index === detonationIndex))
+  assert(settled.shockwaveFront.some((cell) => cell.index === detonationIndex))
   assert(settled.screenShake > 0)
 })
 
@@ -312,8 +323,8 @@ function createFlatGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -350,8 +361,8 @@ function createSonarWallGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -388,8 +399,8 @@ function createTorpedoTestGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -426,8 +437,8 @@ function createLeftTorpedoTestGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -465,8 +476,46 @@ function createDepthChargeTestGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoesRemaining: 6,
+    screenShake: 0,
+    message: "",
+  }
+}
+
+function createCapsuleSonarGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "########",
+      "#......#",
+      "#......#",
+      "#......#",
+      "########",
+    ],
+    { x: 1, y: 2 },
+    { x: 5, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "capsule-sonar-test",
+    turn: 4,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -508,8 +557,8 @@ function createCaveInTestGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -551,8 +600,8 @@ function createLargeDetachedChunkGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
@@ -591,8 +640,8 @@ function createDustSonarGame(): GameState {
     memory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
-    sonarWaves: [],
-    sonarFront: [],
+    shockwaves: [],
+    shockwaveFront: [],
     torpedoes: [],
     depthCharges: [],
     trails: [],
