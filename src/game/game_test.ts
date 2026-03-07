@@ -6,9 +6,11 @@ import {
   advanceTurn,
   createGame,
   type Direction,
+  directionBetweenPoints,
   dropDepthCharge,
   findAutoMoveAnomaly,
-  findPath as findAStarPath,
+  findAutoMovePath,
+  findPath,
   fireTorpedo,
   type GameState,
   holdPosition,
@@ -23,14 +25,29 @@ import {
 } from "./mapgen.ts"
 
 Deno.test("createGame is deterministic for the same seed", () => {
-  const first = createGame({ seed: "playable-seed", width: 48, height: 24, hostileSubmarineCount: 0 })
-  const second = createGame({ seed: "playable-seed", width: 48, height: 24, hostileSubmarineCount: 0 })
+  const first = createGame({
+    seed: "playable-seed",
+    width: 48,
+    height: 24,
+    hostileSubmarineCount: 0,
+  })
+  const second = createGame({
+    seed: "playable-seed",
+    width: 48,
+    height: 24,
+    hostileSubmarineCount: 0,
+  })
 
   assertEquals(first, second)
 })
 
 Deno.test("movePlayer advances into an adjacent passable cell", () => {
-  const game = createGame({ seed: "movement-seed", width: 48, height: 24, hostileSubmarineCount: 0 })
+  const game = createGame({
+    seed: "movement-seed",
+    width: 48,
+    height: 24,
+    hostileSubmarineCount: 0,
+  })
   const direction = findFirstStepDirection(game.map, game.player)
 
   assert(direction)
@@ -44,7 +61,7 @@ Deno.test("movePlayer advances into an adjacent passable cell", () => {
 Deno.test("findPath returns an empty route for an impassable destination", () => {
   const game = createFlatGame()
 
-  assertEquals(findAStarPath(game.map, game.player, { x: 0, y: 0 }), [])
+  assertEquals(findPath(game.map, game.player, { x: 0, y: 0 }), [])
 })
 
 Deno.test("auto-move navigates into unknown tiles but rejects charted walls", () => {
@@ -86,6 +103,15 @@ Deno.test("auto-move anomalies keep partial hostile contacts generic", () => {
   })
 })
 
+Deno.test("auto-move pathfinding stops once the run is over", () => {
+  const game = createFlatGame()
+  const destination = { x: game.player.x + 2, y: game.player.y }
+
+  assert(findAutoMovePath(game, destination).length > 0)
+  assertEquals(findAutoMovePath({ ...game, status: "lost" }, destination), [])
+  assertEquals(findAutoMovePath({ ...game, status: "won" }, destination), [])
+})
+
 Deno.test("auto-move anomalies report exact hostile contact at full visibility", () => {
   const game = createFlatGame()
   const contact = { x: 4, y: 2 }
@@ -116,7 +142,32 @@ Deno.test("moving submarines leave bubble trails at their previous position", ()
   const next = movePlayer(game, "right")
   const trailIndex = game.player.y * game.map.width + game.player.x
 
-  assert(next.trails.some((cell) => cell.index === trailIndex && cell.alpha >= 0.68))
+  assert(
+    next.trails.some((cell) => cell.index === trailIndex && cell.alpha >= 0.68),
+  )
+})
+
+Deno.test("bubble trails last 20 turns and fade by five percent per turn", () => {
+  const game = createFlatGame()
+  const moved = movePlayer(game, "right")
+  const trailIndex = game.player.y * game.map.width + game.player.x
+
+  let current = moved
+
+  for (let turn = 0; turn < 19; turn += 1) {
+    current = holdPosition(current)
+  }
+
+  assertEquals(
+    current.trails.find((cell) => cell.index === trailIndex)?.alpha,
+    0.05,
+  )
+
+  assertEquals(current.trails.some((cell) => cell.index === trailIndex), true)
+
+  current = holdPosition(current)
+
+  assertEquals(current.trails.some((cell) => cell.index === trailIndex), false)
 })
 
 Deno.test("holdPosition consumes a turn without moving the submarine", () => {
@@ -148,11 +199,21 @@ Deno.test("holdPosition emits sonar when it lands on the fifth turn", () => {
   assertEquals(next.turn, 5)
   assertEquals(next.player, game.player)
   assertEquals(next.lastSonarTurn, 5)
-  assertEquals(next.shockwaves.some((wave) => wave.radius === 2 && wave.senderId === "player"), true)
+  assertEquals(
+    next.shockwaves.some((wave) =>
+      wave.radius === 2 && wave.senderId === "player"
+    ),
+    true,
+  )
 })
 
 Deno.test("sonar emits on the fifth successful move", () => {
-  const game = createGame({ seed: "sonar-seed", width: 48, height: 24, hostileSubmarineCount: 0 })
+  const game = createGame({
+    seed: "sonar-seed",
+    width: 48,
+    height: 24,
+    hostileSubmarineCount: 0,
+  })
   const path = findPath(game.map, game.player, game.map.capsule)
 
   assert(path.length > 5)
@@ -169,7 +230,12 @@ Deno.test("sonar emits on the fifth successful move", () => {
   assertEquals(current.turn, 5)
   assertEquals(current.lastSonarTurn, 5)
   assertEquals(current.shockwaves.length > 0, true)
-  assertEquals(current.shockwaves.some((wave) => wave.radius === 2 && wave.senderId === "player"), true)
+  assertEquals(
+    current.shockwaves.some((wave) =>
+      wave.radius === 2 && wave.senderId === "player"
+    ),
+    true,
+  )
   assertEquals(
     current.shockwaveFront.some((cell) =>
       cell.index === current.player.y * current.map.width + current.player.x
@@ -179,7 +245,12 @@ Deno.test("sonar emits on the fifth successful move", () => {
 })
 
 Deno.test("game can be won by following a valid path to the capsule", () => {
-  const game = createGame({ seed: "win-seed", width: 48, height: 24, hostileSubmarineCount: 0 })
+  const game = createGame({
+    seed: "win-seed",
+    width: 48,
+    height: 24,
+    hostileSubmarineCount: 0,
+  })
   const path = findPath(game.map, game.player, game.map.capsule)
 
   let current = game
@@ -239,7 +310,10 @@ Deno.test("fireTorpedo uses facing, deforms walls, and emits a shockwave", () =>
   assertEquals(next.map.tiles[impactIndex], "water")
   assert(next.trails.length > 0)
   assert(next.shockwaveFront.some((cell) => cell.index === impactIndex))
-  assertEquals(next.shockwaves.some((wave) => wave.radius === 2 && wave.damaging), true)
+  assertEquals(
+    next.shockwaves.some((wave) => wave.radius === 2 && wave.damaging),
+    true,
+  )
   assertEquals(next.shockwaves.some((wave) => wave.senderId === "player"), true)
   assertEquals(next.memory[impactIndex], null)
   assert(next.screenShake > 0)
@@ -280,6 +354,29 @@ Deno.test("player torpedoes proximity-detonate and sink hostile submarines", () 
   assertEquals(next.hostileSubmarines.length, 0)
   assert(next.shockwaveFront.some((cell) => cell.index === detonationIndex))
   assert(next.screenShake > 0)
+})
+
+Deno.test("torpedoes keep cruising beyond sonar range until they hit a wall", () => {
+  const game = createLongRangeTorpedoGame()
+  const launched = fireTorpedo(game, "right")
+  const impactIndex = 2 * launched.map.width + 30
+
+  let current = launched
+
+  for (let turn = 0; turn < 6; turn += 1) {
+    current = holdPosition(current)
+  }
+
+  assertEquals(current.torpedoes.length > 0, true)
+  assertEquals(current.map.tiles[impactIndex], "wall")
+
+  for (let turn = 0; turn < 3; turn += 1) {
+    current = holdPosition(current)
+  }
+
+  assertEquals(current.torpedoes.length, 0)
+  assertEquals(current.map.tiles[impactIndex], "water")
+  assert(current.shockwaveFront.some((cell) => cell.index === impactIndex))
 })
 
 Deno.test("large detached wall chunks stay put when 36 or more tiles remain", () => {
@@ -348,26 +445,136 @@ Deno.test("hostile submarines chase nearby shockwaves instead of drifting", () =
 
 Deno.test("hostile submarines launch torpedoes and can sink the player", () => {
   const game = createHostileAttackGame()
-  const launched = advanceTurn(game, game.player, game.facing, null, "Hold position.")
+  const launched = advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    "Hold position.",
+  )
 
   assertEquals(launched.torpedoes.length, 1)
   assertEquals(launched.torpedoes[0].senderId, "hostile-1")
   assertEquals(launched.message, "Hostile contact. Incoming torpedo.")
 
-  const destroyed = advanceTurn(launched, launched.player, launched.facing, null, "Hold position.")
+  const destroyed = advanceTurn(
+    launched,
+    launched.player,
+    launched.facing,
+    null,
+    "Hold position.",
+  )
   const detonationIndex = 2 * destroyed.map.width + 4
 
   assertEquals(destroyed.status, "lost")
-  assertEquals(destroyed.message, "A hostile torpedo tears through your hull. Press R for a new run.")
-  assert(destroyed.shockwaveFront.some((cell) => cell.index === detonationIndex))
+  assertEquals(
+    destroyed.message,
+    "A hostile torpedo tears through your hull. Press R for a new run.",
+  )
+  assert(
+    destroyed.shockwaveFront.some((cell) => cell.index === detonationIndex),
+  )
 })
 
 Deno.test("hostile submarines can ram the player to sink them", () => {
   const game = createHostileRamGame()
-  const next = advanceTurn(game, game.player, game.facing, null, "Hold position.")
+  const next = advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    "Hold position.",
+  )
 
   assertEquals(next.status, "lost")
-  assertEquals(next.message, "A hostile submarine rams your hull. Press R for a new run.")
+  assertEquals(
+    next.message,
+    "A hostile submarine rams your hull. Press R for a new run.",
+  )
+})
+
+Deno.test("scout sonar messages hand off the player's location to hunters", () => {
+  const game = createHostileCommunicationGame()
+  const pinged = advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    "Hold position.",
+  )
+  const relayed = advanceTurn(
+    pinged,
+    pinged.player,
+    pinged.facing,
+    null,
+    "Hold position.",
+  )
+  const hunter = relayed.hostileSubmarines.find((hostile) =>
+    hostile.id === "hostile-2"
+  )
+
+  assertEquals(
+    pinged.shockwaves.some((wave) =>
+      wave.senderId === "hostile-1" && wave.message?.kind === "player-location"
+    ),
+    true,
+  )
+  assertEquals(hunter?.lastKnownPlayerPosition, relayed.player)
+})
+
+Deno.test("turtles switch to hunter behavior when the player enters visual range", () => {
+  const game = createTurtleAwarenessGame()
+  const next = advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    "Hold position.",
+  )
+
+  assertEquals(next.hostileSubmarines[0].archetype, "hunter")
+  assertEquals(next.hostileSubmarines[0].mode, "attack")
+})
+
+Deno.test("enemy sonar only becomes visible when the emitter has line of sight", () => {
+  const visibleGame = createEnemySonarVisibilityGame(false)
+  const hiddenGame = createEnemySonarVisibilityGame(true)
+  const visibleNext = advanceTurn(
+    visibleGame,
+    visibleGame.player,
+    visibleGame.facing,
+    null,
+    "Hold position.",
+  )
+  const hiddenNext = advanceTurn(
+    hiddenGame,
+    hiddenGame.player,
+    hiddenGame.facing,
+    null,
+    "Hold position.",
+  )
+
+  assertEquals(visibleNext.shockwaveFront.length > 0, true)
+  assertEquals(
+    hiddenNext.shockwaveFront.every((cell) => cell.requiresVisibility === true),
+    true,
+  )
+})
+
+Deno.test("enemy explosion fronts stay visibility-gated", () => {
+  const game = createEnemyExplosionVisibilityGame()
+  const next = advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    "Hold position.",
+  )
+
+  assertEquals(
+    next.shockwaveFront.every((cell) => cell.requiresVisibility === true),
+    true,
+  )
 })
 
 Deno.test("destruction takes priority over capsule recovery on the same turn", () => {
@@ -376,7 +583,10 @@ Deno.test("destruction takes priority over capsule recovery on the same turn", (
 
   assertEquals(next.status, "lost")
   assertEquals(next.player, next.map.capsule)
-  assertEquals(next.message, "A hostile submarine rams your hull. Press R for a new run.")
+  assertEquals(
+    next.message,
+    "A hostile submarine rams your hull. Press R for a new run.",
+  )
 })
 
 Deno.test("createGame spawns deterministic corner pickups away from anchors", () => {
@@ -390,28 +600,40 @@ Deno.test("createGame spawns deterministic corner pickups away from anchors", ()
     const { x, y } = pickup.position
     assertEquals(tileAt(first.map, x, y), "water")
     assert(
-      Math.max(Math.abs(x - first.map.spawn.x), Math.abs(y - first.map.spawn.y)) >= 5,
+      Math.max(
+        Math.abs(x - first.map.spawn.x),
+        Math.abs(y - first.map.spawn.y),
+      ) >= 5,
     )
     assert(
-      Math.max(Math.abs(x - first.map.capsule.x), Math.abs(y - first.map.capsule.y)) >= 5,
+      Math.max(
+        Math.abs(x - first.map.capsule.x),
+        Math.abs(y - first.map.capsule.y),
+      ) >= 5,
     )
 
     const up = tileAt(first.map, x, y - 1)
     const right = tileAt(first.map, x + 1, y)
     const down = tileAt(first.map, x, y + 1)
     const left = tileAt(first.map, x - 1, y)
-    const isCorner =
-      (up === "wall" && left === "wall" && right === "water" && down === "water") ||
-      (up === "wall" && right === "wall" && left === "water" && down === "water") ||
-      (right === "wall" && down === "wall" && up === "water" && left === "water") ||
-      (down === "wall" && left === "wall" && up === "water" && right === "water")
+    const isCorner = (up === "wall" && left === "wall" && right === "water" &&
+      down === "water") ||
+      (up === "wall" && right === "wall" && left === "water" &&
+        down === "water") ||
+      (right === "wall" && down === "wall" && up === "water" &&
+        left === "water") ||
+      (down === "wall" && left === "wall" && up === "water" &&
+        right === "water")
 
     assert(isCorner)
   }
 })
 
 Deno.test("torpedo pickups add four ammo and respect the sixteen-round cap", () => {
-  const game = createPickupGame("torpedo-cache", { torpedoAmmo: 13, depthChargeAmmo: 6 })
+  const game = createPickupGame("torpedo-cache", {
+    torpedoAmmo: 13,
+    depthChargeAmmo: 6,
+  })
   const next = movePlayer(game, "right")
 
   assertEquals(next.torpedoAmmo, 16)
@@ -420,7 +642,10 @@ Deno.test("torpedo pickups add four ammo and respect the sixteen-round cap", () 
 })
 
 Deno.test("depth charge pickups add four ammo and respect the sixteen-round cap", () => {
-  const game = createPickupGame("depth-charge-cache", { torpedoAmmo: 6, depthChargeAmmo: 14 })
+  const game = createPickupGame("depth-charge-cache", {
+    torpedoAmmo: 6,
+    depthChargeAmmo: 14,
+  })
   const next = movePlayer(game, "right")
 
   assertEquals(next.depthChargeAmmo, 16)
@@ -458,79 +683,14 @@ function findFirstStepDirection(
   return null
 }
 
-function findPath(
-  map: ReturnType<typeof createGame>["map"],
-  start: Point,
-  end: Point,
-): Point[] {
-  const queue = [start]
-  const parents = new Map<string, Point | null>()
-  parents.set(keyOf(start), null)
-
-  while (queue.length > 0) {
-    const current = queue.shift()
-
-    if (!current) {
-      continue
-    }
-
-    if (current.x === end.x && current.y === end.y) {
-      break
-    }
-
-    for (const next of neighbors(current)) {
-      const key = keyOf(next)
-
-      if (parents.has(key)) {
-        continue
-      }
-
-      if (isPassableTile(tileAt(map, next.x, next.y))) {
-        parents.set(key, current)
-        queue.push(next)
-      }
-    }
-  }
-
-  const path: Point[] = []
-  let cursor: Point | null = end
-
-  while (cursor) {
-    path.push(cursor)
-    cursor = parents.get(keyOf(cursor)) ?? null
-  }
-
-  path.reverse()
-  return path
-}
-
-function neighbors(point: Point): Point[] {
-  return [
-    { x: point.x + 1, y: point.y },
-    { x: point.x - 1, y: point.y },
-    { x: point.x, y: point.y + 1 },
-    { x: point.x, y: point.y - 1 },
-  ]
-}
-
-function keyOf(point: Point): string {
-  return `${point.x}:${point.y}`
-}
-
 function directionBetween(from: Point, to: Point): Direction {
-  if (to.x > from.x) {
-    return "right"
+  const direction = directionBetweenPoints(from, to)
+
+  if (!direction) {
+    throw new Error("Expected adjacent points to produce a direction")
   }
 
-  if (to.x < from.x) {
-    return "left"
-  }
-
-  if (to.y > from.y) {
-    return "down"
-  }
-
-  return "up"
+  return direction
 }
 
 function createFlatGame(): GameState {
@@ -697,6 +857,49 @@ function createLeftTorpedoTestGame(): GameState {
     cracks: [],
     fallingBoulders: [],
     facing: "left",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createLongRangeTorpedoGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "################################",
+      "#..............................#",
+      "#.............................##",
+      "#..............................#",
+      "################################",
+    ],
+    { x: 1, y: 2 },
+    { x: 29, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "long-range-torpedo-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
     torpedoAmmo: 6,
     depthChargeAmmo: 6,
     screenShake: 0,
@@ -1231,6 +1434,256 @@ function createHostileCapsuleCollisionGame(): GameState {
   }
 }
 
+function createHostileCommunicationGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "################",
+      "#..............#",
+      "#..............#",
+      "#..............#",
+      "################",
+    ],
+    { x: 1, y: 2 },
+    { x: 14, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 4, y: 2 },
+    seed: "hostile-communication-test",
+    turn: 2,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [
+      createHostile({
+        id: "hostile-1",
+        position: { x: 8, y: 2 },
+        archetype: "scout",
+        target: { x: 4, y: 2 },
+        lastKnownPlayerPosition: { x: 4, y: 2 },
+        lastKnownPlayerTurn: 2,
+        lastSonarTurn: 0,
+      }),
+      createHostile({
+        id: "hostile-2",
+        position: { x: 12, y: 2 },
+        archetype: "hunter",
+        lastSonarTurn: 0,
+      }),
+    ],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createTurtleAwarenessGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "########",
+      "#......#",
+      "#......#",
+      "#......#",
+      "########",
+    ],
+    { x: 1, y: 2 },
+    { x: 6, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "turtle-awareness-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 4, y: 2 },
+      archetype: "turtle",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createEnemySonarVisibilityGame(blocked: boolean): GameState {
+  const rows = blocked
+    ? [
+      "###########",
+      "#....#....#",
+      "#....#....#",
+      "#.........#",
+      "###########",
+    ]
+    : [
+      "###########",
+      "#.........#",
+      "#.........#",
+      "#.........#",
+      "###########",
+    ]
+  const map = createMapFromRows(rows, { x: 1, y: 2 }, { x: 9, y: 2 })
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: blocked ? "enemy-sonar-hidden-test" : "enemy-sonar-visible-test",
+    turn: 2,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: blocked ? { x: 8, y: 1 } : { x: 8, y: 2 },
+      archetype: "scout",
+      target: { x: 2, y: 2 },
+      lastKnownPlayerPosition: { x: 2, y: 2 },
+      lastKnownPlayerTurn: 2,
+      lastSonarTurn: 0,
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createEnemyExplosionVisibilityGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "###########",
+      "#.........#",
+      "#.........#",
+      "#.........#",
+      "###########",
+    ],
+    { x: 1, y: 2 },
+    { x: 9, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "enemy-explosion-hidden-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => 0).map(() =>
+      null
+    ),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [{
+      origin: { x: 8, y: 2 },
+      radius: 0,
+      senderId: "hostile-1",
+      damaging: true,
+      revealTerrain: false,
+      revealEntities: false,
+    }],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createHostile(
+  options: {
+    id: string
+    position: Point
+    archetype: "scout" | "hunter" | "turtle"
+    target?: Point | null
+    lastKnownPlayerPosition?: Point | null
+    lastKnownPlayerTurn?: number | null
+    lastSonarTurn?: number
+  },
+): GameState["hostileSubmarines"][number] {
+  const loadout = options.archetype === "scout"
+    ? { torpedoAmmo: 2, vlsAmmo: 2, depthChargeAmmo: 2 }
+    : options.archetype === "turtle"
+    ? { torpedoAmmo: 4, vlsAmmo: 4, depthChargeAmmo: 4 }
+    : { torpedoAmmo: 6, vlsAmmo: 6, depthChargeAmmo: 6 }
+
+  return {
+    id: options.id,
+    position: options.position,
+    initialPosition: { ...options.position },
+    facing: "left",
+    mode: options.archetype === "turtle" ? "patrol" : "attack",
+    target: options.target ?? null,
+    reload: 0,
+    archetype: options.archetype,
+    torpedoAmmo: loadout.torpedoAmmo,
+    vlsAmmo: loadout.vlsAmmo,
+    depthChargeAmmo: loadout.depthChargeAmmo,
+    lastSonarTurn: options.lastSonarTurn ?? 0,
+    lastKnownPlayerPosition: options.lastKnownPlayerPosition ?? null,
+    lastKnownPlayerVector: null,
+    lastKnownPlayerTurn: options.lastKnownPlayerTurn ?? null,
+  }
+}
+
 function createPickupGame(
   kind: "torpedo-cache" | "depth-charge-cache" | "map",
   ammo: { torpedoAmmo: number; depthChargeAmmo: number },
@@ -1286,7 +1739,8 @@ function hasKnownTileBeyondPassiveRange(game: GameState): boolean {
 
     const x = index % game.map.width
     const y = Math.floor(index / game.map.width)
-    return Math.max(Math.abs(x - game.player.x), Math.abs(y - game.player.y)) > 2
+    return Math.max(Math.abs(x - game.player.x), Math.abs(y - game.player.y)) >
+      2
   })
 }
 
