@@ -499,6 +499,7 @@ function createFlatGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -541,6 +542,7 @@ function createSonarWallGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -583,6 +585,7 @@ function createTorpedoTestGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -625,6 +628,7 @@ function createLeftTorpedoTestGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -674,6 +678,7 @@ function createTorpedoProximityGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -717,6 +722,7 @@ function createDepthChargeTestGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -767,6 +773,7 @@ function createDepthChargeProximityGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -809,6 +816,7 @@ function createCapsuleSonarGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -856,6 +864,7 @@ function createCaveInTestGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -903,6 +912,7 @@ function createLargeDetachedChunkGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -947,6 +957,7 @@ function createDustSonarGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -996,6 +1007,7 @@ function createHostileInvestigationGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -1045,6 +1057,7 @@ function createHostileAttackGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -1093,6 +1106,7 @@ function createHostileRamGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -1140,6 +1154,7 @@ function createHostileCapsuleCollisionGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
@@ -1186,6 +1201,7 @@ function createPickupGame(
     depthChargeAmmo: ammo.depthChargeAmmo,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 

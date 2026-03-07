@@ -54,6 +54,7 @@ function createBoulderLandingGame(): GameState {
     depthChargeAmmo: 6,
     screenShake: 0,
     message: "",
+    logs: [],
   }
 }
 
