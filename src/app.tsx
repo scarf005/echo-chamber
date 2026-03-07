@@ -14,9 +14,11 @@ import {
   formatGroupedLogMessage,
   groupLogMessages,
   holdPosition,
+  isPlayerSonarEnabled,
   isAutoMoveNavigable,
   movePlayer,
   SONAR_INTERVAL,
+  togglePlayerSonar,
   withGameMessage,
 } from "./game/game.ts"
 import { pointsEqual } from "./game/helpers.ts"
@@ -24,12 +26,13 @@ import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
 import { createExplosionSfx } from "./audio/explosionSfx.ts"
 import { createMovementLoop } from "./audio/movementLoop.ts"
+import { createSonarLoop } from "./audio/sonarLoop.ts"
 import {
+  type AudioSettings,
   levelToSliderPercent,
   readAudioSettings,
   sliderPercentToLevel,
   writeAudioSettings,
-  type AudioSettings,
 } from "./audio/settings.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 
@@ -57,6 +60,7 @@ export function App() {
   const movementLoopRef = useRef<ReturnType<typeof createMovementLoop> | null>(
     null,
   )
+  const sonarLoopRef = useRef<ReturnType<typeof createSonarLoop> | null>(null)
   const playedExplosionCountsRef = useRef<Map<string, number>>(new Map())
 
   useEffect(() => {
@@ -67,14 +71,17 @@ export function App() {
     const backgroundMusic = createBackgroundMusic()
     const explosionSfx = createExplosionSfx()
     const movementLoop = createMovementLoop()
+    const sonarLoop = createSonarLoop()
     backgroundMusicRef.current = backgroundMusic
     explosionSfxRef.current = explosionSfx
     movementLoopRef.current = movementLoop
+    sonarLoopRef.current = sonarLoop
 
     const startAudio = () => {
       void backgroundMusic.ensureStarted()
       void explosionSfx.ensureStarted()
       void movementLoop.ensureStarted()
+      void sonarLoop.ensureStarted()
     }
 
     window.addEventListener("keydown", startAudio, { passive: true })
@@ -86,9 +93,11 @@ export function App() {
       backgroundMusicRef.current = null
       explosionSfxRef.current = null
       movementLoopRef.current = null
+      sonarLoopRef.current = null
       backgroundMusic.dispose()
       explosionSfx.dispose()
       movementLoop.dispose()
+      sonarLoop.dispose()
     }
   }, [])
 
@@ -100,7 +109,8 @@ export function App() {
         continue
       }
 
-      const key = `${shockwave.origin.x}:${shockwave.origin.y}:${shockwave.senderId}`
+      const key =
+        `${shockwave.origin.x}:${shockwave.origin.y}:${shockwave.senderId}`
       const nextCount = (nextCounts.get(key) ?? 0) + 1
       nextCounts.set(key, nextCount)
 
@@ -123,10 +133,14 @@ export function App() {
     backgroundMusicRef.current?.setEnabled(audioSettings.musicEnabled)
     movementLoopRef.current?.setVolume(audioSettings.sfxVolume)
     movementLoopRef.current?.setEnabled(audioSettings.sfxEnabled)
+    sonarLoopRef.current?.setVolume(audioSettings.sfxVolume)
+    sonarLoopRef.current?.setEnabled(
+      audioSettings.sfxEnabled && isPlayerSonarEnabled(game),
+    )
     explosionSfxRef.current?.setVolume(audioSettings.sfxVolume)
     explosionSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
     writeAudioSettings(getBrowserStorage(), audioSettings)
-  }, [audioSettings])
+  }, [audioSettings, game])
 
   const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
@@ -140,9 +154,7 @@ export function App() {
     setGame(createGame({ seed: normalizedSeed }))
   }
 
-  const previewPath = previewTarget
-    ? findAutoMovePath(game, previewTarget)
-    : []
+  const previewPath = previewTarget ? findAutoMovePath(game, previewTarget) : []
 
   useEffect(() => {
     if (game.status === "playing") {
@@ -351,6 +363,12 @@ export function App() {
         return
       }
 
+      if (event.key === "q" || event.key === "Q") {
+        event.preventDefault()
+        setGame((current) => togglePlayerSonar(current))
+        return
+      }
+
       if (event.key === "z" || event.key === "Z") {
         event.preventDefault()
         setPreviewTarget(null)
@@ -405,11 +423,54 @@ export function App() {
   const sonarIn =
     ((SONAR_INTERVAL - (game.turn % SONAR_INTERVAL)) % SONAR_INTERVAL) ||
     SONAR_INTERVAL
+  const playerSonarEnabled = isPlayerSonarEnabled(game)
   const playerCoordinates = formatPoint(game.player)
   const targetCoordinates = previewTarget ? formatPoint(previewTarget) : "--"
+  const musicVolumePercent = levelToSliderPercent(audioSettings.musicVolume)
+  const sfxVolumePercent = levelToSliderPercent(audioSettings.sfxVolume)
   const visibleLogMessages = groupLogMessages(game.logs)
     .slice(-LOG_PANEL_LINES)
     .map(formatGroupedLogMessage)
+
+  const handleMusicEnabledChange = (
+    event: JSX.TargetedEvent<HTMLInputElement>,
+  ) => {
+    const { checked } = event.currentTarget
+    setAudioSettings((current) => ({
+      ...current,
+      musicEnabled: checked,
+    }))
+  }
+
+  const handleMusicVolumeInput = (
+    event: JSX.TargetedEvent<HTMLInputElement>,
+  ) => {
+    const nextVolume = sliderPercentToLevel(Number(event.currentTarget.value))
+    setAudioSettings((current) => ({
+      ...current,
+      musicVolume: nextVolume,
+    }))
+  }
+
+  const handleSfxEnabledChange = (
+    event: JSX.TargetedEvent<HTMLInputElement>,
+  ) => {
+    const { checked } = event.currentTarget
+    setAudioSettings((current) => ({
+      ...current,
+      sfxEnabled: checked,
+    }))
+  }
+
+  const handleSfxVolumeInput = (
+    event: JSX.TargetedEvent<HTMLInputElement>,
+  ) => {
+    const nextVolume = sliderPercentToLevel(Number(event.currentTarget.value))
+    setAudioSettings((current) => ({
+      ...current,
+      sfxVolume: nextVolume,
+    }))
+  }
 
   return (
     <main class="game-shell">
@@ -444,8 +505,12 @@ export function App() {
             <strong>{game.turn}</strong>
           </div>
           <div class="stat-row">
+            <span>player sonar</span>
+            <strong>{playerSonarEnabled ? "ON" : "OFF"}</strong>
+          </div>
+          <div class="stat-row">
             <span>sonar in</span>
-            <strong>{sonarIn}</strong>
+            <strong>{playerSonarEnabled ? sonarIn : "OFF"}</strong>
           </div>
           <div class="stat-row">
             <span>torpedoes</span>
@@ -515,6 +580,55 @@ export function App() {
                   random run
                 </button>
               </div>
+              <div class="sidebar-heading">audio</div>
+              <div class="audio-controls">
+                <div class="audio-setting">
+                  <span>music</span>
+                  <div class="audio-setting-row">
+                    <input
+                      class="audio-slider"
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={musicVolumePercent}
+                      aria-label="music volume"
+                      onInput={handleMusicVolumeInput}
+                    />
+                    <input
+                      class="audio-toggle"
+                      type="checkbox"
+                      checked={audioSettings.musicEnabled}
+                      aria-label="enable music"
+                      onChange={handleMusicEnabledChange}
+                    />
+                    <strong>{musicVolumePercent}%</strong>
+                  </div>
+                </div>
+                <div class="audio-setting">
+                  <span>sfx</span>
+                  <div class="audio-setting-row">
+                    <input
+                      class="audio-slider"
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={sfxVolumePercent}
+                      aria-label="sfx volume"
+                      onInput={handleSfxVolumeInput}
+                    />
+                    <input
+                      class="audio-toggle"
+                      type="checkbox"
+                      checked={audioSettings.sfxEnabled}
+                      aria-label="enable sfx"
+                      onChange={handleSfxEnabledChange}
+                    />
+                    <strong>{sfxVolumePercent}%</strong>
+                  </div>
+                </div>
+              </div>
               <div class="sidebar-heading">credits</div>
               <div class="credit-list">
                 <a
@@ -573,6 +687,14 @@ export function App() {
                 >
                   UnderWater_ExplosionFar by Akkaittou (CC-BY-4.0)
                 </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/kwahmah_02/sounds/268835/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Sonar (tuned to F).wav by kwahmah_02 (CC-BY-3.0)
+                </a>
               </div>
             </section>
           </div>
@@ -621,4 +743,8 @@ function formatBearing(from: Point, to: Point): string {
     default:
       return ""
   }
+}
+
+function getBrowserStorage(): Storage | null {
+  return typeof window === "undefined" ? null : window.localStorage
 }
