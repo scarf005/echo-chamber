@@ -1,6 +1,7 @@
 import {
   DEFAULT_HOSTILE_SUBMARINE_COUNT,
   START_DEPTH_CHARGES,
+import { createInitialLogs, createInitialMissionMessage } from "./log.ts"
   START_TORPEDOES,
 } from "./constants.ts"
 import { createCornerPickups } from "./items.ts"
@@ -59,7 +60,8 @@ export function createGame(options: GameOptions = {}): GameState {
     torpedoAmmo: START_TORPEDOES,
     depthChargeAmmo: START_DEPTH_CHARGES,
     screenShake: 0,
-    message: "Recover the capsule. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
+    message: createInitialMissionMessage(),
+    logs: createInitialLogs(),
   }
 
   return refreshPerception(game, [], [])

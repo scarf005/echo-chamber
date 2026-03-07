@@ -107,6 +107,7 @@ export interface GameState {
   dust: FadeCell[]
   cracks: CrackCell[]
   fallingBoulders: FallingBoulder[]
+  logs: string[]
   facing: HorizontalDirection
   torpedoAmmo: number
   depthChargeAmmo: number

@@ -1,6 +1,7 @@
 export * from "./actions.ts"
 export * from "./constants.ts"
 export * from "./effects.ts"
+export * from "./log.ts"
 export * from "./model.ts"
 export * from "./perception.ts"
 export * from "./state.ts"
