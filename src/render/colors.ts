@@ -1,0 +1,18 @@
+export const COLORS = {
+  background: "#02070c",
+  memoryWater: "#3a6f7b",
+  visibleWater: "#8af4ff",
+  memoryWall: "#284248",
+  visibleWall: "#d7fff8",
+  player: "#ffc857",
+  capsule: "#ff6b6b",
+  trail: "#9ad9ff",
+  dust: "#8c7a5b",
+  dustGlow: "#382e23",
+  sonar: "#8af4ff",
+  sonarGlow: "#123348",
+  torpedo: "#ffe28a",
+  depthCharge: "#ff9f6e",
+  crack: "#f7deb3",
+  boulder: "#c7b48f",
+} as const
