@@ -1,6 +1,7 @@
 import { Map as RotMap, RNG } from "npm:rot-js@2.2.1"
 
 export type TileKind = "wall" | "water"
+export type BiomeKind = "vast" | "regular" | "tight" | "chaotic" | "wavy"
 
 export interface Point {
   x: number
@@ -13,6 +14,7 @@ export interface MapMetadata {
   wallProbability: number
   topology: 4 | 6 | 8
   openTileRatio: number
+  biomes: BiomeKind[]
 }
 
 export interface GeneratedMap {
@@ -32,15 +34,15 @@ export interface MapGenOptions {
   smoothingIterations?: number
   wallProbability?: number
   topology?: 4 | 6 | 8
+  biomes?: BiomeKind[]
 }
 
 const DEFAULT_WIDTH = 64
 const DEFAULT_HEIGHT = 28
 const DEFAULT_SEED = "echo-chamber"
 const DEFAULT_ITERATIONS = 4
-const DEFAULT_WALL_PROBABILITY = 0.45
+const DEFAULT_WALL_PROBABILITY = 0.5
 const DEFAULT_TOPOLOGY = 8
-const VERTICAL_DETAIL_SCALE = 2
 const MIN_WIDTH = 24
 const MIN_HEIGHT = 16
 const DIRECTIONS: Point[] = [
@@ -67,19 +69,13 @@ export function generateMap(options: MapGenOptions = {}): GeneratedMap {
   const topology = options.topology ?? DEFAULT_TOPOLOGY
   const interiorWidth = width - 2
   const interiorHeight = height - 2
-  const sourceHeight = Math.max(
-    8,
-    Math.ceil(interiorHeight / VERTICAL_DETAIL_SCALE),
-  )
   const tiles = Array<TileKind>(width * height).fill("wall")
   const previousRngState = RNG.getState()
 
   try {
     RNG.setSeed(Math.max(1, hashSeed(seed)))
 
-    const cellular = new RotMap.Cellular(interiorWidth, sourceHeight, {
-      born: [4, 5, 6, 7, 8],
-      survive: [3, 4, 5, 6, 7, 8],
+    const cellular = new RotMap.Cellular(interiorWidth, interiorHeight, {
       topology,
     })
 
@@ -90,17 +86,10 @@ export function generateMap(options: MapGenOptions = {}): GeneratedMap {
     }
 
     let freeCells = 0
+
     cellular.connect((x: number, y: number, value: number) => {
       const tile = value === 1 ? "wall" : "water"
-      paintScaledCell(
-        tiles,
-        width,
-        height,
-        x + 1,
-        y,
-        VERTICAL_DETAIL_SCALE,
-        tile,
-      )
+      tiles[indexForTile(width, x + 1, y + 1)] = tile
 
       if (tile === "water") {
         freeCells += 1
@@ -162,6 +151,7 @@ export function generateMap(options: MapGenOptions = {}): GeneratedMap {
       wallProbability: Number(wallProbability.toFixed(2)),
       topology,
       openTileRatio: Number((openTiles / tiles.length).toFixed(3)),
+      biomes: ["regular"],
     },
   }
 }
@@ -208,27 +198,56 @@ export function mapToAscii(map: GeneratedMap): string {
   return rows.join("\n")
 }
 
-function indexForTile(width: number, x: number, y: number): number {
-  return y * width + x
-}
-
-function paintScaledCell(
+export function carveDisc(
   tiles: TileKind[],
   width: number,
   height: number,
-  x: number,
-  sourceY: number,
-  verticalScale: number,
-  tile: TileKind,
+  center: Point,
+  radius: number,
 ): void {
-  const startY = 1 + sourceY * verticalScale
+  const radiusSquared = radius * radius
 
-  for (let offset = 0; offset < verticalScale; offset += 1) {
-    const y = startY + offset
+  for (let y = center.y - radius; y <= center.y + radius; y += 1) {
+    for (let x = center.x - radius; x <= center.x + radius; x += 1) {
+      if (!isInterior(width, height, x, y)) {
+        continue
+      }
 
-    if (y > 0 && y < height - 1) {
-      tiles[indexForTile(width, x, y)] = tile
+      const distanceSquared = (x - center.x) ** 2 + (y - center.y) ** 2
+
+      if (distanceSquared <= radiusSquared) {
+        tiles[indexForTile(width, x, y)] = "water"
+      }
     }
+  }
+}
+
+export function carveLine(
+  tiles: TileKind[],
+  width: number,
+  height: number,
+  start: Point,
+  end: Point,
+  radius: number,
+): void {
+  const steps = Math.max(
+    Math.abs(end.x - start.x),
+    Math.abs(end.y - start.y),
+    1,
+  )
+
+  for (let step = 0; step <= steps; step += 1) {
+    const amount = step / steps
+    carveDisc(
+      tiles,
+      width,
+      height,
+      {
+        x: Math.round(lerp(start.x, end.x, amount)),
+        y: Math.round(lerp(start.y, end.y, amount)),
+      },
+      radius,
+    )
   }
 }
 
@@ -271,59 +290,6 @@ function carveFallbackRoute(
   carveLine(tiles, width, height, start, end, 1)
   carveDisc(tiles, width, height, start, 1)
   carveDisc(tiles, width, height, end, 1)
-}
-
-function carveDisc(
-  tiles: TileKind[],
-  width: number,
-  height: number,
-  center: Point,
-  radius: number,
-): void {
-  const radiusSquared = radius * radius
-
-  for (let y = center.y - radius; y <= center.y + radius; y += 1) {
-    for (let x = center.x - radius; x <= center.x + radius; x += 1) {
-      if (!isInterior(width, height, x, y)) {
-        continue
-      }
-
-      const distanceSquared = (x - center.x) ** 2 + (y - center.y) ** 2
-
-      if (distanceSquared <= radiusSquared) {
-        tiles[indexForTile(width, x, y)] = "water"
-      }
-    }
-  }
-}
-
-function carveLine(
-  tiles: TileKind[],
-  width: number,
-  height: number,
-  start: Point,
-  end: Point,
-  radius: number,
-): void {
-  const steps = Math.max(
-    Math.abs(end.x - start.x),
-    Math.abs(end.y - start.y),
-    1,
-  )
-
-  for (let step = 0; step <= steps; step += 1) {
-    const t = step / steps
-    carveDisc(
-      tiles,
-      width,
-      height,
-      {
-        x: Math.round(lerp(start.x, end.x, t)),
-        y: Math.round(lerp(start.y, end.y, t)),
-      },
-      radius,
-    )
-  }
 }
 
 function enforceBorderWalls(
@@ -403,12 +369,11 @@ function computeRouteLength(
   return null
 }
 
-function isInterior(
-  width: number,
-  height: number,
-  x: number,
-  y: number,
-): boolean {
+function indexForTile(width: number, x: number, y: number): number {
+  return y * width + x
+}
+
+function isInterior(width: number, height: number, x: number, y: number): boolean {
   return x > 0 && x < width - 1 && y > 0 && y < height - 1
 }
 

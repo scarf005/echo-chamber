@@ -39,6 +39,14 @@ Deno.test("generateMap varies layout across different seeds", () => {
   assertNotEquals(mapToAscii(first), mapToAscii(second))
 })
 
+Deno.test("generateMap reports the single regular biome deterministically", () => {
+  const first = generateMap({ width: 64, height: 28, seed: "biome-seed" })
+  const second = generateMap({ width: 64, height: 28, seed: "biome-seed" })
+
+  assertEquals(first.metadata.biomes, ["regular"])
+  assertEquals(first.metadata.biomes, second.metadata.biomes)
+})
+
 Deno.test("spawn and capsule stay in bounds on water tiles", () => {
   const map = generateMap({ width: 52, height: 26, seed: "bounds-check" })
 
@@ -97,6 +105,15 @@ Deno.test("solid border stays intact", () => {
   }
 })
 
+Deno.test("cellular generator keeps both walls and open water in the interior", () => {
+  const map = generateMap({ width: 72, height: 30, seed: "side-view-bias" })
+  const topBand = countWaterTilesInRow(map, 3)
+  const middleBand = countWaterTilesInRow(map, Math.floor(map.height / 2))
+
+  assert(topBand > 0 || middleBand > 0)
+  assert(topBand < map.width - 2 || middleBand < map.width - 2)
+})
+
 function pathExists(map: GeneratedMap): boolean {
   const queue: Point[] = [{ ...map.spawn }]
   const seen = new Set<number>()
@@ -146,4 +163,16 @@ function pathExists(map: GeneratedMap): boolean {
   }
 
   return false
+}
+
+function countWaterTilesInRow(map: GeneratedMap, y: number): number {
+  let count = 0
+
+  for (let x = 1; x < map.width - 1; x += 1) {
+    if (tileAt(map, x, y) === "water") {
+      count += 1
+    }
+  }
+
+  return count
 }
