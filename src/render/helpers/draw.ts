@@ -17,11 +17,13 @@ export function drawTileBackground(
   color: string,
   alpha: number,
 ): void {
-  context.save()
+  const previousAlpha = context.globalAlpha
+  const previousFillStyle = context.fillStyle
   context.globalAlpha = alpha
   context.fillStyle = color
   context.fillRect(x, y, tileSize, tileSize)
-  context.restore()
+  context.fillStyle = previousFillStyle
+  context.globalAlpha = previousAlpha
 }
 
 export function drawGlyph(
@@ -33,11 +35,13 @@ export function drawGlyph(
   color: string,
   alpha: number,
 ): void {
-  context.save()
+  const previousAlpha = context.globalAlpha
+  const previousFillStyle = context.fillStyle
   context.globalAlpha = alpha
   context.fillStyle = color
   context.fillText(glyph, x + tileSize / 2, y + tileSize / 2 + 1)
-  context.restore()
+  context.fillStyle = previousFillStyle
+  context.globalAlpha = previousAlpha
 }
 
 export function screenShakeOffset(game: GameState): { x: number; y: number } {
