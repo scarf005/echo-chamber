@@ -66,10 +66,21 @@ const appSettingsSignal = signal<AppSettings>(
 )
 const viewportModeSignal = signal<ViewportMode>("camera")
 
+function shouldRevealDevMap(settings: AppSettings): boolean {
+  return IS_DEV_BUILD && settings.revealMap
+}
+
+function createConfiguredGame(seed: string, settings: AppSettings) {
+  const game = createGame({ seed })
+  return shouldRevealDevMap(settings) ? revealMap(game) : game
+}
+
 export function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
   const [runSeed, setRunSeed] = useState(DEFAULT_SEED)
-  const [game, setGame] = useState(() => createGame({ seed: DEFAULT_SEED }))
+  const [game, setGame] = useState(() =>
+    createConfiguredGame(DEFAULT_SEED, appSettingsSignal.value)
+  )
   const [previewTarget, setPreviewTarget] = useState<Point | null>(null)
   const [autoMoveTarget, setAutoMoveTarget] = useState<Point | null>(null)
   const [hoveredTile, setHoveredTile] = useState<Point | null>(null)
@@ -77,6 +88,7 @@ export function App() {
   const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
+  const isRevealMapEnabled = shouldRevealDevMap(appSettings)
   const isGodMode = IS_DEV_BUILD && showDevEntityOverlay
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
@@ -359,7 +371,25 @@ export function App() {
     setAutoMoveTarget(null)
     setHoveredTile(null)
     resetAutoMoveSeenAnomalies()
-    setGame(createGame({ seed: normalizedSeed }))
+    setGame(createConfiguredGame(normalizedSeed, appSettingsSignal.peek()))
+  }
+
+  const setViewportModeWithMessage = (nextViewportMode: ViewportMode) => {
+    if (viewportModeSignal.peek() === nextViewportMode) {
+      return
+    }
+
+    viewportModeSignal.value = nextViewportMode
+    setGame((current) => withGameMessage(
+      {
+        ...current,
+      },
+      createLogMessage(
+        nextViewportMode === "full"
+          ? "Display set to full map."
+          : "Display set to tracking camera.",
+      ),
+    ))
   }
 
   const previewPath = previewTarget ? findAutoMovePath(game, previewTarget) : []
@@ -613,15 +643,16 @@ export function App() {
         return
       }
 
+      if (event.key === "Escape") {
+        event.preventDefault()
+        setIsOptionsOpen(true)
+        return
+      }
+
       if (
         target instanceof HTMLElement &&
         target.closest("button, input, textarea, select, a")
       ) {
-        return
-      }
-
-      if (event.key === "r" || event.key === "R") {
-        startRun(createRandomSeed())
         return
       }
 
@@ -633,20 +664,9 @@ export function App() {
 
       if (event.key === "m" || event.key === "M") {
         event.preventDefault()
-        const nextViewportMode = viewportModeSignal.peek() === "full"
-          ? "camera"
-          : "full"
-        viewportModeSignal.value = nextViewportMode
-        setGame((current) => withGameMessage(
-          {
-            ...current,
-          },
-          createLogMessage(
-            nextViewportMode === "full"
-              ? "Display set to full map."
-              : "Display set to tracking camera.",
-          ),
-        ))
+        setViewportModeWithMessage(
+          viewportModeSignal.peek() === "full" ? "camera" : "full",
+        )
         return
       }
 
@@ -794,6 +814,20 @@ export function App() {
       ...current,
       showDevEntityOverlay: event.currentTarget.checked,
     }))
+  }
+
+  const handleRevealMapChange = (
+    event: JSX.TargetedEvent<HTMLInputElement>,
+  ) => {
+    const { checked } = event.currentTarget
+    updateAppSettings((current) => ({
+      ...current,
+      revealMap: checked,
+    }))
+
+    if (checked) {
+      setGame((current) => revealMap(current))
+    }
   }
 
   return (
@@ -991,24 +1025,21 @@ export function App() {
                 ? (
                   <div class="dev-only-block">
                     <div class="sidebar-heading">dev</div>
-                    <div class="button-stack">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          viewportModeSignal.value = "full"
-                          setGame((current) =>
-                            withGameMessage(
-                              revealMap(current),
-                              createLogMessage("Dev reveal: full map charted."),
-                            )
-                          )
-                          setIsOptionsOpen(false)
-                        }}
-                      >
-                        reveal map
-                      </button>
-                    </div>
                     <div class="audio-controls">
+                      <div class="audio-setting">
+                        <span>map visibility</span>
+                        <div class="audio-setting-row">
+                          <span>reveal map</span>
+                          <input
+                            class="audio-toggle"
+                            type="checkbox"
+                            checked={isRevealMapEnabled}
+                            aria-label="reveal map"
+                            onChange={handleRevealMapChange}
+                          />
+                          <strong>{isRevealMapEnabled ? "ON" : "OFF"}</strong>
+                        </div>
+                      </div>
                       <div class="audio-setting">
                         <span>map overlay</span>
                         <div class="audio-setting-row">

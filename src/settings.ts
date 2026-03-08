@@ -8,6 +8,7 @@ import {
 
 export type AppSettings = {
   audio: AudioSettings
+  revealMap: boolean
   showDevEntityOverlay: boolean
 }
 
@@ -17,6 +18,7 @@ export const DEV_ENTITY_OVERLAY_STORAGE_KEY = "echo-chamber:dev-entity-overlay"
 export function defaultAppSettings(isDevBuild: boolean): AppSettings {
   return {
     audio: DEFAULT_AUDIO_SETTINGS,
+    revealMap: false,
     showDevEntityOverlay: isDevBuild,
   }
 }
@@ -27,6 +29,7 @@ export function normalizeAppSettings(
 ): AppSettings {
   return {
     audio: normalizeAudioSettings(value?.audio),
+    revealMap: isDevBuild ? (value?.revealMap ?? false) : false,
     showDevEntityOverlay: value?.showDevEntityOverlay ?? isDevBuild,
   }
 }
@@ -54,6 +57,7 @@ export function readAppSettings(
   } catch {
     return {
       audio: readAudioSettings(storage),
+      revealMap: defaults.revealMap,
       showDevEntityOverlay: readLegacyDevEntityOverlaySetting(
         storage,
         defaults.showDevEntityOverlay,
@@ -63,6 +67,7 @@ export function readAppSettings(
 
   return {
     audio: readAudioSettings(storage),
+    revealMap: defaults.revealMap,
     showDevEntityOverlay: readLegacyDevEntityOverlaySetting(
       storage,
       defaults.showDevEntityOverlay,

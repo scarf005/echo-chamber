@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import { assertEquals } from "@std/assert"
 
 import { DEFAULT_AUDIO_SETTINGS } from "./audio/settings.ts"
@@ -13,10 +15,12 @@ import {
 Deno.test("defaultAppSettings follows the build mode", () => {
   assertEquals(defaultAppSettings(true), {
     audio: DEFAULT_AUDIO_SETTINGS,
+    revealMap: false,
     showDevEntityOverlay: true,
   })
   assertEquals(defaultAppSettings(false), {
     audio: DEFAULT_AUDIO_SETTINGS,
+    revealMap: false,
     showDevEntityOverlay: false,
   })
 })
@@ -34,6 +38,7 @@ Deno.test("readAppSettings restores the unified payload", () => {
                 sfxEnabled: true,
                 sfxVolume: 0.4,
               },
+              revealMap: true,
               showDevEntityOverlay: false,
             })
             : null,
@@ -47,6 +52,7 @@ Deno.test("readAppSettings restores the unified payload", () => {
         sfxEnabled: true,
         sfxVolume: 0.4,
       },
+      revealMap: true,
       showDevEntityOverlay: false,
     },
   )
@@ -83,6 +89,7 @@ Deno.test("readAppSettings falls back to legacy storage keys", () => {
         sfxEnabled: false,
         sfxVolume: 0.9,
       },
+      revealMap: false,
       showDevEntityOverlay: false,
     },
   )
@@ -106,6 +113,7 @@ Deno.test("writeAppSettings stores a normalized unified payload", () => {
         sfxEnabled: false,
         sfxVolume: -1,
       },
+      revealMap: true,
       showDevEntityOverlay: false,
     },
     true,
@@ -119,6 +127,7 @@ Deno.test("writeAppSettings stores a normalized unified payload", () => {
       sfxEnabled: false,
       sfxVolume: 0,
     },
+    revealMap: true,
     showDevEntityOverlay: false,
   })
 })
