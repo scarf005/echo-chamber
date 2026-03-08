@@ -2,6 +2,7 @@
 
 import { assertEquals } from "jsr:@std/assert"
 
+import { activateLocale, defaultLocale, i18n } from "../i18n.ts"
 import {
   createLogMessage,
   createInitialLogs,
@@ -82,6 +83,27 @@ Deno.test("groupVisibleLogMessages keeps AI entries visible in god mode", () => 
   ], true).map(formatGroupedLogMessage)
 
   assertEquals(grouped, ["Advance.", "Scout slips north.", "Advance."])
+})
+
+Deno.test("formatGroupedLogMessage re-translates existing messages after locale changes", () => {
+  activateLocale("en")
+
+  try {
+    const localizedEntry = createLogMessage(
+      i18n._("Holding position."),
+      "neutral",
+      () => i18n._("Holding position."),
+    )
+    const [groupedEntry] = groupLogMessages([localizedEntry])
+
+    assertEquals(formatGroupedLogMessage(groupedEntry), "Holding position.")
+
+    activateLocale("ko")
+
+    assertEquals(formatGroupedLogMessage(groupedEntry), "위치 유지.")
+  } finally {
+    activateLocale(defaultLocale)
+  }
 })
 
 function createGameStateForLogs(): GameState {
