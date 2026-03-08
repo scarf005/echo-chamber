@@ -80,11 +80,18 @@ export function drawShockwaveLayer(
     dust: Map<number, number>
     shockwaveFront: Map<number, FadeCell>
   },
+  showHiddenEnemySonar = false,
 ): void {
   const dustAlpha = effectMaps.dust.get(index) ?? 0
   const front = effectMaps.shockwaveFront.get(index)
 
-  if (!front || (front.requiresVisibility && game.visibility[index] === 0)) {
+  if (!front) {
+    return
+  }
+
+  const hiddenEnemySonar = front.requiresVisibility && game.visibility[index] === 0
+
+  if (hiddenEnemySonar && !showHiddenEnemySonar) {
     return
   }
 
@@ -92,7 +99,8 @@ export function drawShockwaveLayer(
   const sonarColor = enemySonar ? COLORS.enemySonar : COLORS.sonar
   const sonarGlow = enemySonar ? COLORS.enemySonarGlow : COLORS.sonarGlow
 
-  const sonarAlpha = front.alpha * Math.max(0.1, 1 - dustAlpha * 0.85)
+  const sonarAlpha = front.alpha * Math.max(0.1, 1 - dustAlpha * 0.85) *
+    (hiddenEnemySonar ? 0.72 : 1)
 
   if (sonarAlpha <= 0) {
     return

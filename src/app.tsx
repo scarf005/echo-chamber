@@ -768,6 +768,7 @@ export function App() {
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,
+    hoveredTile: isGodMode ? hoveredTile : null,
     viewportMode,
     cameraTileWidth: 30,
     cameraTileHeight: 20,

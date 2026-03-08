@@ -2,7 +2,7 @@ import type { CrackCell, FadeCell, GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
 import { COLORS } from "./colors.ts"
 import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
-import { screenShakeOffset } from "./helpers/draw.ts"
+import { drawGlyph, drawTileBackground, screenShakeOffset } from "./helpers/draw.ts"
 import {
   pointToViewport,
   resolveViewportMetrics,
@@ -18,6 +18,8 @@ import {
 import {
   colorForHostileSubmarine,
   drawEntitiesLayer,
+  playerGlyphForFacing,
+  resolveHostileEstimateOverlay,
 } from "./layers/entities.ts"
 import { drawEffectsLayer, drawShockwaveLayer } from "./layers/effects.ts"
 import { drawTileMemoryLayer } from "./layers/tileMemory.ts"
@@ -101,6 +103,9 @@ export function drawGame(
   const effectMaps = resolveEffectMaps(game)
   const entityMaps = resolveEntityMaps(game)
   const tileMemoryCanvas = resolveTileMemoryCanvas(game, viewport)
+  const hostileEstimateOverlay = renderOptions.debugEntityOverlay
+    ? resolveHostileEstimateOverlay(game, renderOptions.hoveredTile ?? null)
+    : null
 
   context.drawImage(tileMemoryCanvas, 0, 0)
 
@@ -139,7 +144,19 @@ export function drawGame(
         screenY,
         index,
         effectMaps,
+        renderOptions.debugEntityOverlay === true,
       )
+
+      if (hostileEstimateOverlay?.estimatedIndexes.has(index)) {
+        drawHostileEstimateOverlay(
+          context,
+          game,
+          tileSize,
+          screenX,
+          screenY,
+          index === hostileEstimateOverlay.highlightedEstimatedIndex,
+        )
+      }
     }
   }
 
@@ -154,6 +171,51 @@ export function drawGame(
   if (selectedTarget) {
     drawTargetHighlight(context, selectedTarget, viewport)
   }
+}
+
+function drawHostileEstimateOverlay(
+  context: CanvasRenderingContext2D,
+  game: GameState,
+  tileSize: number,
+  screenX: number,
+  screenY: number,
+  highlighted: boolean,
+): void {
+  drawTileBackground(
+    context,
+    screenX,
+    screenY,
+    tileSize,
+    COLORS.enemySonar,
+    highlighted ? 0.5 : 0.24,
+  )
+  drawGlyph(
+    context,
+    screenX,
+    screenY,
+    tileSize,
+    playerGlyphForFacing(game.facing),
+    COLORS.player,
+    highlighted ? 1 : 0.62,
+  )
+
+  if (!highlighted) {
+    return
+  }
+
+  const inset = Math.max(1, tileSize * 0.08)
+  const lineWidth = Math.max(1, tileSize * 0.1)
+
+  context.save()
+  context.strokeStyle = COLORS.fish
+  context.lineWidth = lineWidth
+  context.strokeRect(
+    screenX + inset,
+    screenY + inset,
+    Math.max(1, tileSize - inset * 2),
+    Math.max(1, tileSize - inset * 2),
+  )
+  context.restore()
 }
 
 function resolveEffectMaps(game: GameState): EffectMaps {
