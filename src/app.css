@@ -106,6 +106,33 @@
   width: 100%;
 }
 
+.language-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.language-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.language-switch-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: auto;
+  width: auto;
+  padding: 0.45rem 0.65rem;
+}
+
+.language-switch-button.is-active {
+  border-color: rgba(186, 243, 247, 0.72);
+  background: rgba(8, 40, 52, 0.98);
+}
+
 .seed-controls {
   display: grid;
   gap: 0.55rem;
