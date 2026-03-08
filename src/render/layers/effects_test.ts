@@ -4,6 +4,7 @@ import { assertEquals } from "jsr:@std/assert"
 
 import type { GameState } from "../../game/game.ts"
 import {
+  resolveTrailColor,
   shouldDrawTrail,
   shouldDrawVentLight,
   shouldRevealEffectsOnDeath,
@@ -33,6 +34,14 @@ Deno.test("death reveals hidden effects regardless of visibility", () => {
   assertEquals(shouldRevealEffectsOnDeath(game), true)
   assertEquals(shouldDrawVentLight(game, 0), true)
   assertEquals(shouldDrawTrail(game, 0, { index: 0, alpha: 1 }), true)
+})
+
+Deno.test("resolveTrailColor makes enemy projectile trails more reddish", () => {
+  assertEquals(resolveTrailColor({ index: 0, alpha: 1 }), "#9ad9ff")
+  assertEquals(
+    resolveTrailColor({ index: 0, alpha: 1, source: "enemy-projectile" }),
+    "#ff8f96",
+  )
 })
 
 function createEffectsGame(visibility: GameState["visibility"]): GameState {

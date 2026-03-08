@@ -14,6 +14,7 @@ export const COLORS = {
   hostileSubmarineGuard: "#b134eb",
   fish: "#7dff9b",
   trail: "#9ad9ff",
+  enemyProjectileTrail: "#ff8f96",
   vent: "#ffb26b",
   ventDim: "#ad6a37",
   ventGlow: "#4d2815",

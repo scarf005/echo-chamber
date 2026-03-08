@@ -3,6 +3,12 @@ import type { LightCell } from "../lighting.ts"
 import { COLORS } from "../colors.ts"
 import { drawGlyph, drawTileBackground } from "../helpers/draw.ts"
 
+export function resolveTrailColor(trail?: FadeCell): string {
+  return trail?.source === "enemy-projectile"
+    ? COLORS.enemyProjectileTrail
+    : COLORS.trail
+}
+
 export function drawEffectsLayer(
   context: CanvasRenderingContext2D,
   game: GameState,
@@ -48,7 +54,7 @@ export function drawEffectsLayer(
       screenY,
       tileSize,
       "~",
-      COLORS.trail,
+      resolveTrailColor(trail),
       trailAlpha,
     )
   }
