@@ -456,33 +456,11 @@ function drawExactEntityOverlay(
   const torpedo = entityMaps.torpedoes.get(index)
 
   if (torpedo) {
-    drawGlyph(
-      context,
-      screenX,
-      screenY,
-      tileSize,
-      torpedo.direction === "left"
-        ? "<"
-        : torpedo.direction === "right"
-        ? ">"
-        : torpedo.direction === "up"
-        ? "^"
-        : "v",
-      COLORS.torpedo,
-      alpha,
-    )
+    drawTorpedoGlyph(context, screenX, screenY, tileSize, torpedo, alpha)
   }
 
   if (entityMaps.depthCharges.has(index)) {
-    drawGlyph(
-      context,
-      screenX,
-      screenY,
-      tileSize,
-      "v",
-      COLORS.depthCharge,
-      alpha,
-    )
+    drawDepthChargeGlyph(context, screenX, screenY, tileSize, alpha)
   }
 
   if (entityMaps.boulders.has(index)) {
@@ -516,4 +494,43 @@ function drawExactEntityOverlay(
       alpha,
     )
   }
+}
+
+export function shouldRenderProjectileInDarkness(senderId: string): boolean {
+  return senderId === "player"
+}
+
+function drawTorpedoGlyph(
+  context: CanvasRenderingContext2D,
+  screenX: number,
+  screenY: number,
+  tileSize: number,
+  torpedo: Torpedo,
+  alpha: number,
+): void {
+  drawGlyph(
+    context,
+    screenX,
+    screenY,
+    tileSize,
+    torpedo.direction === "left"
+      ? "<"
+      : torpedo.direction === "right"
+      ? ">"
+      : torpedo.direction === "up"
+      ? "^"
+      : "v",
+    COLORS.torpedo,
+    alpha,
+  )
+}
+
+function drawDepthChargeGlyph(
+  context: CanvasRenderingContext2D,
+  screenX: number,
+  screenY: number,
+  tileSize: number,
+  alpha: number,
+): void {
+  drawGlyph(context, screenX, screenY, tileSize, "v", COLORS.depthCharge, alpha)
 }

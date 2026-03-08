@@ -7,7 +7,13 @@ import {
   markerForEntityMemory,
   resolveHostileEstimateOverlay,
   resolveHostileEstimatedPlayerPosition,
+  shouldRenderProjectileInDarkness,
 } from "./entities.ts"
+
+Deno.test("player-fired projectiles stay visible in darkness", () => {
+  assertEquals(shouldRenderProjectileInDarkness("player"), true)
+  assertEquals(shouldRenderProjectileInDarkness("hostile-1"), false)
+})
 
 Deno.test("entity memory markers distinguish item enemy and non-hostile", () => {
   assertEquals(markerForEntityMemory("item"), {
