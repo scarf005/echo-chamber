@@ -6,8 +6,8 @@ import {
 } from "./entityHitSfx.ts"
 
 Deno.test("entity hit sfx uses the underwater blub sample", () => {
-  assertEquals(getEntityHitSampleChoices(), [
-    "/audio/underwater-blub-03.mp3",
+  assertEquals(getEntityHitSampleChoices().map(fileNameFromUrl), [
+    "underwater-blub-03.mp3",
   ])
 })
 
@@ -20,3 +20,7 @@ Deno.test("entity hit sfx volume clamps invalid values", () => {
   assertEquals(getEntityHitVolume(4), 0.42)
   assertEquals(getEntityHitVolume(-1), 0)
 })
+
+function fileNameFromUrl(url: string): string {
+  return url.slice(url.lastIndexOf("/") + 1)
+}

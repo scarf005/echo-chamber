@@ -8,9 +8,9 @@ import {
 } from "./sonarContactSfx.ts"
 
 Deno.test("sonar contact sfx rotates between both normalized samples", () => {
-  assertEquals(getSonarContactSampleChoices(), [
-    "/audio/sonar-contact-kizilsungur.mp3",
-    "/audio/sonar-contact-digital.mp3",
+  assertEquals(getSonarContactSampleChoices().map(fileNameFromUrl), [
+    "sonar-contact-kizilsungur.mp3",
+    "sonar-contact-digital.mp3",
   ])
 })
 
@@ -29,3 +29,7 @@ Deno.test("sonar contact sfx enforces a two-second cooldown", () => {
   assertEquals(canPlaySonarContactPing(1_000, 2_999), false)
   assertEquals(canPlaySonarContactPing(1_000, 1_000 + SONAR_CONTACT_COOLDOWN_MS), true)
 })
+
+function fileNameFromUrl(url: string): string {
+  return url.slice(url.lastIndexOf("/") + 1)
+}
