@@ -3,7 +3,7 @@
 import { assertEquals } from "jsr:@std/assert"
 
 import {
-  classifyLogMessageTone,
+  createLogMessage,
   createInitialLogs,
   formatGroupedLogMessage,
   groupLogMessages,
@@ -14,19 +14,19 @@ import type { GameState } from "./model.ts"
 Deno.test("withGameMessage appends to the history and keeps the latest message", () => {
   const base = createGameStateForLogs()
 
-  const next = withGameMessage(base, "Advance.")
+  const next = withGameMessage(base, createLogMessage("Advance."))
 
   assertEquals(next.message, "Advance.")
-  assertEquals(next.logs, ["Advance."])
+  assertEquals(next.logs, [{ message: "Advance.", type: "neutral" }])
 })
 
 Deno.test("groupLogMessages groups consecutive duplicates", () => {
   const grouped = groupLogMessages([
-    "Advance.",
-    "Advance.",
-    "Holding position.",
-    "Holding position.",
-    "Advance.",
+    createLogMessage("Advance."),
+    createLogMessage("Advance."),
+    createLogMessage("Holding position."),
+    createLogMessage("Holding position."),
+    createLogMessage("Advance."),
   ]).map(formatGroupedLogMessage)
 
   assertEquals(grouped, ["Advance. (x2)", "Holding position. (x2)", "Advance."])
@@ -34,34 +34,30 @@ Deno.test("groupLogMessages groups consecutive duplicates", () => {
 
 Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
   assertEquals(createInitialLogs(), [
-    "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
-    "Move with WASD or arrows.",
-    "Click once to plot a course.",
-    "Click the same tile again to engage auto-nav.",
-    "Wait with .",
-    "Launch torpedo with Z.",
-    "Drop depth charge with X.",
-    "Toggle display with M.",
-    "Press R for random run.",
+    createLogMessage(
+      "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
+    ),
+    createLogMessage("Move with WASD or arrows."),
+    createLogMessage("Click once to plot a course."),
+    createLogMessage("Click the same tile again to engage auto-nav."),
+    createLogMessage("Wait with ."),
+    createLogMessage("Launch torpedo with Z."),
+    createLogMessage("Drop depth charge with X."),
+    createLogMessage("Toggle display with M."),
+    createLogMessage("Press R for random run."),
   ])
 })
 
-Deno.test("classifyLogMessageTone marks positive and negative status messages", () => {
-  assertEquals(classifyLogMessageTone("Recovered 3 torpedoes."), "positive")
-  assertEquals(classifyLogMessageTone("sonar contact"), "warning")
-  assertEquals(
-    classifyLogMessageTone("Capsule delivered to dock. Press R for a new run."),
-    "positive",
-  )
-  assertEquals(
-    classifyLogMessageTone("Cave-in debris slams through the silt."),
-    "negative",
-  )
-  assertEquals(
-    classifyLogMessageTone("A hostile torpedo tears through your hull. Press R for a new run."),
-    "negative",
-  )
-  assertEquals(classifyLogMessageTone("Holding position."), "neutral")
+Deno.test("groupLogMessages keeps differently typed messages separate", () => {
+  const grouped = groupLogMessages([
+    createLogMessage("Status changed.", "neutral"),
+    createLogMessage("Status changed.", "warning"),
+  ])
+
+  assertEquals(grouped, [
+    { message: "Status changed.", type: "neutral", count: 1 },
+    { message: "Status changed.", type: "warning", count: 1 },
+  ])
 })
 
 function createGameStateForLogs(): GameState {

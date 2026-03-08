@@ -25,6 +25,12 @@ export type RevealableEntityKind =
 
 export type EntityRevealKind = "player" | "capsule" | "enemy" | "item"
 export type SonarMessage = { kind: "player-location"; position: Point }
+export type LogMessageTone = "positive" | "negative" | "warning" | "neutral"
+
+export interface LogMessage {
+  message: string
+  type: LogMessageTone
+}
 
 export type PickupKind = "torpedo-cache" | "depth-charge-cache" | "map"
 
@@ -161,7 +167,7 @@ export interface GameState {
   depthChargeAmmo: number
   screenShake: number
   message: string
-  logs: string[]
+  logs: LogMessage[]
 }
 
 export interface GameOptions {
