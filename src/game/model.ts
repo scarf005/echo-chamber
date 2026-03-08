@@ -176,6 +176,7 @@ export interface HostileSubmarine {
   lastKnownPlayerVector?: Point | null
   lastKnownPlayerTurn?: number | null
   previousPosition?: Point | null
+  recentPositions?: Point[]
   plannedPath?: Point[]
   lastAiLog?: string | null
   salvoShotsRemaining?: number

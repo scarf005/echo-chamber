@@ -60,6 +60,7 @@ export function cloneHostileSubmarine(hostileSubmarine: HostileSubmarine): Hosti
     previousPosition: hostileSubmarine.previousPosition
       ? { ...hostileSubmarine.previousPosition }
       : null,
+    recentPositions: hostileSubmarine.recentPositions?.map((point) => ({ ...point })),
     initialPosition: hostileSubmarine.initialPosition
       ? { ...hostileSubmarine.initialPosition }
       : undefined,

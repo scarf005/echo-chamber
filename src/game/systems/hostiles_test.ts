@@ -181,6 +181,7 @@ Deno.test("hostiles carry their planned path forward after moving", () => {
     { x: 12, y: 2 },
     { x: 11, y: 2 },
   ])
+  assertEquals(next.hostileSubmarines[0].recentPositions, [{ x: 15, y: 2 }])
 })
 
 function createMapFromRows(

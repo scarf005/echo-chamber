@@ -87,6 +87,7 @@ interface ResolvedHostileSubmarine extends HostileSubmarine {
   lastKnownPlayerVector: Point | null
   lastKnownPlayerTurn: number | null
   previousPosition: Point | null
+  recentPositions: Point[]
   plannedPath: Point[]
   lastAiLog: string | null
   salvoShotsRemaining: number
@@ -140,6 +141,8 @@ const GUARD_LOADOUT: Loadout = {
   vlsAmmo: 4,
   depthChargeAmmo: 4,
 }
+
+const HOSTILE_POSITION_MEMORY_LIMIT = 4
 
 const TURTLE_LOADOUT: Loadout = {
   torpedoAmmo: 4,
@@ -563,6 +566,11 @@ export function stepHostileSubmarines(
       }
     }
 
+    const recentPositions = rememberRecentPosition(
+      hostileSubmarine.recentPositions,
+      previousPosition,
+    )
+
     const attack = resolveAttack(
       map,
       hostileSubmarine,
@@ -685,6 +693,7 @@ export function stepHostileSubmarines(
       lastKnownPlayerVector,
       lastKnownPlayerTurn,
       previousPosition,
+      recentPositions,
       lastAiLog,
       plannedPath: storedPlannedPath,
       salvoShotsRemaining,
@@ -834,6 +843,7 @@ function hydrateHostileSubmarine(
     previousPosition: hostileSubmarine.previousPosition
       ? { ...hostileSubmarine.previousPosition }
       : null,
+    recentPositions: hostileSubmarine.recentPositions?.map((point) => ({ ...point })) ?? [],
     lastAiLog: hostileSubmarine.lastAiLog ?? null,
     plannedPath: hostileSubmarine.plannedPath
       ? hostileSubmarine.plannedPath.map((point) => ({ ...point }))
@@ -1794,6 +1804,22 @@ function sonarIntervalForHostile(
     case "hunter":
       return HOSTILE_HUNTER_SONAR_INTERVAL
   }
+}
+
+function rememberRecentPosition(
+  recentPositions: readonly Point[],
+  previousPosition: Point | null,
+): Point[] {
+  if (!previousPosition) {
+    return recentPositions.map((point) => ({ ...point }))
+  }
+
+  const nextRecentPositions = [
+    { ...previousPosition },
+    ...recentPositions.filter((point) => !pointsEqual(point, previousPosition)),
+  ]
+
+  return nextRecentPositions.slice(0, HOSTILE_POSITION_MEMORY_LIMIT)
 }
 
 function shouldBroadcastPlayerPosition(
