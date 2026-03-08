@@ -153,6 +153,32 @@ export function previewShockwaveEntityReveals(
   return Array.from(revealedEntities.values())
 }
 
+export function didShockwaveReachPointThisTurn(
+  map: GeneratedMap,
+  wave: Shockwave,
+  dust: FadeCell[],
+  trails: FadeCell[],
+  revealableEntities: RevealableEntity[],
+  point: Point,
+  spawnedThisTurn: boolean,
+): boolean {
+  const pointIndex = indexForPoint(map.width, point)
+  const dustByIndex = indexAlphaLookup(dust)
+  const entitiesByIndex = buildEntitiesByIndex(map.width, revealableEntities)
+  const blockerIndexes = buildBlockerIndexes(map.width, revealableEntities, trails)
+  const trace = traceWaveBand(
+    map,
+    wave,
+    spawnedThisTurn ? -1 : wave.radius,
+    Math.min(MAX_SONAR_RADIUS, wave.radius + SONAR_SPEED),
+    dustByIndex,
+    entitiesByIndex,
+    blockerIndexes,
+  )
+
+  return trace.front.has(pointIndex)
+}
+
 function advanceShockwave(
   map: GeneratedMap,
   wave: Shockwave,
@@ -364,8 +390,9 @@ function toEntityRevealKind(
     case "item":
       return "item"
     case "hostile-submarine":
-    case "fish":
       return "enemy"
+    case "fish":
+      return "non-hostile"
     default:
       return null
   }

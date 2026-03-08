@@ -1,3 +1,5 @@
+/// <reference path="./vite-env.d.ts" />
+
 import "./app.css"
 import { effect as signalEffect, signal } from "@preact/signals"
 import { debounce } from "@std/async/debounce"
@@ -117,6 +119,7 @@ export function App() {
   const playedDeathCueCountRef = useRef(0)
   const playedPickupCueCountRef = useRef(0)
   const playedSonarContactCueCountRef = useRef(0)
+  const playedHostileSonarContactCueCountRef = useRef(0)
   const autoMoveSeenAnomaliesRef = useRef<Set<string>>(new Set())
   const autoMoveSeenTargetRef = useRef<Point | null>(null)
   const audioSettingsRef = useRef(audioSettings)
@@ -353,6 +356,17 @@ export function App() {
   }, [game.playerSonarContactAudioVariant, game.playerSonarContactCueCount])
 
   useEffect(() => {
+    const cueCount = game.hostileSonarContactCueCount ?? 0
+
+    if (cueCount <= playedHostileSonarContactCueCountRef.current) {
+      return
+    }
+
+    playedHostileSonarContactCueCountRef.current = cueCount
+    void sonarContactSfxRef.current?.playContactPing("kizilsungur")
+  }, [game.hostileSonarContactCueCount])
+
+  useEffect(() => {
     syncAudioControllers()
   }, [audioSettings, game.playerSonarEnabled, game.status])
 
@@ -369,6 +383,7 @@ export function App() {
     playedDeathCueCountRef.current = 0
     playedPickupCueCountRef.current = 0
     playedSonarContactCueCountRef.current = 0
+    playedHostileSonarContactCueCountRef.current = 0
     viewportModeSignal.value = "camera"
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
     runSeedRef.current = normalizedSeed

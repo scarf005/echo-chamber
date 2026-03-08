@@ -249,6 +249,16 @@ export function describeInspectorContact(
     return exactEntityNameAtPoint(game, point) ?? null
   }
 
+  if (
+    game.torpedoes.some((candidate) =>
+      candidate.senderId !== "player" &&
+      candidate.position.x === point.x &&
+      candidate.position.y === point.y
+    )
+  ) {
+    return "hostile entity"
+  }
+
   return normalizeInspectorContact(game.entityMemory?.[index] ?? null)
 }
 
@@ -318,7 +328,7 @@ export function describeNotableHostileAiDecision(
 }
 
 function normalizeInspectorContact(contact: string | null): string | null {
-  return contact === "enemy" ? "entity" : contact
+  return contact === "enemy" ? "hostile entity" : contact
 }
 
 function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): InspectorRow[] {

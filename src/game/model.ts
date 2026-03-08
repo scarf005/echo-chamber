@@ -24,7 +24,12 @@ export type RevealableEntityKind =
   | "hostile-submarine"
   | "fish"
 
-export type EntityRevealKind = "player" | "capsule" | "enemy" | "item"
+export type EntityRevealKind =
+  | "player"
+  | "capsule"
+  | "enemy"
+  | "item"
+  | "non-hostile"
 export type SonarContactAudioVariant = "digital" | "kizilsungur"
 export type SonarMessage = { kind: "player-location"; position: Point }
 export type LogMessageTone =
@@ -194,6 +199,7 @@ export interface GameState {
   lastSonarTurn: number
   playerSonarContactCueCount?: number
   playerSonarContactAudioVariant?: SonarContactAudioVariant | null
+  hostileSonarContactCueCount?: number
   playerEntityHitCueCount?: number
   playerDeathCueCount?: number
   playerPickupCueCount?: number

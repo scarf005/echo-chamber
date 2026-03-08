@@ -133,7 +133,7 @@ function clearEntityMemory(
 function isRememberedEntity(
   kind: EntityReveal["kind"],
 ): kind is Extract<EntityMemoryKind, EntityReveal["kind"]> {
-  return kind === "item" || kind === "enemy"
+  return kind === "item" || kind === "enemy" || kind === "non-hostile"
 }
 
 function rememberVisibleEntity(

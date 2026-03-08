@@ -8,8 +8,9 @@ Deno.test("entity memory markers distinguish item enemy and non-hostile", () => 
     color: "#b7ff8a",
   })
   assertEquals(markerForEntityMemory("enemy"), {
-    glyph: "!",
-    color: "#ff8c69",
+    glyph: "?",
+    color: "#ff5d55",
+    backgroundColor: "#ffe28a",
   })
   assertEquals(markerForEntityMemory("non-hostile"), {
     glyph: "~",

@@ -305,8 +305,10 @@ Deno.test("player sonar contact cue uses digital audio for non-hostile fish", ()
     }],
   })
   const contacted = holdPosition(emitted)
+  const fishIndex = contacted.map.width * 2 + 5
 
   assertEquals(contacted.playerSonarContactCueCount, 1)
+  assertEquals(contacted.entityMemory?.[fishIndex], "non-hostile")
 })
 
 Deno.test("player entity hit cue fires when the bow pulps a fish", () => {
@@ -688,7 +690,7 @@ Deno.test("hostile submarines launch torpedoes and can sink the player", () => {
 
   assertEquals(launched.torpedoes.length, 1)
   assertEquals(launched.torpedoes[0].senderId, "hostile-1")
-  assertEquals(launched.message, "Hostile contact. Incoming torpedo.")
+  assertEquals(launched.message, "Hold position.")
 
   const destroyed = advanceTurn(
     launched,
@@ -707,6 +709,48 @@ Deno.test("hostile submarines launch torpedoes and can sink the player", () => {
   assert(
     destroyed.shockwaveFront.some((cell) => cell.index === detonationIndex),
   )
+})
+
+Deno.test("hostile sonar contact logs red and leaves an imprecise marker", () => {
+  const game = createEnemySonarContactGame()
+  const next = holdPosition(game)
+  const hostileOrigin = { x: 8, y: 2 }
+  const hostileContacts = next.entityMemory
+    ?.map((kind, index) => ({
+      kind,
+      point: {
+        x: index % next.map.width,
+        y: Math.floor(index / next.map.width),
+      },
+    }))
+    .filter((entry) => entry.kind === "enemy") ?? []
+
+  assertEquals(next.hostileSonarContactCueCount, 1)
+  assertEquals(next.message, "hostile sonar from →")
+  assertEquals(next.logs.at(-1), {
+    message: "hostile sonar from →",
+    type: "negative",
+  })
+  assertEquals(hostileContacts.length > 0, true)
+  assertEquals(
+    hostileContacts.some((entry) => {
+      const distance = Math.max(
+        Math.abs(entry.point.x - hostileOrigin.x),
+        Math.abs(entry.point.y - hostileOrigin.y),
+      )
+      return distance >= 1 && distance <= 2
+    }),
+    true,
+  )
+})
+
+Deno.test("non-hostile shockwaves do not trigger hostile sonar contact", () => {
+  const game = createNonHostileShockwaveGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.hostileSonarContactCueCount, 0)
+  assertEquals(next.message, "Holding position.")
+  assertEquals(next.entityMemory?.every((entry) => entry === null), true)
 })
 
 Deno.test("hostile scouts sonar every five turns while patrolling", () => {
@@ -1273,7 +1317,12 @@ function createSonarWallGame(): GameState {
     torpedoes: [],
     depthCharges: [],
     pickups: [],
-    hostileSubmarines: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 8, y: 2 },
+      archetype: "turtle",
+      lastSonarTurn: 1,
+    })],
     trails: [],
     dust: [],
     cracks: [],
@@ -1316,7 +1365,12 @@ function createTorpedoTestGame(): GameState {
     torpedoes: [],
     depthCharges: [],
     pickups: [],
-    hostileSubmarines: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 8, y: 2 },
+      archetype: "turtle",
+      lastSonarTurn: 1,
+    })],
     trails: [],
     dust: [],
     cracks: [],
@@ -3001,6 +3055,80 @@ function createEnemySonarVisibilityGame(blocked: boolean): GameState {
     screenShake: 0,
     message: "",
     logs: [],
+  }
+}
+
+function createEnemySonarContactGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "###########",
+      "#.........#",
+      "#.........#",
+      "#.........#",
+      "###########",
+    ],
+    { x: 1, y: 2 },
+    { x: 9, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "enemy-sonar-contact-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    hostileSonarContactCueCount: 0,
+    shockwaves: [{
+      origin: { x: 8, y: 2 },
+      radius: 4,
+      senderId: "hostile-1",
+      damaging: false,
+      revealTerrain: false,
+      revealEntities: false,
+    }],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 8, y: 2 },
+      archetype: "turtle",
+      lastSonarTurn: 1,
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    playerSonarEnabled: false,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createNonHostileShockwaveGame(): GameState {
+  const game = createEnemySonarContactGame()
+
+  return {
+    ...game,
+    seed: "non-hostile-shockwave-test",
+    shockwaves: [{
+      origin: { x: 8, y: 2 },
+      radius: 4,
+      senderId: "fish-1",
+      damaging: false,
+      revealTerrain: false,
+      revealEntities: false,
+    }],
   }
 }
 

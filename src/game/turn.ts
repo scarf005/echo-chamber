@@ -1,4 +1,5 @@
 import {
+  PASSIVE_EXACT_RADIUS,
   CRACK_DECAY,
   DEPTH_CHARGE_RANGE,
   DEPTH_CHARGE_SPEED,
@@ -9,6 +10,7 @@ import {
   TORPEDO_SPEED,
   TRAIL_DECAY,
 } from "./constants.ts"
+import { randomIntegerBetween } from "jsr:@std/random"
 import {
   decayCells,
   decayCracks,
@@ -18,6 +20,7 @@ import {
   resolveImpactMessage,
 } from "./effects.ts"
 import {
+  chebyshevDistance,
   cloneBoulder,
   cloneDepthCharge,
   cloneFish,
@@ -44,11 +47,13 @@ import type {
 } from "./model.ts"
 import { refreshPerception } from "./perception.ts"
 import type { Point } from "./mapgen.ts"
+import { isPassableTile, tileAt } from "./mapgen.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
 import { stepFish } from "./systems/fish.ts"
 import { stepHostileSubmarines } from "./systems/hostiles.ts"
 import { stepDepthCharges, stepTorpedoes } from "./systems/projectiles.ts"
 import {
+  didShockwaveReachPointThisTurn,
   previewShockwaveEntityReveals,
   stepShockwaves,
 } from "./systems/shockwaves.ts"
@@ -217,7 +222,6 @@ export function advanceTurn(
     ...depthChargeStep.shockwaves,
     ...(shouldEmitSonar ? [createSonarShockwave(nextPlayer)] : []),
   ]
-  let hostileLaunchMessage: LogMessage | null = null
   let hostileAiLogs: LogMessage[] = []
   const revealableEntitiesBeforeHostiles = collectRevealableEntities(
     nextPlayer,
@@ -299,13 +303,33 @@ export function advanceTurn(
         "A hostile submarine rams your hull. Press R for a new run.",
         "negative",
       )
-    } else if (hostileStep.launchedTorpedoes.length > 0) {
-      hostileLaunchMessage = createLogMessage(
-        "Hostile contact. Incoming torpedo.",
-        "negative",
-      )
     }
   }
+
+  const revealableEntitiesAfterHostiles = collectRevealableEntities(
+    nextPlayer,
+    map.capsule,
+    hadCapsule || capsuleRetrievedThisTurn,
+    torpedoes,
+    depthCharges,
+    pickups,
+    fallingBoulders,
+    fish,
+    hostileSubmarines,
+  )
+  const hostileSonarContact = collectHostileSonarContacts(
+    map,
+    hostileSubmarines,
+    game.shockwaves,
+    spawnedShockwaves,
+    dust,
+    trails,
+    revealableEntitiesAfterHostiles,
+    nextPlayer,
+  )
+  const hostileSonarMessage = hostileSonarContact.direction !== null
+    ? createLogMessage(`hostile sonar from ${hostileSonarContact.direction}`, "negative")
+    : null
 
   const shockwaveStep = stepShockwaves(
     map,
@@ -313,17 +337,7 @@ export function advanceTurn(
     spawnedShockwaves,
     dust,
     trails,
-    collectRevealableEntities(
-      nextPlayer,
-      map.capsule,
-      hadCapsule || capsuleRetrievedThisTurn,
-      torpedoes,
-      depthCharges,
-      pickups,
-      fallingBoulders,
-      fish,
-      hostileSubmarines,
-    ),
+    revealableEntitiesAfterHostiles,
   )
   const playerSonarMadeContact = playerSonarMadePreHostileContact ||
     shockwaveStep.revealedEntities.some(
@@ -394,11 +408,17 @@ export function advanceTurn(
     )
     : impactMessage !== null
     ? impactMessage
-    : hostileLaunchMessage !== null
-    ? hostileLaunchMessage
+    : hostileSonarMessage !== null
+    ? hostileSonarMessage
     : fallbackMessage
   const nextMessageText = typeof nextMessage === "string" ? nextMessage : nextMessage.message
-  const nextLogs = [...game.logs, ...hostileAiLogs].slice(-MAX_LOG_MESSAGES)
+  const nextLogs = [
+    ...game.logs,
+    ...hostileAiLogs,
+    ...(hostileSonarMessage !== null && nextMessage !== hostileSonarMessage
+      ? [hostileSonarMessage]
+      : []),
+  ].slice(-MAX_LOG_MESSAGES)
 
   return withGameMessage(
     refreshPerception(
@@ -415,6 +435,9 @@ export function advanceTurn(
           ? (game.playerSonarContactCueCount ?? 0) + 1
           : (game.playerSonarContactCueCount ?? 0),
         playerSonarContactAudioVariant,
+        hostileSonarContactCueCount: hostileSonarContact.reveals.length > 0
+          ? (game.hostileSonarContactCueCount ?? 0) + 1
+          : (game.hostileSonarContactCueCount ?? 0),
         playerEntityHitCueCount: playerEntityHitThisTurn
           ? (game.playerEntityHitCueCount ?? 0) + 1
           : (game.playerEntityHitCueCount ?? 0),
@@ -444,10 +467,116 @@ export function advanceTurn(
         message: nextMessageText,
       },
       [...shockwaveStep.revealedTiles, ...pickupStep.tileReveals],
-      shockwaveStep.revealedEntities,
+      [...shockwaveStep.revealedEntities, ...hostileSonarContact.reveals],
     ),
     nextMessage,
   )
+}
+
+function collectHostileSonarContacts(
+  map: GameState["map"],
+  hostileSubmarines: GameState["hostileSubmarines"],
+  activeShockwaves: Shockwave[],
+  spawnedShockwaves: Shockwave[],
+  dust: GameState["dust"],
+  trails: GameState["trails"],
+  revealableEntities: RevealableEntity[],
+  player: Point,
+): { reveals: EntityReveal[]; direction: string | null } {
+  const hostileIds = new Set(hostileSubmarines.map((hostileSubmarine) => hostileSubmarine.id))
+  const hostileWaves = [
+    ...activeShockwaves
+      .filter((wave) => hostileIds.has(wave.senderId) && wave.damaging === false)
+      .map((wave) => ({ wave, spawnedThisTurn: false })),
+    ...spawnedShockwaves
+      .filter((wave) => hostileIds.has(wave.senderId) && wave.damaging === false)
+      .map((wave) => ({ wave, spawnedThisTurn: true })),
+  ]
+
+  const reveals = new Map<number, EntityReveal>()
+  let direction: string | null = null
+
+  for (const { wave, spawnedThisTurn } of hostileWaves) {
+    if (!didShockwaveReachPointThisTurn(
+      map,
+      wave,
+      dust,
+      trails,
+      revealableEntities,
+      player,
+      spawnedThisTurn,
+    )) {
+      continue
+    }
+
+    if (chebyshevDistance(player, wave.origin) <= PASSIVE_EXACT_RADIUS) {
+      if (direction === null) {
+        direction = describeHostileBearing(player, wave.origin)
+      }
+      continue
+    }
+
+    const approximatePoint = createApproximateHostileSonarPoint(map, wave.origin)
+    const index = indexForPoint(map.width, approximatePoint)
+    reveals.set(index, {
+      index,
+      kind: "enemy",
+      sourceSenderId: wave.senderId,
+    })
+
+    if (direction === null) {
+      direction = describeHostileBearing(player, wave.origin)
+    }
+  }
+
+  return {
+    reveals: Array.from(reveals.values()),
+    direction,
+  }
+}
+
+function createApproximateHostileSonarPoint(
+  map: GameState["map"],
+  origin: Point,
+): Point {
+  const candidates: Point[] = []
+
+  for (let dy = -2; dy <= 2; dy += 1) {
+    for (let dx = -2; dx <= 2; dx += 1) {
+      const distance = Math.max(Math.abs(dx), Math.abs(dy))
+
+      if (distance < 1 || distance > 2) {
+        continue
+      }
+
+      const candidate = {
+        x: origin.x + dx,
+        y: origin.y + dy,
+      }
+      const tile = tileAt(map, candidate.x, candidate.y)
+
+      if (tile && isPassableTile(tile)) {
+        candidates.push(candidate)
+      }
+    }
+  }
+
+  if (candidates.length === 0) {
+    return { ...origin }
+  }
+
+  return { ...candidates[randomIntegerBetween(0, candidates.length - 1)] }
+}
+
+function describeHostileBearing(player: Point, origin: Point): string {
+  const deltaX = origin.x - player.x
+  const deltaY = origin.y - player.y
+
+  if (Math.abs(deltaX) >= Math.abs(deltaY)) {
+    return deltaX < 0 ? "←" : "→"
+  }
+
+  return deltaY < 0 ? "↑" : "↓"
 }
 
 function createSonarShockwave(origin: Point): Shockwave {
@@ -502,6 +631,10 @@ function resolvePlayerSonarContactAudioVariantForPhase(
   ))
   const hasDigitalContact = playerContactReveals.some((reveal) => {
     if (reveal.kind === "capsule" || reveal.kind === "item") {
+      return true
+    }
+
+    if (reveal.kind === "non-hostile") {
       return true
     }
 

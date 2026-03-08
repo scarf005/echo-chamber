@@ -43,7 +43,24 @@ Deno.test("inspector renames remembered enemy contact to entity", () => {
 
   game.entityMemory![index] = "enemy"
 
-  assertEquals(describeInspectorContact(game, enemyPoint), "entity")
+  assertEquals(describeInspectorContact(game, enemyPoint), "hostile entity")
+})
+
+Deno.test("inspector keeps hostile torpedoes generic without exact sight", () => {
+  const game = createInspectorFishGame()
+  const torpedoPoint = { x: 5, y: 2 }
+  const index = torpedoPoint.y * game.map.width + torpedoPoint.x
+
+  game.visibility[index] = 1
+  game.torpedoes = [{
+    position: torpedoPoint,
+    senderId: "hostile-1",
+    direction: "left",
+    speed: 3,
+    rangeRemaining: 6,
+  }]
+
+  assertEquals(describeInspectorContact(game, torpedoPoint), "hostile entity")
 })
 
 Deno.test("inspector does not leak fish identity outside detected visibility", () => {
