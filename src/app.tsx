@@ -683,6 +683,11 @@ export function App() {
 
       if (event.key === "Escape") {
         event.preventDefault()
+        runSeedSignal.value = randomizeRunSeed(
+          runSeedSignal.peek(),
+          DEFAULT_SEED,
+          createRandomSeed(),
+        )
         isOptionsOpenSignal.value = true
         isOrdersModalOpenSignal.value = false
         return
