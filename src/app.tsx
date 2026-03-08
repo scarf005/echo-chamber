@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro"
 /// <reference path="./vite-env.d.ts" />
 
 import "./app.css"
@@ -423,8 +424,8 @@ export function App() {
       },
       createLogMessage(
         nextViewportMode === "full"
-          ? "Display set to full map."
-          : "Display set to tracking camera.",
+          ? t`Display set to full map.`
+          : t`Display set to tracking camera.`,
       ),
     ))
   }
@@ -632,7 +633,7 @@ export function App() {
       updateGame((current) =>
         withGameMessage({
           ...current,
-        }, createLogMessage(`Auto-nav engaged to ${formatPoint(point)}.`))
+        }, createLogMessage(t`Auto-nav engaged to ${formatPoint(point)}.`))
       )
       return
     }
@@ -649,7 +650,7 @@ export function App() {
         },
         nextPreviewPath.length >= 2
           ? createLogMessage(
-            `Course plotted to ${formatPoint(point)}. Click again to engage.`,
+            t`Course plotted to ${formatPoint(point)}. Click again to engage.`,
           )
           : createLogMessage(
             createAutoMoveStopMessage(
@@ -909,11 +910,11 @@ export function App() {
       <aside class="sidebar">
         <section class="sidebar-panel sidebar-panel-primary">
           <div class="panel-header">
-            <div class="sidebar-heading">mission status</div>
+            <div class="sidebar-heading">{t`mission status`}</div>
             <button
               type="button"
               class="icon-button"
-              aria-label="open options"
+              aria-label={t`open options`}
               aria-haspopup="dialog"
               aria-expanded={isOptionsOpen}
               onClick={() => {
@@ -927,31 +928,31 @@ export function App() {
             </button>
           </div>
           <div class="stat-row">
-            <span>turn</span>
+            <span>{t`turn`}</span>
             <strong>{game.turn}</strong>
           </div>
           <div class="stat-row">
-            <span>sonar in</span>
+            <span>{t`sonar in`}</span>
             <strong>{playerSonarEnabled ? sonarIn : "OFF"}</strong>
           </div>
           <div class="stat-row">
-            <span>torpedoes</span>
+            <span>{t`torpedoes`}</span>
             <strong>{game.torpedoAmmo}</strong>
           </div>
           <div class="stat-row">
-            <span>depth charges</span>
+            <span>{t`depth charges`}</span>
             <strong>{game.depthChargeAmmo}</strong>
           </div>
           <div class="stat-row">
-            <span>position</span>
+            <span>{t`position`}</span>
             <strong>{playerCoordinates}</strong>
           </div>
           <div class="stat-row">
-            <span>target</span>
+            <span>{t`target`}</span>
             <strong>{targetCoordinates}</strong>
           </div>
           <div class="stat-row">
-            <span>display</span>
+            <span>{t`display`}</span>
             <strong>{viewportLabel}</strong>
           </div>
         </section>
@@ -961,7 +962,7 @@ export function App() {
             <button
               type="button"
               class="panel-title-button"
-              aria-label="open full order log"
+              aria-label={t`open full order log`}
               aria-haspopup="dialog"
               aria-expanded={isOrdersModalOpen}
               onClick={() => {
@@ -969,7 +970,7 @@ export function App() {
                 isOptionsOpenSignal.value = false
               }}
             >
-              <span class="sidebar-heading">orders</span>
+              <span class="sidebar-heading">{t`orders`}</span>
             </button>
           </div>
           <div class="sidebar-text-block sidebar-log-list">
@@ -985,9 +986,9 @@ export function App() {
         </section>
 
         <section class="sidebar-panel">
-          <div class="sidebar-heading">inspector</div>
+          <div class="sidebar-heading">{t`inspector`}</div>
           <div class="stat-row">
-            <span>hover tile</span>
+            <span>{t`hover tile`}</span>
             <strong>{hoveredTile ? formatPoint(hoveredTile) : "--"}</strong>
           </div>
           {visibleInspectorRows && visibleInspectorRows.length > 0
@@ -1006,7 +1007,7 @@ export function App() {
             )
             : (
               <div class="sidebar-text-block">
-                hover any tile to inspect terrain and contacts.
+                {t`hover any tile to inspect terrain and contacts.`}
               </div>
             )}
         </section>
@@ -1019,17 +1020,17 @@ export function App() {
               class="modal-panel"
               role="dialog"
               aria-modal="true"
-              aria-label="options"
+              aria-label={t`options`}
               onClick={(event) => event.stopPropagation()}
             >
               <div class="panel-header">
-                <div class="sidebar-heading">options</div>
+                <div class="sidebar-heading">{t`options`}</div>
                 <button
                   type="button"
                   class="modal-close"
                   onClick={() => isOptionsOpenSignal.value = false}
                 >
-                  close
+                  {t`close`}
                 </button>
               </div>
               <div class="seed-controls">
@@ -1038,10 +1039,21 @@ export function App() {
                     class="seed-input"
                     type="text"
                     value={runSeed}
-                    placeholder="seed"
-                    aria-label="run seed"
+                    placeholder={t`seed`}
+                    aria-label={t`run seed`}
                     onInput={handleRunSeedInput}
                   />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      startRun(
+                        randomizeRunSeed(runSeed, DEFAULT_SEED, createRandomSeed()),
+                      )
+                      isOptionsOpenSignal.value = false
+                    }}
+                  >
+                    {t`random seed`}
+                  </button>
                   <button
                     type="button"
                     onClick={() => {
@@ -1049,21 +1061,21 @@ export function App() {
                       isOptionsOpenSignal.value = false
                     }}
                   >
-                    restart
+                    {t`restart`}
                   </button>
                 </div>
                 {activeSeedModes.length > 0
                   ? (
                     <div class="sidebar-text-block">
-                      active seed modes: {activeSeedModes.join(", ")}.
+                      {t`active seed modes`}: {activeSeedModes.join(", ")}.
                     </div>
                   )
                   : null}
               </div>
-              <div class="sidebar-heading">audio</div>
+              <div class="sidebar-heading">{t`audio`}</div>
               <div class="audio-controls">
                 <div class="audio-setting">
-                  <span>music</span>
+                  <span>{t`music`}</span>
                   <div class="audio-setting-row">
                     <input
                       class="audio-slider"
@@ -1072,21 +1084,21 @@ export function App() {
                       max="100"
                       step="1"
                       value={musicVolumePercent}
-                      aria-label="music volume"
+                      aria-label={t`music volume`}
                       onInput={handleMusicVolumeInput}
                     />
                     <input
                       class="audio-toggle"
                       type="checkbox"
                       checked={audioSettings.musicEnabled}
-                      aria-label="enable music"
+                      aria-label={t`enable music`}
                       onChange={handleMusicEnabledChange}
                     />
                     <strong>{musicVolumePercent}%</strong>
                   </div>
                 </div>
                 <div class="audio-setting">
-                  <span>sfx</span>
+                  <span>{t`sfx`}</span>
                   <div class="audio-setting-row">
                     <input
                       class="audio-slider"
@@ -1095,14 +1107,14 @@ export function App() {
                       max="100"
                       step="1"
                       value={sfxVolumePercent}
-                      aria-label="sfx volume"
+                      aria-label={t`sfx volume`}
                       onInput={handleSfxVolumeInput}
                     />
                     <input
                       class="audio-toggle"
                       type="checkbox"
                       checked={audioSettings.sfxEnabled}
-                      aria-label="enable sfx"
+                      aria-label={t`enable sfx`}
                       onChange={handleSfxEnabledChange}
                     />
                     <strong>{sfxVolumePercent}%</strong>
@@ -1112,33 +1124,33 @@ export function App() {
               {IS_DEV_BUILD
                 ? (
                   <div class="dev-only-block">
-                    <div class="sidebar-heading">dev</div>
+                    <div class="sidebar-heading">{t`dev`}</div>
                     <div class="audio-controls">
                       <div class="audio-setting">
-                        <span>map visibility</span>
+                        <span>{t`map visibility`}</span>
                         <div class="audio-setting-row">
-                          <span>reveal map</span>
+                          <span>{t`reveal map`}</span>
                           <input
                             class="audio-toggle"
                             type="checkbox"
                             checked={appSettings.revealMap}
-                            aria-label="reveal map"
+                            aria-label={t`reveal map`}
                             onChange={handleRevealMapChange}
                           />
                           <strong>{appSettings.revealMap ? "ON" : "OFF"}</strong>
                         </div>
                       </div>
                       <div class="audio-setting">
-                        <span>map overlay</span>
+                        <span>{t`map overlay`}</span>
                         <div class="audio-setting-row">
                           <span>
-                            god mode
+                            {t`god mode`}
                           </span>
                           <input
                             class="audio-toggle"
                             type="checkbox"
                             checked={showDevEntityOverlay}
-                            aria-label="god mode"
+                            aria-label={t`god mode`}
                             onChange={handleDevEntityOverlayChange}
                           />
                           <strong>{showDevEntityOverlay ? "ON" : "OFF"}</strong>
@@ -1148,7 +1160,7 @@ export function App() {
                   </div>
                 )
                 : null}
-              <div class="sidebar-heading">credits</div>
+              <div class="sidebar-heading">{t`credits`}</div>
               <div class="credit-list">
                 <a
                   class="credit-link"
@@ -1267,17 +1279,17 @@ export function App() {
               class="modal-panel message-modal"
               role="dialog"
               aria-modal="true"
-              aria-label="orders"
+              aria-label={t`orders`}
               onClick={(event) => event.stopPropagation()}
             >
               <div class="panel-header">
-                <div class="sidebar-heading">orders</div>
+                <div class="sidebar-heading">{t`orders`}</div>
                 <button
                   type="button"
                   class="modal-close"
                   onClick={() => isOrdersModalOpenSignal.value = false}
                 >
-                  close
+                  {t`close`}
                 </button>
               </div>
               <div class="message-modal-scroll">
