@@ -11,7 +11,7 @@ const HELP_LOG_MESSAGES = [
   createLogMessage("Launch torpedo with Z."),
   createLogMessage("Drop depth charge with X."),
   createLogMessage("Toggle display with M."),
-  createLogMessage("Use Options to restart or roll a random run."),
+  createLogMessage("When sunk, press R to restart. Use Options for restart or random run anytime."),
 ]
 export const MAX_LOG_MESSAGES = 200
 
