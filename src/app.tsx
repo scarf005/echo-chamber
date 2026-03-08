@@ -680,7 +680,7 @@ export function App() {
 
       if (shouldRestartFromKey(event.key, gameRef.current.status)) {
         event.preventDefault()
-        startRun()
+        startRun(createRandomSeed())
         return
       }
 
