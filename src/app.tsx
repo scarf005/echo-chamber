@@ -92,7 +92,7 @@ export function App() {
   const audioSettings = appSettings.audio
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
   const isRevealMapEnabled = shouldRevealDevMap(appSettings)
-  const isGodMode = IS_DEV_BUILD && showDevEntityOverlay
+  const isGodMode = game.status === "won" || (IS_DEV_BUILD && showDevEntityOverlay)
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
   const isOrdersModalOpenRef = useRef(false)
