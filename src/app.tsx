@@ -807,10 +807,6 @@ export function App() {
             <strong>{game.turn}</strong>
           </div>
           <div class="stat-row">
-            <span>player sonar</span>
-            <strong>{playerSonarEnabled ? "ON" : "OFF"}</strong>
-          </div>
-          <div class="stat-row">
             <span>sonar in</span>
             <strong>{playerSonarEnabled ? sonarIn : "OFF"}</strong>
           </div>
