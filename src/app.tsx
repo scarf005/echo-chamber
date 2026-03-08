@@ -53,7 +53,11 @@ import {
   writeAppSettings,
 } from "./settings.ts"
 import { shouldRestartFromKey } from "./input.ts"
-import { createRestartRunSeed, parseRunSeed } from "./runSeed.ts"
+import {
+  createRandomSeed,
+  createRestartRunSeed,
+  parseRunSeed,
+} from "./runSeed.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
   describeHoveredInspectorRows,
@@ -64,7 +68,7 @@ import { activateLocale } from "./i18n.ts"
 import { languageSignal } from "./signals.ts"
 import { localizeAutoMoveReason } from "./game/localize.ts"
 
-const DEFAULT_SEED = "echo-chamber"
+const INITIAL_RUN_SEED = createRandomSeed()
 const AUTO_MOVE_DELAY_MS = 70
 const LOG_PANEL_LINES = 6
 const SETTINGS_PERSIST_DELAY_MS = 150
@@ -75,8 +79,8 @@ const appSettingsSignal = signal<AppSettings>(
 const viewportModeSignal = signal<ViewportMode>("camera")
 const isOptionsOpenSignal = signal(false)
 const isOrdersModalOpenSignal = signal(false)
-const runSeedSignal = signal(DEFAULT_SEED)
-const activeRunSeedSignal = signal(DEFAULT_SEED)
+const runSeedSignal = signal(INITIAL_RUN_SEED)
+const activeRunSeedSignal = signal(INITIAL_RUN_SEED)
 const previewTargetSignal = signal<Point | null>(null)
 const autoMoveTargetSignal = signal<Point | null>(null)
 const hoveredTileSignal = signal<Point | null>(null)
@@ -95,7 +99,7 @@ function shouldRevealDevMap(settings: AppSettings): boolean {
 }
 
 function createConfiguredGame(rawSeed: string, settings: AppSettings) {
-  const runSeed = parseRunSeed(rawSeed, DEFAULT_SEED)
+  const runSeed = parseRunSeed(rawSeed, INITIAL_RUN_SEED)
   const game = createGame({
     seed: runSeed.gameSeed,
     hostileSubmarineCount: difficultyToHostileSubmarineCount(
@@ -109,7 +113,7 @@ function createConfiguredGame(rawSeed: string, settings: AppSettings) {
 
 type AppGame = ReturnType<typeof createConfiguredGame>
 const gameSignal = signal<AppGame>(
-  createConfiguredGame(DEFAULT_SEED, appSettingsSignal.value),
+  createConfiguredGame(INITIAL_RUN_SEED, appSettingsSignal.value),
 )
 
 export function App() {
@@ -127,7 +131,7 @@ export function App() {
   const audioSettings = appSettings.audio
   const difficulty = appSettings.difficulty
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
-  const activeRunSeedConfig = parseRunSeed(activeRunSeed, DEFAULT_SEED)
+  const activeRunSeedConfig = parseRunSeed(activeRunSeed, INITIAL_RUN_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
     activeRunSeedConfig.enableMapMode
   const isGodMode = game.status === "won" ||
@@ -187,6 +191,21 @@ export function App() {
 
   const clearAutoMoveRoute = () => {
     autoMoveSeenTargetRef.current = null
+  }
+
+  const applyRunSeedState = (rawSeed = runSeedSignal.peek()) => {
+    const normalizedSeed = parseRunSeed(rawSeed, INITIAL_RUN_SEED).rawSeed
+    activeRunSeedSignal.value = normalizedSeed
+    runSeedSignal.value = normalizedSeed
+    viewportModeSignal.value = "camera"
+    previewTargetSignal.value = null
+    autoMoveTargetSignal.value = null
+    hoveredTileSignal.value = null
+    resetAutoMoveSeenAnomalies()
+    gameSignal.value = createConfiguredGame(
+      normalizedSeed,
+      appSettingsSignal.peek(),
+    )
   }
 
   const beginAutoMoveRoute = (point: Point) => {
@@ -419,22 +438,11 @@ export function App() {
     playedPickupCueCountRef.current = 0
     playedSonarContactCueCountRef.current = 0
     playedHostileSonarContactCueCountRef.current = 0
-    viewportModeSignal.value = "camera"
-    const normalizedSeed = parseRunSeed(rawSeed, DEFAULT_SEED).rawSeed
-    activeRunSeedSignal.value = normalizedSeed
-    runSeedSignal.value = normalizedSeed
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    hoveredTileSignal.value = null
-    resetAutoMoveSeenAnomalies()
-    gameSignal.value = createConfiguredGame(
-      normalizedSeed,
-      appSettingsSignal.peek(),
-    )
+    applyRunSeedState(rawSeed)
   }
 
   const restartRun = () => {
-    startRunWithSeed(createRestartRunSeed(runSeedSignal.peek(), DEFAULT_SEED))
+    startRunWithSeed(createRestartRunSeed(runSeedSignal.peek(), INITIAL_RUN_SEED))
   }
 
   const setViewportModeWithMessage = (nextViewportMode: ViewportMode) => {
@@ -773,7 +781,7 @@ export function App() {
         event.preventDefault()
         runSeedSignal.value = createRestartRunSeed(
           runSeedSignal.peek(),
-          DEFAULT_SEED,
+          INITIAL_RUN_SEED,
         )
         isOptionsOpenSignal.value = true
         isOrdersModalOpenSignal.value = false
@@ -1145,6 +1153,7 @@ export function App() {
                     class="seed-input"
                     type="text"
                     value={runSeed}
+                    autocomplete="off"
                     placeholder={t`seed`}
                     aria-label={t`run seed`}
                     onInput={handleRunSeedInput}
