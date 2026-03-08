@@ -30,6 +30,12 @@ export function levelToSliderPercent(value: number): number {
   return Math.round(clampAudioLevel(value) * 100)
 }
 
+export function isDocumentAudioAllowed(
+  documentState: Pick<Document, "hidden" | "hasFocus">,
+): boolean {
+  return !documentState.hidden && documentState.hasFocus()
+}
+
 export function normalizeAudioSettings(
   value: Partial<AudioSettings> | null | undefined,
 ): AudioSettings {

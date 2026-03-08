@@ -3,6 +3,7 @@ import { assertEquals } from "@std/assert"
 import {
   AUDIO_SETTINGS_STORAGE_KEY,
   DEFAULT_AUDIO_SETTINGS,
+  isDocumentAudioAllowed,
   levelToSliderPercent,
   normalizeAudioSettings,
   readAudioSettings,
@@ -81,4 +82,28 @@ Deno.test("writeAudioSettings stores normalized payload", () => {
 Deno.test("slider conversion helpers round-trip expected values", () => {
   assertEquals(sliderPercentToLevel(75), 0.75)
   assertEquals(levelToSliderPercent(0.24), 24)
+})
+
+Deno.test("isDocumentAudioAllowed requires both visibility and focus", () => {
+  assertEquals(
+    isDocumentAudioAllowed({
+      hidden: false,
+      hasFocus: () => true,
+    }),
+    true,
+  )
+  assertEquals(
+    isDocumentAudioAllowed({
+      hidden: true,
+      hasFocus: () => true,
+    }),
+    false,
+  )
+  assertEquals(
+    isDocumentAudioAllowed({
+      hidden: false,
+      hasFocus: () => false,
+    }),
+    false,
+  )
 })
