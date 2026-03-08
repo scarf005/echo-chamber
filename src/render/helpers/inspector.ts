@@ -42,7 +42,7 @@ export function describeHoveredInspectorRows(
     ? tileAt(game.map, point.x, point.y) ?? "void"
     : game.memory[index] ?? "unknown"
   const rows: InspectorRow[] = [
-    { label: "terrain", value: localizeTileKind(tileAt(game.map, point.x, point.y) ?? "void") },
+    { label: "terrain", value: terrain === "unknown" ? "unknown" : localizeTileKind(terrain) },
     { label: "contact", value: describeInspectorContact(game, point, options) ?? "--" },
     {
       label: "visibility",
