@@ -5,8 +5,8 @@ import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 
 import {
-  classifyLogMessageTone,
   createGame,
+  createLogMessage,
   createRandomSeed,
   directionBetweenPoints,
   directionFromKey,
@@ -393,10 +393,13 @@ export function App() {
             {
               ...current,
             },
-            createAutoMoveStopMessage(
-              anomaly.reason,
-              current.player,
-              anomaly.point,
+            createLogMessage(
+              createAutoMoveStopMessage(
+                anomaly.reason,
+                current.player,
+                anomaly.point,
+              ),
+              "warning",
             ),
           )
         }
@@ -410,10 +413,13 @@ export function App() {
             {
               ...current,
             },
-            createAutoMoveStopMessage(
-              "no plotted course",
-              current.player,
-              autoMoveTarget,
+            createLogMessage(
+              createAutoMoveStopMessage(
+                "no plotted course",
+                current.player,
+                autoMoveTarget,
+              ),
+              "warning",
             ),
           )
         }
@@ -425,7 +431,10 @@ export function App() {
           clearAutoMoveRoute()
           return withGameMessage({
             ...current,
-          }, createAutoMoveStopMessage("wall ahead", current.player, nextPoint))
+          }, createLogMessage(
+            createAutoMoveStopMessage("wall ahead", current.player, nextPoint),
+            "warning",
+          ))
         }
 
         const direction = directionBetweenPoints(path[0], nextPoint)
@@ -462,10 +471,13 @@ export function App() {
             {
               ...next,
             },
-            createAutoMoveStopMessage(
-              nextAnomaly.reason,
-              next.player,
-              nextAnomaly.point,
+            createLogMessage(
+              createAutoMoveStopMessage(
+                nextAnomaly.reason,
+                next.player,
+                nextAnomaly.point,
+              ),
+              "warning",
             ),
           )
         }
@@ -503,10 +515,13 @@ export function App() {
           {
             ...current,
           },
-          createAutoMoveStopMessage(
-            "charted wall at destination",
-            current.player,
-            point,
+          createLogMessage(
+            createAutoMoveStopMessage(
+              "charted wall at destination",
+              current.player,
+              point,
+            ),
+            "warning",
           ),
         )
       )
@@ -522,7 +537,7 @@ export function App() {
       setGame((current) =>
         withGameMessage({
           ...current,
-        }, `Auto-nav engaged to ${formatPoint(point)}.`)
+        }, createLogMessage(`Auto-nav engaged to ${formatPoint(point)}.`))
       )
       return
     }
@@ -538,11 +553,16 @@ export function App() {
           ...current,
         },
         nextPreviewPath.length >= 2
-          ? `Course plotted to ${formatPoint(point)}. Click again to engage.`
-          : createAutoMoveStopMessage(
-            "no plotted course",
-            current.player,
-            point,
+          ? createLogMessage(
+            `Course plotted to ${formatPoint(point)}. Click again to engage.`,
+          )
+          : createLogMessage(
+            createAutoMoveStopMessage(
+              "no plotted course",
+              current.player,
+              point,
+            ),
+            "warning",
           ),
       )
     )
@@ -593,9 +613,11 @@ export function App() {
           {
             ...current,
           },
-          nextViewportMode === "full"
-            ? "Display set to full map."
-            : "Display set to tracking camera.",
+          createLogMessage(
+            nextViewportMode === "full"
+              ? "Display set to full map."
+              : "Display set to tracking camera.",
+          ),
         ))
         return
       }
@@ -806,7 +828,7 @@ export function App() {
           <div class="sidebar-text-block sidebar-log-list">
             {visibleLogMessages.map((entry, index) => (
               <div
-                class={`sidebar-log-message sidebar-log-message-${classifyLogMessageTone(entry.message)}`}
+                class={`sidebar-log-message sidebar-log-message-${entry.type}`}
                 key={`${index}:${entry.message}:${entry.count}`}
               >
                 {formatGroupedLogMessage(entry)}
@@ -945,7 +967,7 @@ export function App() {
                           setGame((current) =>
                             withGameMessage(
                               revealMap(current),
-                              "Dev reveal: full map charted.",
+                              createLogMessage("Dev reveal: full map charted."),
                             )
                           )
                           setIsOptionsOpen(false)
