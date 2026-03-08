@@ -5,6 +5,7 @@ import { assertEquals } from "jsr:@std/assert"
 import type { GameState, HostileSubmarine } from "../../game/game.ts"
 import {
   markerForEntityMemory,
+  resolveEntityVisibilityLevel,
   resolveHostileEstimateOverlay,
   resolveHostileEstimatedPlayerPosition,
   shouldRenderProjectileInDarkness,
@@ -13,6 +14,14 @@ import {
 Deno.test("player-fired projectiles stay visible in darkness", () => {
   assertEquals(shouldRenderProjectileInDarkness("player"), true)
   assertEquals(shouldRenderProjectileInDarkness("hostile-1"), false)
+})
+
+Deno.test("death reveals exact entity visibility regardless of fog", () => {
+  const game = createEstimateOverlayGame()
+  const lostGame = { ...game, status: "lost" as const }
+
+  assertEquals(resolveEntityVisibilityLevel(game, 0), 0)
+  assertEquals(resolveEntityVisibilityLevel(lostGame, 0), 3)
 })
 
 Deno.test("entity memory markers distinguish item enemy and non-hostile", () => {

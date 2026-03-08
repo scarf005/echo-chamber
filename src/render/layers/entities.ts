@@ -114,7 +114,7 @@ export function drawEntitiesLayer(
     pickups: Map<number, PickupItem>
   },
 ): void {
-  const visibility = game.visibility[index]
+  const visibility = resolveEntityVisibilityLevel(game, index)
   const entityMemory = game.entityMemory?.[index] ?? null
   const debugOverlayAlpha = renderOptions.debugEntityOverlay ? 0.5 : 0
   const capsuleCollected = game.capsuleCollected ?? false
@@ -498,6 +498,13 @@ function drawExactEntityOverlay(
 
 export function shouldRenderProjectileInDarkness(senderId: string): boolean {
   return senderId === "player"
+}
+
+export function resolveEntityVisibilityLevel(
+  game: GameState,
+  index: number,
+): number {
+  return game.status === "lost" ? 3 : game.visibility[index]
 }
 
 function drawTorpedoGlyph(

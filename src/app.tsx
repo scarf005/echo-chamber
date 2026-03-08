@@ -4,7 +4,7 @@ import "./app.css"
 import { effect as signalEffect, signal } from "@preact/signals"
 import { debounce } from "@std/async/debounce"
 import type { JSX } from "preact"
-import { useEffect, useRef, useState } from "preact/hooks"
+import { useEffect, useRef } from "preact/hooks"
 
 import {
   createGame,
@@ -51,6 +51,7 @@ import {
   writeAppSettings,
 } from "./settings.ts"
 import { shouldRestartFromKey } from "./input.ts"
+import { parseRunSeed, randomizeRunSeed } from "./runSeed.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
   describeHoveredInspectorRows,
@@ -67,35 +68,53 @@ const appSettingsSignal = signal<AppSettings>(
   readAppSettings(getBrowserStorage(), IS_DEV_BUILD),
 )
 const viewportModeSignal = signal<ViewportMode>("camera")
+const isOptionsOpenSignal = signal(false)
+const isOrdersModalOpenSignal = signal(false)
+const runSeedSignal = signal(DEFAULT_SEED)
+const activeRunSeedSignal = signal(DEFAULT_SEED)
+const previewTargetSignal = signal<Point | null>(null)
+const autoMoveTargetSignal = signal<Point | null>(null)
+const hoveredTileSignal = signal<Point | null>(null)
 
 function shouldRevealDevMap(settings: AppSettings): boolean {
   return IS_DEV_BUILD && settings.revealMap
 }
 
-function createConfiguredGame(seed: string, settings: AppSettings) {
-  const game = createGame({ seed })
-  return shouldRevealDevMap(settings) ? revealMap(game) : game
+function createConfiguredGame(rawSeed: string, settings: AppSettings) {
+  const runSeed = parseRunSeed(rawSeed, DEFAULT_SEED)
+  const game = createGame({ seed: runSeed.gameSeed })
+  return shouldRevealDevMap(settings) || runSeed.enableMapMode
+    ? revealMap(game)
+    : game
 }
 
+type AppGame = ReturnType<typeof createConfiguredGame>
+const gameSignal = signal<AppGame>(
+  createConfiguredGame(DEFAULT_SEED, appSettingsSignal.value),
+)
+
 export function App() {
-  const [isOptionsOpen, setIsOptionsOpen] = useState(false)
-  const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false)
-  const [runSeed, setRunSeed] = useState(DEFAULT_SEED)
-  const [game, setGame] = useState(() =>
-    createConfiguredGame(DEFAULT_SEED, appSettingsSignal.value)
-  )
-  const [previewTarget, setPreviewTarget] = useState<Point | null>(null)
-  const [autoMoveTarget, setAutoMoveTarget] = useState<Point | null>(null)
-  const [hoveredTile, setHoveredTile] = useState<Point | null>(null)
+  const isOptionsOpen = isOptionsOpenSignal.value
+  const isOrdersModalOpen = isOrdersModalOpenSignal.value
+  const runSeed = runSeedSignal.value
+  const activeRunSeed = activeRunSeedSignal.value
+  const game = gameSignal.value
+  const previewTarget = previewTargetSignal.value
+  const autoMoveTarget = autoMoveTargetSignal.value
+  const hoveredTile = hoveredTileSignal.value
   const appSettings = appSettingsSignal.value
   const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
-  const isRevealMapEnabled = shouldRevealDevMap(appSettings)
-  const isGodMode = game.status === "won" || (IS_DEV_BUILD && showDevEntityOverlay)
-  const runSeedRef = useRef(DEFAULT_SEED)
-  const isOptionsOpenRef = useRef(false)
-  const isOrdersModalOpenRef = useRef(false)
+  const activeRunSeedConfig = parseRunSeed(activeRunSeed, DEFAULT_SEED)
+  const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
+    activeRunSeedConfig.enableMapMode
+  const isGodMode = game.status === "won" || activeRunSeedConfig.enableGodMode ||
+    (IS_DEV_BUILD && showDevEntityOverlay)
+  const activeSeedModes = [
+    activeRunSeedConfig.enableGodMode ? "god" : null,
+    activeRunSeedConfig.enableMapMode ? "map" : null,
+  ].filter((mode): mode is string => mode !== null)
   const backgroundMusicRef = useRef<
     ReturnType<typeof createBackgroundMusic> | null
   >(null)
@@ -123,13 +142,15 @@ export function App() {
   const autoMoveSeenAnomaliesRef = useRef<Set<string>>(new Set())
   const autoMoveSeenTargetRef = useRef<Point | null>(null)
   const audioSettingsRef = useRef(audioSettings)
-  const gameRef = useRef(game)
   const pageAudioEnabledRef = useRef(
     typeof document === "undefined" ? true : isDocumentAudioAllowed(document),
   )
 
   audioSettingsRef.current = audioSettings
-  gameRef.current = game
+
+  const updateGame = (update: (current: AppGame) => AppGame) => {
+    gameSignal.value = update(gameSignal.peek())
+  }
 
   const updateAppSettings = (
     update: (current: AppSettings) => AppSettings,
@@ -152,7 +173,7 @@ export function App() {
 
   const syncAudioControllers = () => {
     const currentAudioSettings = audioSettingsRef.current
-    const currentGame = gameRef.current
+    const currentGame = gameSignal.peek()
     const pageAudioEnabled = pageAudioEnabledRef.current
 
     backgroundMusicRef.current?.setVolume(currentAudioSettings.musicVolume)
@@ -189,14 +210,6 @@ export function App() {
       pageAudioEnabled && currentAudioSettings.sfxEnabled,
     )
   }
-
-  useEffect(() => {
-    isOptionsOpenRef.current = isOptionsOpen
-  }, [isOptionsOpen])
-
-  useEffect(() => {
-    isOrdersModalOpenRef.current = isOrdersModalOpen
-  }, [isOrdersModalOpen])
 
   useEffect(() => {
     const backgroundMusic = createBackgroundMusic()
@@ -370,7 +383,7 @@ export function App() {
     syncAudioControllers()
   }, [audioSettings, game.playerSonarEnabled, game.status])
 
-  const startRun = (rawSeed = runSeedRef.current) => {
+  const startRun = (rawSeed = runSeedSignal.peek()) => {
     void backgroundMusicRef.current?.ensureStarted()
     void deathSfxRef.current?.ensureStarted()
     void entityHitSfxRef.current?.ensureStarted()
@@ -385,14 +398,14 @@ export function App() {
     playedSonarContactCueCountRef.current = 0
     playedHostileSonarContactCueCountRef.current = 0
     viewportModeSignal.value = "camera"
-    const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
-    runSeedRef.current = normalizedSeed
-    setRunSeed(normalizedSeed)
-    setPreviewTarget(null)
-    setAutoMoveTarget(null)
-    setHoveredTile(null)
+    const normalizedSeed = parseRunSeed(rawSeed, DEFAULT_SEED).rawSeed
+    activeRunSeedSignal.value = normalizedSeed
+    runSeedSignal.value = normalizedSeed
+    previewTargetSignal.value = null
+    autoMoveTargetSignal.value = null
+    hoveredTileSignal.value = null
     resetAutoMoveSeenAnomalies()
-    setGame(createConfiguredGame(normalizedSeed, appSettingsSignal.peek()))
+    gameSignal.value = createConfiguredGame(normalizedSeed, appSettingsSignal.peek())
   }
 
   const setViewportModeWithMessage = (nextViewportMode: ViewportMode) => {
@@ -401,7 +414,7 @@ export function App() {
     }
 
     viewportModeSignal.value = nextViewportMode
-    setGame((current) => withGameMessage(
+    updateGame((current) => withGameMessage(
       {
         ...current,
       },
@@ -420,9 +433,9 @@ export function App() {
       return
     }
 
-    setPreviewTarget(null)
-    setAutoMoveTarget(null)
-    setHoveredTile(null)
+    previewTargetSignal.value = null
+    autoMoveTargetSignal.value = null
+    hoveredTileSignal.value = null
     resetAutoMoveSeenAnomalies()
   }, [game.status])
 
@@ -432,25 +445,25 @@ export function App() {
     }
 
     if (isOptionsOpen) {
-      setAutoMoveTarget(null)
+      autoMoveTargetSignal.value = null
       return
     }
 
     if (game.status !== "playing") {
-      setAutoMoveTarget(null)
+      autoMoveTargetSignal.value = null
       resetAutoMoveSeenAnomalies()
       return
     }
 
     if (pointsEqual(game.player, autoMoveTarget)) {
-      setAutoMoveTarget(null)
+      autoMoveTargetSignal.value = null
       return
     }
 
     const timeoutId = window.setTimeout(() => {
-      setGame((current) => {
+      updateGame((current) => {
         if (current.status !== "playing") {
-          setAutoMoveTarget(null)
+          autoMoveTargetSignal.value = null
           resetAutoMoveSeenAnomalies()
           return current
         }
@@ -467,7 +480,7 @@ export function App() {
             ...autoMoveSeenAnomaliesRef.current,
             keyForAutoMoveAnomaly(anomaly),
           ])
-          setAutoMoveTarget(null)
+          autoMoveTargetSignal.value = null
           return withGameMessage(
             {
               ...current,
@@ -486,7 +499,7 @@ export function App() {
         const path = findAutoMovePath(current, autoMoveTarget)
 
         if (path.length < 2) {
-          setAutoMoveTarget(null)
+          autoMoveTargetSignal.value = null
           clearAutoMoveRoute()
           return withGameMessage(
             {
@@ -506,7 +519,7 @@ export function App() {
         const nextPoint = path[1]
 
         if (!isPassableTile(tileAt(current.map, nextPoint.x, nextPoint.y))) {
-          setAutoMoveTarget(null)
+          autoMoveTargetSignal.value = null
           clearAutoMoveRoute()
           return withGameMessage({
             ...current,
@@ -519,7 +532,7 @@ export function App() {
         const direction = directionBetweenPoints(path[0], nextPoint)
 
         if (!direction) {
-          setAutoMoveTarget(null)
+          autoMoveTargetSignal.value = null
           clearAutoMoveRoute()
           return current
         }
@@ -545,7 +558,7 @@ export function App() {
             ...autoMoveSeenAnomaliesRef.current,
             keyForAutoMoveAnomaly(nextAnomaly),
           ])
-          setAutoMoveTarget(null)
+          autoMoveTargetSignal.value = null
           return withGameMessage(
             {
               ...next,
@@ -565,7 +578,7 @@ export function App() {
           !moved || pointsEqual(next.player, autoMoveTarget) ||
           next.status !== "playing"
         ) {
-          setAutoMoveTarget(null)
+          autoMoveTargetSignal.value = null
           clearAutoMoveRoute()
         }
 
@@ -577,7 +590,7 @@ export function App() {
   }, [autoMoveTarget, game, isOptionsOpen])
 
   const handleViewportTileClick = (point: Point) => {
-    if (isOptionsOpenRef.current) {
+    if (isOptionsOpenSignal.peek()) {
       return
     }
 
@@ -586,10 +599,10 @@ export function App() {
     }
 
     if (!isAutoMoveNavigable(game, point)) {
-      setPreviewTarget(null)
-      setAutoMoveTarget(null)
+      previewTargetSignal.value = null
+      autoMoveTargetSignal.value = null
       clearAutoMoveRoute()
-      setGame((current) =>
+      updateGame((current) =>
         withGameMessage(
           {
             ...current,
@@ -612,8 +625,8 @@ export function App() {
 
     if (previewTarget && pointsEqual(previewTarget, point)) {
       beginAutoMoveRoute(point)
-      setAutoMoveTarget({ ...point })
-      setGame((current) =>
+      autoMoveTargetSignal.value = { ...point }
+      updateGame((current) =>
         withGameMessage({
           ...current,
         }, createLogMessage(`Auto-nav engaged to ${formatPoint(point)}.`))
@@ -624,9 +637,9 @@ export function App() {
     const nextPreviewPath = findAutoMovePath(game, point)
 
     beginAutoMoveRoute(point)
-    setPreviewTarget({ ...point })
-    setAutoMoveTarget(null)
-    setGame((current) =>
+    previewTargetSignal.value = { ...point }
+    autoMoveTargetSignal.value = null
+    updateGame((current) =>
       withGameMessage(
         {
           ...current,
@@ -651,11 +664,11 @@ export function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target
 
-      if (isOptionsOpenRef.current || isOrdersModalOpenRef.current) {
+      if (isOptionsOpenSignal.peek() || isOrdersModalOpenSignal.peek()) {
         if (event.key === "Escape") {
           event.preventDefault()
-          setIsOptionsOpen(false)
-          setIsOrdersModalOpen(false)
+          isOptionsOpenSignal.value = false
+          isOrdersModalOpenSignal.value = false
         }
 
         return
@@ -667,7 +680,7 @@ export function App() {
 
       if (event.key === "Escape") {
         event.preventDefault()
-        setIsOptionsOpen(true)
+        isOptionsOpenSignal.value = true
         return
       }
 
@@ -678,15 +691,25 @@ export function App() {
         return
       }
 
-      if (shouldRestartFromKey(event.key, gameRef.current.status)) {
+      if (shouldRestartFromKey(event.key, gameSignal.peek().status)) {
         event.preventDefault()
-        startRun(createRandomSeed())
+        startRun(
+          randomizeRunSeed(
+            activeRunSeedSignal.peek(),
+            DEFAULT_SEED,
+            createRandomSeed(),
+          ),
+        )
         return
       }
 
       if (event.key === "q" || event.key === "Q") {
         event.preventDefault()
-        setGame((current) => togglePlayerSonar(current))
+        updateGame((current) => {
+          const next = togglePlayerSonar(current)
+          void sonarLoopRef.current?.playToggleCue(isPlayerSonarEnabled(next))
+          return next
+        })
         return
       }
 
@@ -700,37 +723,37 @@ export function App() {
 
       if (event.key === "z" || event.key === "Z") {
         event.preventDefault()
-        setPreviewTarget(null)
-        setAutoMoveTarget(null)
+        previewTargetSignal.value = null
+        autoMoveTargetSignal.value = null
         clearAutoMoveRoute()
-        setGame((current) => fireTorpedo(current))
+        updateGame((current) => fireTorpedo(current))
         return
       }
 
       if (event.key === "c" || event.key === "C") {
         event.preventDefault()
-        setPreviewTarget(null)
-        setAutoMoveTarget(null)
+        previewTargetSignal.value = null
+        autoMoveTargetSignal.value = null
         clearAutoMoveRoute()
-        setGame((current) => fireTorpedo(current, "up"))
+        updateGame((current) => fireTorpedo(current, "up"))
         return
       }
 
       if (event.key === "x" || event.key === "X") {
         event.preventDefault()
-        setPreviewTarget(null)
-        setAutoMoveTarget(null)
+        previewTargetSignal.value = null
+        autoMoveTargetSignal.value = null
         clearAutoMoveRoute()
-        setGame((current) => dropDepthCharge(current))
+        updateGame((current) => dropDepthCharge(current))
         return
       }
 
       if (event.key === ".") {
         event.preventDefault()
-        setPreviewTarget(null)
-        setAutoMoveTarget(null)
+        previewTargetSignal.value = null
+        autoMoveTargetSignal.value = null
         clearAutoMoveRoute()
-        setGame((current) => holdPosition(current))
+        updateGame((current) => holdPosition(current))
         return
       }
 
@@ -741,10 +764,10 @@ export function App() {
       }
 
       event.preventDefault()
-      setPreviewTarget(null)
-      setAutoMoveTarget(null)
+      previewTargetSignal.value = null
+      autoMoveTargetSignal.value = null
       resetAutoMoveSeenAnomalies()
-      setGame((current) => {
+      updateGame((current) => {
         const next = movePlayer(current, direction)
 
         if (
@@ -859,8 +882,14 @@ export function App() {
     }))
 
     if (checked) {
-      setGame((current) => revealMap(current))
+      updateGame((current) => revealMap(current))
     }
+  }
+
+  const handleRunSeedInput = (
+    event: JSX.TargetedEvent<HTMLInputElement>,
+  ) => {
+    runSeedSignal.value = event.currentTarget.value
   }
 
   return (
@@ -871,7 +900,9 @@ export function App() {
           selectedTarget={previewTarget}
           previewPath={previewPath}
           onTileClick={handleViewportTileClick}
-          onTileHover={setHoveredTile}
+          onTileHover={(point) => {
+            hoveredTileSignal.value = point
+          }}
           renderOptions={renderOptions}
         />
       </section>
@@ -887,8 +918,8 @@ export function App() {
               aria-haspopup="dialog"
               aria-expanded={isOptionsOpen}
               onClick={() => {
-                setIsOptionsOpen(true)
-                setIsOrdersModalOpen(false)
+                isOptionsOpenSignal.value = true
+                isOrdersModalOpenSignal.value = false
               }}
             >
               <span />
@@ -935,8 +966,8 @@ export function App() {
               aria-haspopup="dialog"
               aria-expanded={isOrdersModalOpen}
               onClick={() => {
-                setIsOrdersModalOpen(true)
-                setIsOptionsOpen(false)
+                isOrdersModalOpenSignal.value = true
+                isOptionsOpenSignal.value = false
               }}
             >
               <span class="sidebar-heading">orders</span>
@@ -984,7 +1015,7 @@ export function App() {
 
       {isOptionsOpen
         ? (
-          <div class="modal-backdrop" onClick={() => setIsOptionsOpen(false)}>
+          <div class="modal-backdrop" onClick={() => isOptionsOpenSignal.value = false}>
             <section
               class="modal-panel"
               role="dialog"
@@ -997,21 +1028,49 @@ export function App() {
                 <button
                   type="button"
                   class="modal-close"
-                  onClick={() => setIsOptionsOpen(false)}
+                  onClick={() => isOptionsOpenSignal.value = false}
                 >
                   close
                 </button>
               </div>
-              <div class="button-stack">
-                <button
-                  type="button"
-                  onClick={() => {
-                    startRun(createRandomSeed())
-                    setIsOptionsOpen(false)
-                  }}
-                >
-                  restart mission
-                </button>
+              <div class="seed-controls">
+                <input
+                  class="seed-input"
+                  type="text"
+                  value={runSeed}
+                  placeholder="seed"
+                  aria-label="run seed"
+                  onInput={handleRunSeedInput}
+                />
+                <div class="seed-button-row">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      startRun(
+                        randomizeRunSeed(runSeed, DEFAULT_SEED, createRandomSeed()),
+                      )
+                      isOptionsOpenSignal.value = false
+                    }}
+                  >
+                    random seed
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      startRun(runSeed)
+                      isOptionsOpenSignal.value = false
+                    }}
+                  >
+                    restart
+                  </button>
+                </div>
+                {activeSeedModes.length > 0
+                  ? (
+                    <div class="sidebar-text-block">
+                      active seed modes: {activeSeedModes.join(", ")}.
+                    </div>
+                  )
+                  : null}
               </div>
               <div class="sidebar-heading">audio</div>
               <div class="audio-controls">
@@ -1074,11 +1133,11 @@ export function App() {
                           <input
                             class="audio-toggle"
                             type="checkbox"
-                            checked={isRevealMapEnabled}
+                            checked={appSettings.revealMap}
                             aria-label="reveal map"
                             onChange={handleRevealMapChange}
                           />
-                          <strong>{isRevealMapEnabled ? "ON" : "OFF"}</strong>
+                          <strong>{appSettings.revealMap ? "ON" : "OFF"}</strong>
                         </div>
                       </div>
                       <div class="audio-setting">
@@ -1215,7 +1274,7 @@ export function App() {
 
       {isOrdersModalOpen
         ? (
-          <div class="modal-backdrop" onClick={() => setIsOrdersModalOpen(false)}>
+          <div class="modal-backdrop" onClick={() => isOrdersModalOpenSignal.value = false}>
             <section
               class="modal-panel message-modal"
               role="dialog"
@@ -1228,7 +1287,7 @@ export function App() {
                 <button
                   type="button"
                   class="modal-close"
-                  onClick={() => setIsOrdersModalOpen(false)}
+                  onClick={() => isOrdersModalOpenSignal.value = false}
                 >
                   close
                 </button>
