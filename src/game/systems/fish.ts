@@ -9,6 +9,7 @@ import {
 import {
   chebyshevDistance,
   createDeterministicRandom,
+  indexForPoint,
   keyOfPoint,
   randomInteger,
   shufflePoints,
@@ -362,63 +363,149 @@ function findPathToward(
   goal: Point,
   occupied: Set<string>,
 ): Point[] {
-  const queue: Point[] = [{ ...start }]
-  const parents = new Map<string, Point | null>()
-  parents.set(keyOfPoint(start), null)
+  const width = map.width
+  const totalTiles = map.tiles.length
+  const startIndex = indexForPoint(width, start)
+  const goalIndex = indexForPoint(width, goal)
 
-  while (queue.length > 0) {
-    const current = queue.shift()
+  if (startIndex === goalIndex) {
+    return [{ ...start }]
+  }
 
-    if (!current) {
-      continue
-    }
+  const queue = new Int32Array(totalTiles)
+  const parents = new Int32Array(totalTiles)
+  const occupiedIndexes = occupiedIndexesForPath(width, occupied)
+  const neighborIndexes = new Int32Array(4)
+  const neighborScores = new Int32Array(4)
+  let queueStart = 0
+  let queueEnd = 1
 
-    if (samePoint(current, goal)) {
+  parents.fill(-2)
+  parents[startIndex] = -1
+  queue[0] = startIndex
+
+  while (queueStart < queueEnd) {
+    const currentIndex = queue[queueStart]
+    queueStart += 1
+
+    if (currentIndex === goalIndex) {
       break
     }
 
-    for (const next of orderedNeighbors(current, goal)) {
-      const key = keyOfPoint(next)
+    const neighborCount = fillOrderedNeighborIndexes(
+      width,
+      map.height,
+      currentIndex,
+      goal,
+      neighborIndexes,
+      neighborScores,
+    )
 
-      if (parents.has(key) || !isPassableTile(tileAt(map, next.x, next.y))) {
+    for (let index = 0; index < neighborCount; index += 1) {
+      const nextIndex = neighborIndexes[index]
+
+      if (parents[nextIndex] !== -2 || !isPassableTile(map.tiles[nextIndex])) {
         continue
       }
 
-      if (occupied.has(key) && !samePoint(next, goal)) {
+      if (occupiedIndexes.has(nextIndex) && nextIndex !== goalIndex) {
         continue
       }
 
-      parents.set(key, current)
-      queue.push(next)
+      parents[nextIndex] = currentIndex
+      queue[queueEnd] = nextIndex
+      queueEnd += 1
     }
   }
 
-  if (!parents.has(keyOfPoint(goal))) {
+  if (parents[goalIndex] === -2) {
     return [{ ...start }]
   }
 
   const path: Point[] = []
-  let cursor: Point | null = { ...goal }
+  let cursorIndex = goalIndex
 
-  while (cursor) {
-    path.push(cursor)
-    cursor = parents.get(keyOfPoint(cursor)) ?? null
+  while (cursorIndex !== -1) {
+    path.push(pointFromIndex(width, cursorIndex))
+    cursorIndex = parents[cursorIndex]
   }
 
   path.reverse()
   return path
 }
 
-function orderedNeighbors(point: Point, goal: Point): Point[] {
-  return CARDINAL_STEPS
-    .map((step) => ({ x: point.x + step.x, y: point.y + step.y }))
-    .sort((left, right) =>
-      distanceScore(left, goal) - distanceScore(right, goal)
-    )
+function occupiedIndexesForPath(
+  width: number,
+  occupied: ReadonlySet<string>,
+): Set<number> {
+  const indexes = new Set<number>()
+
+  for (const pointKey of occupied) {
+    indexes.add(indexForPoint(width, pointFromKey(pointKey)))
+  }
+
+  return indexes
 }
 
-function distanceScore(point: Point, goal: Point): number {
-  return Math.abs(point.x - goal.x) + Math.abs(point.y - goal.y)
+function pointFromKey(pointKey: string): Point {
+  const separatorIndex = pointKey.indexOf(":")
+  return {
+    x: Number(pointKey.slice(0, separatorIndex)),
+    y: Number(pointKey.slice(separatorIndex + 1)),
+  }
+}
+
+function pointFromIndex(width: number, index: number): Point {
+  return {
+    x: index % width,
+    y: Math.floor(index / width),
+  }
+}
+
+function fillOrderedNeighborIndexes(
+  width: number,
+  height: number,
+  pointIndex: number,
+  goal: Point,
+  neighborIndexes: Int32Array,
+  neighborScores: Int32Array,
+): number {
+  const x = pointIndex % width
+  const y = Math.floor(pointIndex / width)
+  let neighborCount = 0
+
+  const insertNeighbor = (nextIndex: number, nextX: number, nextY: number) => {
+    const score = Math.abs(nextX - goal.x) + Math.abs(nextY - goal.y)
+    let insertIndex = neighborCount
+
+    while (insertIndex > 0 && neighborScores[insertIndex - 1] > score) {
+      neighborIndexes[insertIndex] = neighborIndexes[insertIndex - 1]
+      neighborScores[insertIndex] = neighborScores[insertIndex - 1]
+      insertIndex -= 1
+    }
+
+    neighborIndexes[insertIndex] = nextIndex
+    neighborScores[insertIndex] = score
+    neighborCount += 1
+  }
+
+  if (x + 1 < width) {
+    insertNeighbor(pointIndex + 1, x + 1, y)
+  }
+
+  if (x > 0) {
+    insertNeighbor(pointIndex - 1, x - 1, y)
+  }
+
+  if (y + 1 < height) {
+    insertNeighbor(pointIndex + width, x, y + 1)
+  }
+
+  if (y > 0) {
+    insertNeighbor(pointIndex - width, x, y - 1)
+  }
+
+  return neighborCount
 }
 
 function allWaterTiles(map: GeneratedMap): Point[] {
