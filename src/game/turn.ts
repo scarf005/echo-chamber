@@ -38,6 +38,7 @@ import type {
   EntityReveal,
   Fish,
   GameState,
+  GameStatus,
   HostileSubmarine,
   HorizontalDirection,
   LogMessage,
@@ -46,7 +47,7 @@ import type {
   Shockwave,
   TurnAction,
 } from "./model.ts"
-import { refreshPerception } from "./perception.ts"
+import { refreshPerception, revealMap } from "./perception.ts"
 import type { Point } from "./mapgen.ts"
 import { clearKelpStrandAt, isPassableTile, tileAt } from "./mapgen.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
@@ -448,14 +449,13 @@ export function advanceTurn(
       : []),
   ].slice(-MAX_LOG_MESSAGES)
 
-  return withGameMessage(
-    refreshPerception(
-      {
+  const nextStatus: GameStatus = playerDestroyed ? "lost" : won ? "won" : "playing"
+  const nextGame: GameState = {
         ...game,
         map,
         player: { ...nextPlayer },
         turn: nextTurn,
-        status: playerDestroyed ? "lost" : won ? "won" : "playing",
+        status: nextStatus,
         playerSonarEnabled,
         capsuleCollected,
         lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
@@ -493,7 +493,11 @@ export function advanceTurn(
         depthChargeAmmo,
         screenShake,
         message: nextMessageText,
-      },
+      }
+
+  return withGameMessage(
+    refreshPerception(
+      playerDestroyed || won ? revealMap(nextGame) : nextGame,
       [...shockwaveStep.revealedTiles, ...pickupStep.tileReveals],
       [...shockwaveStep.revealedEntities, ...hostileSonarContact.reveals],
     ),

@@ -146,6 +146,10 @@ const GUARD_LOADOUT: Loadout = {
 }
 
 const HOSTILE_POSITION_MEMORY_LIMIT = 4
+const GUARD_CAPSULE_RESPONSE_RADIUS =
+  HOSTILE_GUARD_MAX_CAPSULE_DISTANCE + PROJECTILE_PROXIMITY_RADIUS
+const SCOUT_RETREAT_TRIGGER_DISTANCE = PROJECTILE_PROXIMITY_RADIUS + 1
+const SCOUT_KITE_DISTANCE = HOSTILE_PLAYER_DETECTION_RADIUS - 2
 
 const TURTLE_LOADOUT: Loadout = {
   torpedoAmmo: 4,
@@ -355,6 +359,13 @@ export function stepHostileSubmarines(
       lastKnownPlayerFromDirectDetection = knowledge.directDetection
     }
 
+    if (shouldForgetPlayerFix(archetype, lastKnownPlayerTurn, turn)) {
+      lastKnownPlayerPosition = null
+      lastKnownPlayerVector = null
+      lastKnownPlayerTurn = null
+      lastKnownPlayerFromDirectDetection = false
+    }
+
     if (!lastKnownPlayerPosition) {
       salvoShotsRemaining = 0
       salvoStepDirection = null
@@ -374,26 +385,47 @@ export function stepHostileSubmarines(
     if (archetype === "turtle") {
       mode = "patrol"
       target = { ...hostileSubmarine.initialPosition }
-    } else if (archetype === "scout" && lastKnownPlayerPosition) {
+    } else if (
+      archetype === "scout" &&
+      lastKnownPlayerPosition &&
+      shouldScoutRetreat(
+        position,
+        lastKnownPlayerPosition,
+        lastKnownPlayerTurn,
+        turn,
+      )
+    ) {
       mode = "retreat"
       target = chooseScoutRetreatTarget(
         hostileSubmarine,
         currentHostiles,
         context.player,
       )
-    } else if (lastKnownPlayerPosition) {
+    } else if (
+      lastKnownPlayerPosition &&
+      canPursuePlayerFix(
+        archetype,
+        map.capsule,
+        lastKnownPlayerPosition,
+        knowledge.directDetection,
+      )
+    ) {
       mode = "attack"
-      target = predictPlayerPosition(
+      target = chooseAttackTarget(
         map,
+        position,
         lastKnownPlayerPosition,
         lastKnownPlayerVector,
         archetype,
+        knowledge.directDetection,
+        lastKnownPlayerTurn,
+        turn,
       )
     } else if (
       archetype === "guard" &&
       knowledge.cluePosition &&
       chebyshevDistance(knowledge.cluePosition, map.capsule) <=
-        HOSTILE_GUARD_MAX_CAPSULE_DISTANCE + PROJECTILE_PROXIMITY_RADIUS
+        GUARD_CAPSULE_RESPONSE_RADIUS
     ) {
       mode = "investigate"
       retainedPlannedPath = target
@@ -777,6 +809,59 @@ function formatPoint(point: Point): string {
   return `${point.x},${point.y}`
 }
 
+function maxEvidenceAgeForArchetype(archetype: HostileSubmarineArchetype): number {
+  return archetype === "hunter" || archetype === "scout" ? 2 : 1
+}
+
+function shouldForgetPlayerFix(
+  archetype: HostileSubmarineArchetype,
+  lastKnownPlayerTurn: number | null,
+  turn: number,
+): boolean {
+  return lastKnownPlayerTurn !== null &&
+    turn - lastKnownPlayerTurn > maxEvidenceAgeForArchetype(archetype)
+}
+
+function shouldScoutRetreat(
+  position: Point,
+  lastKnownPlayerPosition: Point,
+  lastKnownPlayerTurn: number | null,
+  turn: number,
+): boolean {
+  return lastKnownPlayerTurn !== null &&
+    turn - lastKnownPlayerTurn <= 1 &&
+    chebyshevDistance(position, lastKnownPlayerPosition) <=
+      SCOUT_RETREAT_TRIGGER_DISTANCE
+}
+
+function canPursuePlayerFix(
+  archetype: HostileSubmarineArchetype,
+  capsule: Point,
+  lastKnownPlayerPosition: Point,
+  directDetection: boolean,
+): boolean {
+  return archetype !== "guard" || directDetection ||
+    chebyshevDistance(lastKnownPlayerPosition, capsule) <=
+      GUARD_CAPSULE_RESPONSE_RADIUS
+}
+
+function shouldUseExactAttackTarget(
+  map: GeneratedMap,
+  position: Point,
+  lastKnownPlayerPosition: Point,
+  directDetection: boolean,
+  lastKnownPlayerTurn: number | null,
+  turn: number,
+): boolean {
+  return directDetection ||
+    (lastKnownPlayerTurn !== null && turn - lastKnownPlayerTurn <= 1 && (
+      hasHorizontalShotOpportunity(map, position, lastKnownPlayerPosition) ||
+      hasVerticalShotOpportunity(map, position, lastKnownPlayerPosition) ||
+      hasDepthChargeOpportunity(map, position, lastKnownPlayerPosition) ||
+      findCeilingTrapShot(map, position, lastKnownPlayerPosition) !== null
+    ))
+}
+
 function allWaterTiles(map: GeneratedMap): Point[] {
   const points: Point[] = []
 
@@ -936,9 +1021,14 @@ function gatherKnowledge(
   }
 
   if (context.capsuleRetrievedThisTurn) {
+    const capsuleAlarmIsLocal = chebyshevDistance(
+      hostileSubmarine.position,
+      map.capsule,
+    ) <= HOSTILE_COMMUNICATION_RADIUS
+
     return {
-      confirmedPlayerPosition: { ...context.player },
-      cluePosition: { ...context.player },
+      confirmedPlayerPosition: capsuleAlarmIsLocal ? { ...context.player } : null,
+      cluePosition: capsuleAlarmIsLocal ? { ...context.player } : { ...map.capsule },
       playerVector,
       directDetection: false,
       detectedByPlayerSonar: false,
@@ -1184,6 +1274,33 @@ function chooseScoutRetreatTarget(
     const candidateScore = chebyshevDistance(candidate, player)
     return candidateScore > bestScore ? candidate : best
   }, candidates[0])
+}
+
+function chooseAttackTarget(
+  map: GeneratedMap,
+  position: Point,
+  lastKnownPlayerPosition: Point,
+  lastKnownPlayerVector: Point | null,
+  archetype: HostileSubmarineArchetype,
+  directDetection: boolean,
+  lastKnownPlayerTurn: number | null,
+  turn: number,
+): Point {
+  return shouldUseExactAttackTarget(
+      map,
+      position,
+      lastKnownPlayerPosition,
+      directDetection,
+      lastKnownPlayerTurn,
+      turn,
+    )
+    ? { ...lastKnownPlayerPosition }
+    : predictPlayerPosition(
+      map,
+      lastKnownPlayerPosition,
+      lastKnownPlayerVector,
+      archetype,
+    )
 }
 
 function predictPlayerPosition(
@@ -1458,12 +1575,17 @@ function chooseRetreatStep(
   }
 
   return options.sort((left, right) => {
-    const leftScore = chebyshevDistance(left, player) * 10 -
+    const leftScore = scoutKiteScore(left, player) -
       chebyshevDistance(left, retreatTarget) - retreatLoopPenalty(left, recentPositions)
-    const rightScore = chebyshevDistance(right, player) * 10 -
+    const rightScore = scoutKiteScore(right, player) -
       chebyshevDistance(right, retreatTarget) - retreatLoopPenalty(right, recentPositions)
     return rightScore - leftScore
   })[0]
+}
+
+function scoutKiteScore(point: Point, player: Point): number {
+  const distance = chebyshevDistance(point, player)
+  return distance * 2 - Math.abs(distance - SCOUT_KITE_DISTANCE) * 8
 }
 
 function retreatLoopPenalty(point: Point, recentPositions: readonly Point[]): number {
@@ -1506,6 +1628,7 @@ function shouldHoldAttackPosition(
       position,
       attackTarget,
       hostileSubmarine.torpedoAmmo,
+      hostileSubmarine.vlsAmmo,
       hostileSubmarine.depthChargeAmmo,
       lastKnownPlayerVector,
       lastKnownPlayerTurn,
@@ -1545,6 +1668,7 @@ function hasFreshPursuitWeaponOpportunity(
   position: Point,
   target: Point,
   torpedoAmmo: number,
+  vlsAmmo: number,
   depthChargeAmmo: number,
   lastKnownPlayerVector: Point | null,
   lastKnownPlayerTurn: number | null,
@@ -1567,12 +1691,17 @@ function hasFreshPursuitWeaponOpportunity(
     Math.sign(lastKnownPlayerVector.x) === Math.sign(target.x - position.x) &&
     hasHorizontalShotOpportunity(map, position, target)
 
+  const ascendingEscapeShot = vlsAmmo > 0 &&
+    lastKnownPlayerVector.y < 0 &&
+    target.y < position.y &&
+    hasVerticalShotOpportunity(map, position, target)
+
   const descendingEscapeDrop = depthChargeAmmo > 0 &&
     lastKnownPlayerVector.y > 0 &&
     target.y > position.y &&
     hasDepthChargeOpportunity(map, position, target)
 
-  return horizontalEscapeShot || descendingEscapeDrop
+  return horizontalEscapeShot || ascendingEscapeShot || descendingEscapeDrop
 }
 
 function shouldScoutHoldForEstimatedShot(
@@ -1738,6 +1867,7 @@ function resolveAttack(
     position,
     lastKnownPlayerPosition,
     torpedoAmmo,
+    vlsAmmo,
     depthChargeAmmo,
     lastKnownPlayerVector,
     lastKnownPlayerTurn,
@@ -1800,7 +1930,7 @@ function resolveAttack(
       ? { x: position.x, y: lastKnownPlayerPosition.y }
       : guessedTarget)
 
-  const maxEvidenceAge = archetype === "hunter" ? 2 : 1
+  const maxEvidenceAge = maxEvidenceAgeForArchetype(archetype)
   const confidence = archetype === "hunter"
     ? turnAge === 0 ? 0.32 : 0.16
     : turnAge === 0

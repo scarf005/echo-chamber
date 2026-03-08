@@ -524,6 +524,7 @@ Deno.test("game is won by bringing the capsule back to the dock", () => {
     current.message,
     "Capsule delivered to dock. Press R for a new run.",
   )
+  assertEquals(current.memory, current.map.tiles)
 })
 
 Deno.test("passive visibility uses 1 tile exact and 2 tiles coarse", () => {
@@ -672,7 +673,7 @@ Deno.test("repeated torpedo strikes can collapse a large detached chunk", () => 
   assertEquals(current.map.tiles[deepChunkIndex], "water")
 })
 
-Deno.test("depth charge falls with bubbles and detonates near obstacles", () => {
+Deno.test("depth charge keeps falling past nearby obstacles until impact", () => {
   const game = createDepthChargeTestGame()
   const dropped = dropDepthCharge(game)
 
@@ -682,13 +683,18 @@ Deno.test("depth charge falls with bubbles and detonates near obstacles", () => 
   assert(dropped.trails.length > 0)
 
   const settled = movePlayer(dropped, "left")
-  const detonationIndex = 3 * settled.map.width + 3
+  let crashed = settled
+  for (let index = 0; index < 6 && crashed.depthCharges.length > 0; index += 1) {
+    crashed = holdPosition(crashed)
+  }
+  const detonationIndex = 4 * crashed.map.width + 3
   const obstacleIndex = 4 * settled.map.width + 4
 
-  assertEquals(settled.depthCharges.length, 0)
-  assertEquals(settled.map.tiles[obstacleIndex], "water")
-  assert(settled.shockwaveFront.some((cell) => cell.index === detonationIndex))
-  assert(settled.screenShake > 0)
+  assertEquals(settled.depthCharges.length, 1)
+  assertEquals(crashed.depthCharges.length, 0)
+  assertEquals(crashed.map.tiles[obstacleIndex], "water")
+  assert(crashed.shockwaveFront.some((cell) => cell.index === detonationIndex))
+  assert(crashed.screenShake > 0)
 })
 
 Deno.test("depth charges proximity-detonate when a hostile submarine closes within two tiles", () => {
@@ -754,6 +760,7 @@ Deno.test("hostile submarines launch torpedoes and can sink the player", () => {
     destroyed.message,
     "A hostile torpedo tears through your hull. Press R for a new run.",
   )
+  assertEquals(destroyed.memory, destroyed.map.tiles)
   assert(
     destroyed.shockwaveFront.some((cell) => cell.index === detonationIndex),
   )
@@ -1038,10 +1045,10 @@ Deno.test("scout sonar messages hand off the player's location to hunters", () =
   assertEquals(hunter?.lastKnownPlayerPosition, relayed.player)
 })
 
-Deno.test("scouts fire at their estimated player position before retreating", () => {
+Deno.test("scouts fire at their estimated player position before pressing forward", () => {
   const game = createScoutFireBeforeRetreatGame()
   const fired = holdPosition(game)
-  const retreated = holdPosition(fired)
+  const advanced = holdPosition(fired)
 
   assertEquals(fired.torpedoes.length, 1)
   assertEquals(fired.torpedoes[0].senderId, "hostile-1")
@@ -1049,9 +1056,9 @@ Deno.test("scouts fire at their estimated player position before retreating", ()
   assertEquals(fired.hostileSubmarines[0].position, { x: 10, y: 4 })
   assertEquals(fired.hostileSubmarines[0].lastKnownPlayerPosition, { x: 4, y: 4 })
   assertEquals(fired.hostileSubmarines[0].reload, 3)
-  assertEquals(retreated.hostileSubmarines[0].position, { x: 11, y: 4 })
-  assertEquals(retreated.hostileSubmarines[0].reload, 2)
-  assertEquals(retreated.status, "playing")
+  assertEquals(advanced.hostileSubmarines[0].position, { x: 9, y: 4 })
+  assertEquals(advanced.hostileSubmarines[0].reload, 2)
+  assertEquals(advanced.status, "playing")
 })
 
 Deno.test("scouts hold and fire on the same turn they gain a fresh fix", () => {
@@ -1066,21 +1073,21 @@ Deno.test("scouts hold and fire on the same turn they gain a fresh fix", () => {
   assertEquals(next.hostileSubmarines[0].reload, 3)
 })
 
-Deno.test("scouts do not pause retreat for stale player fixes", () => {
+Deno.test("scouts stop retreating once stale player fixes expire", () => {
   const game = createScoutStaleFixGame()
   const next = holdPosition(game)
 
   assertEquals(next.torpedoes.length, 0)
-  assertEquals(next.hostileSubmarines[0].position, { x: 11, y: 4 })
+  assertEquals(next.hostileSubmarines[0].position, { x: 9, y: 4 })
   assertEquals(next.hostileSubmarines[0].reload, 0)
 })
 
-Deno.test("scouts do not pause retreat when a shot risks friendly fire", () => {
+Deno.test("scouts keep advancing when a shot risks friendly fire", () => {
   const game = createScoutFriendlyFireGame()
   const next = holdPosition(game)
 
   assertEquals(next.torpedoes.length, 0)
-  assertEquals(next.hostileSubmarines[0].position, { x: 11, y: 4 })
+  assertEquals(next.hostileSubmarines[0].position, { x: 9, y: 4 })
   assertEquals(next.hostileSubmarines[0].reload, 0)
 })
 
@@ -1139,19 +1146,17 @@ Deno.test("enemies hit by player sonar immediately relay the player position", (
   assertEquals(secondHostile?.mode, "attack")
 })
 
-Deno.test("retrieving the capsule alerts every hostile immediately", () => {
+Deno.test("retrieving the capsule gives nearby hostiles an exact fix and distant ones the alarm origin", () => {
   const game = createCapsuleAlarmGame()
   const next = movePlayer(game, "right")
+  const nearbyHunter = next.hostileSubmarines.find((hostile) => hostile.id === "hostile-1")
+  const distantTurtle = next.hostileSubmarines.find((hostile) => hostile.id === "hostile-2")
 
   assertEquals(next.capsuleCollected, true)
   assertEquals(next.message, "Capsule retrieved. Return to dock.")
-  assertEquals(
-    next.hostileSubmarines.every((hostile) =>
-      hostile.lastKnownPlayerPosition?.x === next.player.x &&
-      hostile.lastKnownPlayerPosition?.y === next.player.y
-    ),
-    true,
-  )
+  assertEquals(nearbyHunter?.lastKnownPlayerPosition, next.player)
+  assertEquals(distantTurtle?.lastKnownPlayerPosition, null)
+  assertEquals(distantTurtle?.mode, "patrol")
 })
 
 Deno.test("same-turn hostile relay does not depend on hostile iteration order", () => {
@@ -2744,10 +2749,10 @@ function createHostileDockCollisionGame(): GameState {
 function createCapsuleAlarmGame(): GameState {
   const map = createMapFromRows(
     [
-      "############",
-      "#..........#",
-      "#..........#",
-      "############",
+      "################################",
+      "#..............##..............#",
+      "#..............##..............#",
+      "################################",
     ],
     { x: 1, y: 1 },
     { x: 3, y: 1 },
@@ -2777,7 +2782,7 @@ function createCapsuleAlarmGame(): GameState {
       }),
       createHostile({
         id: "hostile-2",
-        position: { x: 10, y: 1 },
+        position: { x: 28, y: 1 },
         archetype: "turtle",
       }),
     ],

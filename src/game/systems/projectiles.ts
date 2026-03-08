@@ -24,7 +24,6 @@ import {
   cloneHostileSubmarine,
   deltaForDirection,
   indexForPoint,
-  isNearObstacleBelow,
   pointsEqual,
 } from "../helpers.ts"
 import { type GeneratedMap, type Point, tileAt } from "../mapgen.ts"
@@ -291,54 +290,6 @@ export function stepDepthCharges(
         1,
       )
 
-      if (
-        hasProjectileTargetNearby(
-          current,
-          depthCharge.senderId,
-          depthCharge.avoidFriendlyFire ?? true,
-          nextFish,
-          nextHostileSubmarines,
-          player,
-        )
-      ) {
-        const explosion = detonateProjectile(
-          map,
-          current,
-          `${seed}:${turn}:${current.x}:${current.y}:depth:${impacts}`,
-          depthCharge.senderId,
-          nextTrails,
-          nextCracks,
-          nextStructuralDamage,
-          nextDust,
-          nextFish,
-          nextHostileSubmarines,
-          player,
-        )
-
-        nextTrails = explosion.trails
-        nextCracks = explosion.cracks
-        nextStructuralDamage = explosion.structuralDamage
-        nextDust = explosion.dust
-        nextFish.splice(0, nextFish.length, ...explosion.fish)
-        nextHostileSubmarines.splice(
-          0,
-          nextHostileSubmarines.length,
-          ...explosion.hostileSubmarines,
-        )
-        fallingBoulders.push(...explosion.fallingBoulders)
-        impactPoints.push(explosion.impactPoint)
-        shockwaves.push(explosion.shockwave)
-        playerDestroyed = playerDestroyed || explosion.playerDestroyed
-        if (depthCharge.senderId === "player") {
-          playerEntityHits += explosion.entityHits
-        }
-        exploded = true
-        impacts += 1
-        caveIns += explosion.caveIns
-        screenShake = Math.max(screenShake, explosion.screenShake)
-        break
-      }
-
       const nextPoint = {
         x: current.x,
         y: current.y + 1,
@@ -436,44 +387,6 @@ export function stepDepthCharges(
         break
       }
 
-      if (isNearObstacleBelow(map, current)) {
-        const explosion = detonateProjectile(
-          map,
-          current,
-          `${seed}:${turn}:${current.x}:${current.y}:depth:${impacts}`,
-          depthCharge.senderId,
-          nextTrails,
-          nextCracks,
-          nextStructuralDamage,
-          nextDust,
-          nextFish,
-          nextHostileSubmarines,
-          player,
-        )
-
-        nextTrails = explosion.trails
-        nextCracks = explosion.cracks
-        nextStructuralDamage = explosion.structuralDamage
-        nextDust = explosion.dust
-        nextFish.splice(0, nextFish.length, ...explosion.fish)
-        nextHostileSubmarines.splice(
-          0,
-          nextHostileSubmarines.length,
-          ...explosion.hostileSubmarines,
-        )
-        fallingBoulders.push(...explosion.fallingBoulders)
-        impactPoints.push(explosion.impactPoint)
-        shockwaves.push(explosion.shockwave)
-        playerDestroyed = playerDestroyed || explosion.playerDestroyed
-        if (depthCharge.senderId === "player") {
-          playerEntityHits += explosion.entityHits
-        }
-        exploded = true
-        impacts += 1
-        caveIns += explosion.caveIns
-        screenShake = Math.max(screenShake, explosion.screenShake)
-        break
-      }
     }
 
     if (!exploded && remaining > 0) {
