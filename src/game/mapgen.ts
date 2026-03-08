@@ -1,6 +1,6 @@
 import { Map as RotMap, RNG } from "npm:rot-js@2.2.1"
 
-export type TileKind = "wall" | "water"
+export type TileKind = "wall" | "water" | "kelp"
 export type BiomeKind = "vast" | "regular" | "tight" | "chaotic" | "wavy"
 
 export interface Point {
@@ -131,10 +131,12 @@ export function generateMap(options: MapGenOptions = {}): GeneratedMap {
     carveFallbackRoute(tiles, width, height, spawn, capsule)
   }
 
+  addKelpOnRock(tiles, width, height, seed, [spawn, capsule])
+
   const routeLength =
     computeRouteLength(tiles, width, height, spawn, capsule) ?? 0
   const openTiles = tiles.reduce(
-    (count, tile) => count + (tile === "water" ? 1 : 0),
+    (count, tile) => count + (isPassableTile(tile) ? 1 : 0),
     0,
   )
 
@@ -169,7 +171,11 @@ export function tileAt(
 }
 
 export function isPassableTile(tile: TileKind | null): boolean {
-  return tile === "water"
+  return tile === "water" || tile === "kelp"
+}
+
+export function isSonarBlockingTile(tile: TileKind | null): boolean {
+  return tile === "wall" || tile === "kelp"
 }
 
 export function mapToAscii(map: GeneratedMap): string {
@@ -189,7 +195,8 @@ export function mapToAscii(map: GeneratedMap): string {
         continue
       }
 
-      row += tileAt(map, x, y) === "wall" ? "#" : "."
+      const tile = tileAt(map, x, y)
+      row += tile === "wall" ? "#" : tile === "kelp" ? '"' : "."
     }
 
     rows.push(row)
@@ -263,7 +270,7 @@ function findEdgeAnchor(
 
   for (let y = 1; y < height - 1; y += 1) {
     for (let x = 1; x < width - 1; x += 1) {
-      if (tiles[indexForTile(width, x, y)] !== "water") {
+      if (!isPassableTile(tiles[indexForTile(width, x, y)])) {
         continue
       }
 
@@ -290,6 +297,58 @@ function carveFallbackRoute(
   carveLine(tiles, width, height, start, end, 1)
   carveDisc(tiles, width, height, start, 1)
   carveDisc(tiles, width, height, end, 1)
+}
+
+function addKelpOnRock(
+  tiles: TileKind[],
+  width: number,
+  height: number,
+  seed: string,
+  protectedPoints: Point[],
+): void {
+  for (let y = 2; y < height - 1; y += 1) {
+    for (let x = 1; x < width - 1; x += 1) {
+      const anchorIndex = indexForTile(width, x, y)
+
+      if (tiles[anchorIndex] !== "water") {
+        continue
+      }
+
+      if (tiles[indexForTile(width, x, y + 1)] !== "wall") {
+        continue
+      }
+
+      if (isProtectedKelpPoint(x, y, protectedPoints)) {
+        continue
+      }
+
+      if (kelpHash(seed, x, y) > 0.2) {
+        continue
+      }
+
+      const strandHeight = 1 + Math.floor(kelpHash(seed, x + width, y + height) * 3)
+
+      for (let offset = 0; offset < strandHeight; offset += 1) {
+        const kelpY = y - offset
+
+        if (kelpY <= 0) {
+          break
+        }
+
+        if (isProtectedKelpPoint(x, kelpY, protectedPoints)) {
+          break
+        }
+
+        const kelpIndex = indexForTile(width, x, kelpY)
+
+        if (tiles[kelpIndex] !== "water") {
+          break
+        }
+
+        tiles[kelpIndex] = "kelp"
+      }
+    }
+  }
 }
 
 function enforceBorderWalls(
@@ -360,7 +419,7 @@ function computeRouteLength(
         continue
       }
 
-      if (tiles[indexForTile(width, next.x, next.y)] === "water") {
+      if (isPassableTile(tiles[indexForTile(width, next.x, next.y)])) {
         queue.push({ point: next, distance: current.distance + 1 })
       }
     }
@@ -381,6 +440,10 @@ function isSamePoint(a: Point, b: Point): boolean {
   return a.x === b.x && a.y === b.y
 }
 
+function isProtectedKelpPoint(x: number, y: number, protectedPoints: Point[]): boolean {
+  return protectedPoints.some((point) => point.x === x && point.y === y)
+}
+
 function normalizeSeed(seed: number | string | undefined): string {
   if (seed === undefined) {
     return DEFAULT_SEED
@@ -398,6 +461,10 @@ function hashSeed(seed: string): number {
   }
 
   return hash >>> 0
+}
+
+function kelpHash(seed: string, x: number, y: number): number {
+  return hashSeed(`${seed}:kelp:${x}:${y}`) / 0xffffffff
 }
 
 function clamp(value: number, min: number, max: number): number {

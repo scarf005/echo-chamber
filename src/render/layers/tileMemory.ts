@@ -52,5 +52,23 @@ export function drawTileMemoryLayer(
       visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
       visibility >= 2 ? 0.8 : 0.42,
     )
+  } else if (memory === "kelp") {
+    drawTileBackground(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
+      visibility >= 2 ? 0.18 : 0.1,
+    )
+    drawGlyph(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      '"',
+      visibility >= 2 ? "#5fe08f" : "#2d7a52",
+      visibility >= 2 ? 0.92 : 0.66,
+    )
   }
 }

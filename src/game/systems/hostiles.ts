@@ -43,6 +43,7 @@ import type {
 import {
   type GeneratedMap,
   isPassableTile,
+  type TileKind,
   type Point,
   tileAt,
 } from "../mapgen.ts"
@@ -59,7 +60,7 @@ interface HostileTurnContext {
   previousPlayer: Point
   shockwaves: Shockwave[]
   trails: FadeCell[]
-  memory: Array<"wall" | "water" | null>
+  memory: Array<TileKind | null>
   playerSonarHitHostiles: ReadonlySet<string>
 }
 
@@ -1284,7 +1285,7 @@ function choosePatrolStep(
 
 function findScoutExplorationTarget(
   map: GeneratedMap,
-  memory: Array<"wall" | "water" | null>,
+  memory: Array<TileKind | null>,
   start: Point,
   occupied: Set<string>,
   random: () => number,
@@ -1357,7 +1358,7 @@ function findScoutExplorationTarget(
 
 function shouldKeepScoutExplorationTarget(
   map: GeneratedMap,
-  memory: Array<"wall" | "water" | null>,
+  memory: Array<TileKind | null>,
   start: Point,
   target: Point,
   occupied: Set<string>,
@@ -1389,7 +1390,7 @@ function shouldKeepScoutExplorationTarget(
 
 function countScoutUnseenNeighbors(
   map: GeneratedMap,
-  memory: Array<"wall" | "water" | null>,
+  memory: Array<TileKind | null>,
   point: Point,
 ): number {
   return CARDINAL_STEPS.reduce((count, step) => {

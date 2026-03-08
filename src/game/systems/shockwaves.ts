@@ -17,6 +17,7 @@ import type {
 } from "../model.ts"
 import {
   type GeneratedMap,
+  isSonarBlockingTile,
   type Point,
   tileAt,
   type TileKind,
@@ -250,7 +251,7 @@ function traceWaveBand(
         break
       }
 
-      if (tile === "wall") {
+      if (isSonarBlockingTile(tile)) {
         if (distance > previousRadius) {
           if (wave.revealTerrain) {
             revealedTiles.set(mapIndex, tile)
