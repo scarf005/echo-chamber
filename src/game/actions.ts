@@ -294,8 +294,8 @@ export function togglePlayerSonar(game: GameState): GameState {
       playerSonarEnabled: enabled,
     },
     enabled
-      ? createLogMessage(i18n._("Player sonar enabled."), "positive")
-      : createLogMessage(i18n._("Player sonar disabled."), "negative"),
+      ? createLogMessage(i18n._("Player sonar enabled."), "positive", () => i18n._("Player sonar enabled."))
+      : createLogMessage(i18n._("Player sonar disabled."), "negative", () => i18n._("Player sonar disabled.")),
   )
 }
 
@@ -314,7 +314,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     return withGameMessage({
       ...game,
       facing: horizontalFacingForMove(game.facing, direction),
-    }, createLogMessage(i18n._("Hull blocked."), "warning"))
+    }, createLogMessage(i18n._("Hull blocked."), "warning", () => i18n._("Hull blocked.")))
   }
 
   return advanceTurn(
@@ -322,7 +322,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     target,
     horizontalFacingForMove(game.facing, direction),
     null,
-    createLogMessage(i18n._("Advance.")),
+    createLogMessage(i18n._("Advance."), "neutral", () => i18n._("Advance.")),
   )
 }
 
@@ -336,7 +336,7 @@ export function holdPosition(game: GameState): GameState {
     game.player,
     game.facing,
     null,
-    createLogMessage(i18n._("Holding position.")),
+    createLogMessage(i18n._("Holding position."), "neutral", () => i18n._("Holding position.")),
   )
 }
 
@@ -355,7 +355,7 @@ export function fireTorpedo(
     return withGameMessage({
       ...game,
       facing: nextFacing,
-    }, createLogMessage(i18n._("No torpedoes remaining."), "negative"))
+    }, createLogMessage(i18n._("No torpedoes remaining."), "negative", () => i18n._("No torpedoes remaining.")))
   }
 
   return advanceTurn(
@@ -369,6 +369,13 @@ export function fireTorpedo(
         : direction === "right"
         ? i18n._("Tube away to starboard.")
         : i18n._("VLS launch upward."),
+      "neutral",
+      () =>
+        direction === "left"
+          ? i18n._("Tube away to port.")
+          : direction === "right"
+          ? i18n._("Tube away to starboard.")
+          : i18n._("VLS launch upward."),
     ),
   )
 }
@@ -381,7 +388,7 @@ export function dropDepthCharge(game: GameState): GameState {
   if (game.depthChargeAmmo <= 0) {
     return withGameMessage({
       ...game,
-    }, createLogMessage(i18n._("No depth charges remaining."), "negative"))
+    }, createLogMessage(i18n._("No depth charges remaining."), "negative", () => i18n._("No depth charges remaining.")))
   }
 
   return advanceTurn(
@@ -389,6 +396,6 @@ export function dropDepthCharge(game: GameState): GameState {
     game.player,
     game.facing,
     { kind: "depth-charge" },
-    createLogMessage(i18n._("Depth charge away.")),
+    createLogMessage(i18n._("Depth charge away."), "neutral", () => i18n._("Depth charge away.")),
   )
 }

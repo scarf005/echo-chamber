@@ -32,7 +32,12 @@ import {
   pointsEqual,
 } from "./helpers.ts"
 import { isPlayerSonarEnabled } from "./actions.ts"
-import { createLogMessage, MAX_LOG_MESSAGES, withGameMessage } from "./log.ts"
+import {
+  createLogMessage,
+  MAX_LOG_MESSAGES,
+  resolveLogMessageText,
+  withGameMessage,
+} from "./log.ts"
 import { collectPickups } from "./items.ts"
 import { WIN_SEED_MODE_HINT } from "../runSeed.ts"
 import { emitVentPlumes } from "./vents.ts"
@@ -102,6 +107,7 @@ export function advanceTurn(
     ? createLogMessage(
       i18n._("A hostile submarine rams your hull. Press R for a new run."),
       "negative",
+      () => i18n._("A hostile submarine rams your hull. Press R for a new run."),
     )
     : null
   const playerMoved = nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y
@@ -163,6 +169,7 @@ export function advanceTurn(
     hostileMessage = createLogMessage(
       i18n._("A hostile torpedo tears through your hull. Press R for a new run."),
       "negative",
+      () => i18n._("A hostile torpedo tears through your hull. Press R for a new run."),
     )
   }
 
@@ -194,6 +201,7 @@ export function advanceTurn(
     hostileMessage = createLogMessage(
       i18n._("A hostile blast caves in your hull. Press R for a new run."),
       "negative",
+      () => i18n._("A hostile blast caves in your hull. Press R for a new run."),
     )
   }
 
@@ -218,6 +226,7 @@ export function advanceTurn(
     hostileMessage = createLogMessage(
       i18n._("Cave-in debris crushes your hull. Press R for a new run."),
       "negative",
+      () => i18n._("Cave-in debris crushes your hull. Press R for a new run."),
     )
   }
 
@@ -311,6 +320,7 @@ export function advanceTurn(
       hostileMessage = createLogMessage(
         "A hostile submarine rams your hull. Press R for a new run.",
         "negative",
+        () => i18n._("A hostile submarine rams your hull. Press R for a new run."),
       )
     }
   }
@@ -340,6 +350,7 @@ export function advanceTurn(
     ? createLogMessage(
       i18n._("hostile sonar from {direction}", { direction: hostileSonarContact.direction }),
       "negative",
+      () => i18n._("hostile sonar from {direction}", { direction: hostileSonarContact.direction }),
     )
     : null
 
@@ -416,14 +427,14 @@ export function advanceTurn(
   const kelpMessage = cutKelp ? createLogMessage("You cut kelps.") : null
   const latestDetectionMessage = detectionLogs.at(-1) ?? null
   const capsuleMessage = capsuleRetrievedThisTurn
-    ? createLogMessage(i18n._("Capsule retrieved. Return to dock."), "positive")
+    ? createLogMessage(i18n._("Capsule retrieved. Return to dock."), "positive", () => i18n._("Capsule retrieved. Return to dock."))
     : null
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
-      createLogMessage(i18n._("Your submarine is destroyed. Press R for a new run."), "negative")
+      createLogMessage(i18n._("Your submarine is destroyed. Press R for a new run."), "negative", () => i18n._("Your submarine is destroyed. Press R for a new run."))
     : won
-    ? createLogMessage(i18n._("Capsule delivered to dock. Press R for a new run."), "positive")
+    ? createLogMessage(i18n._("Capsule delivered to dock. Press R for a new run."), "positive", () => i18n._("Capsule delivered to dock. Press R for a new run."))
     : capsuleMessage !== null
     ? capsuleMessage
     : pickupStep.message !== null
@@ -433,6 +444,11 @@ export function advanceTurn(
       rammedFishCount === 1
         ? i18n._("You paste a fish against the bow.")
         : i18n._("You paste {rammedFishCount} fish against the bow.", { rammedFishCount }),
+      "neutral",
+      () =>
+        rammedFishCount === 1
+          ? i18n._("You paste a fish against the bow.")
+          : i18n._("You paste {rammedFishCount} fish against the bow.", { rammedFishCount }),
     )
     : kelpMessage !== null
     ? kelpMessage
@@ -443,7 +459,9 @@ export function advanceTurn(
     : hostileSonarMessage !== null
     ? hostileSonarMessage
     : fallbackMessage
-  const nextMessageText = typeof nextMessage === "string" ? nextMessage : nextMessage.message
+  const nextMessageText = typeof nextMessage === "string"
+    ? nextMessage
+    : resolveLogMessageText(nextMessage)
   const detectionHistoryLogs = nextMessage === latestDetectionMessage
     ? detectionLogs.slice(0, -1)
     : detectionLogs
