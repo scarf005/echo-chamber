@@ -1211,6 +1211,16 @@ function hasVerticalShotOpportunity(
     hasClearCardinalPath(map, position, createVerticalShotTarget(position, target))
 }
 
+function hasDepthChargeOpportunity(
+  map: GeneratedMap,
+  position: Point,
+  target: Point,
+): boolean {
+  return target.y > position.y + 1 &&
+    Math.abs(target.x - position.x) <= PROJECTILE_PROXIMITY_RADIUS &&
+    hasClearCardinalPath(map, position, { x: position.x, y: target.y })
+}
+
 function findCeilingTrapShot(
   map: GeneratedMap,
   position: Point,
@@ -1454,6 +1464,7 @@ function shouldHoldAttackPosition(
 
   return hasHorizontalShotOpportunity(map, position, target) ||
     hasVerticalShotOpportunity(map, position, target) ||
+    hasDepthChargeOpportunity(map, position, target) ||
     (ceilingTrapShot !== null &&
       (ceilingTrapShot.direction !== "up" ||
         canEscapeVerticalCaveIn(map, position, ceilingTrapShot.impactPoint, occupied)))
@@ -1484,6 +1495,8 @@ function shouldScoutHoldForEstimatedShot(
     hasHorizontalShotOpportunity(map, position, target)
   const verticalShotOpportunity = hostileSubmarine.vlsAmmo > 0 &&
     hasVerticalShotOpportunity(map, position, target)
+  const depthChargeOpportunity = hostileSubmarine.depthChargeAmmo > 0 &&
+    hasDepthChargeOpportunity(map, position, target)
 
   const ceilingTrapShot = findCeilingTrapShot(map, position, target)
   const safeCeilingTrap = ceilingTrapShot !== null &&
@@ -1496,6 +1509,8 @@ function shouldScoutHoldForEstimatedShot(
     ? createHorizontalShotTarget(position, target)
     : verticalShotOpportunity
     ? createVerticalShotTarget(position, target)
+    : depthChargeOpportunity
+    ? { x: position.x, y: target.y }
     : safeCeilingTrap !== null &&
         ((safeCeilingTrap.direction === "up" && hostileSubmarine.vlsAmmo > 0) ||
           (safeCeilingTrap.direction !== "up" && hostileSubmarine.torpedoAmmo > 0))
@@ -1629,6 +1644,11 @@ function resolveAttack(
     position,
     lastKnownPlayerPosition,
   )
+  const depthChargeOpportunity = hasDepthChargeOpportunity(
+    map,
+    position,
+    lastKnownPlayerPosition,
+  )
   const ceilingTrapShot = findCeilingTrapShot(
     map,
     position,
@@ -1649,6 +1669,8 @@ function resolveAttack(
       ? createHorizontalShotTarget(position, lastKnownPlayerPosition)
       : verticalShotOpportunity
       ? createVerticalShotTarget(position, lastKnownPlayerPosition)
+      : depthChargeOpportunity
+      ? { x: position.x, y: lastKnownPlayerPosition.y }
       : guessedTarget)
 
   const turnAge = lastKnownPlayerTurn === null
@@ -1685,6 +1707,7 @@ function resolveAttack(
     !directLane &&
     !horizontalShotOpportunity &&
     !verticalShotOpportunity &&
+    !depthChargeOpportunity &&
     !usableCeilingTrapShot &&
     random() > confidence
   ) {
@@ -1776,9 +1799,7 @@ function resolveAttack(
     firedWeapon = "vls"
     firedDirection = "up"
   } else if (
-    directLane &&
-    lastKnownPlayerPosition.x === position.x &&
-    lastKnownPlayerPosition.y >= position.y &&
+    depthChargeOpportunity &&
     nextDepthChargeAmmo > 0
   ) {
     depthCharges.push({

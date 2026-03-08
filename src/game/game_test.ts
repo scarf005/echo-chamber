@@ -890,6 +890,16 @@ Deno.test("hostile submarines do not waste depth charges on targets directly abo
   assertEquals(launched.hostileSubmarines[0].reload, 0)
 })
 
+Deno.test("hostile submarines use depth charges when the player is below them", () => {
+  const game = createHostileDepthChargeAttackGame()
+  const launched = holdPosition(game)
+
+  assertEquals(launched.torpedoes.length, 0)
+  assertEquals(launched.depthCharges.length, 1)
+  assertEquals(launched.depthCharges[0].senderId, "hostile-1")
+  assertEquals(launched.hostileSubmarines[0].depthChargeAmmo, 5)
+})
+
 Deno.test("hostile submarines do not waste ranged ammo on diagonal targets", () => {
   const game = createHostileDiagonalContactGame()
   const next = holdPosition(game)
@@ -2067,6 +2077,54 @@ function createHostileAboveWithoutVlsGame(): GameState {
         : { ...game.hostileSubmarines[0].position },
       vlsAmmo: 0,
     }],
+  }
+}
+
+function createHostileDepthChargeAttackGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "##########",
+      "#........#",
+      "#........#",
+      "#........#",
+      "#........#",
+      "##########",
+    ],
+    { x: 1, y: 1 },
+    { x: 8, y: 4 },
+  )
+
+  return {
+    map,
+    player: { x: 5, y: 4 },
+    seed: "hostile-depth-charge-attack-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 4, y: 1 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
   }
 }
 
