@@ -60,19 +60,19 @@ export function resolveImpactMessage(
   boulderLandings: number,
 ): string | null {
   if (caveIns > 0) {
-    return "Violent torpedo impact. Cracks race overhead."
+    return i18n._("Violent torpedo impact. Cracks race overhead.")
   }
 
   if (boulderLandings > 0) {
-    return "Cave-in debris slams through the silt."
+    return i18n._("Cave-in debris slams through the silt.")
   }
 
   if (torpedoImpacts > 0) {
-    return "Violent torpedo impact."
+    return i18n._("Violent torpedo impact.")
   }
 
   if (depthChargeImpacts > 0) {
-    return "Depth charge detonates below."
+    return i18n._("Depth charge detonates below.")
   }
 
   return null

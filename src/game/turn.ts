@@ -100,7 +100,7 @@ export function advanceTurn(
   )
   let hostileMessage: LogMessage | null = playerDestroyed
     ? createLogMessage(
-      "A hostile submarine rams your hull. Press R for a new run.",
+      i18n._("A hostile submarine rams your hull. Press R for a new run."),
       "negative",
     )
     : null
@@ -161,7 +161,7 @@ export function advanceTurn(
 
   if (torpedoStep.playerDestroyed) {
     hostileMessage = createLogMessage(
-        "A hostile torpedo tears through your hull. Press R for a new run.",
+      i18n._("A hostile torpedo tears through your hull. Press R for a new run."),
       "negative",
     )
   }
@@ -192,7 +192,7 @@ export function advanceTurn(
 
   if (depthChargeStep.playerDestroyed) {
     hostileMessage = createLogMessage(
-        "A hostile blast caves in your hull. Press R for a new run.",
+      i18n._("A hostile blast caves in your hull. Press R for a new run."),
       "negative",
     )
   }
@@ -216,7 +216,7 @@ export function advanceTurn(
 
   if (boulderStep.playerDestroyed) {
     hostileMessage = createLogMessage(
-        "Cave-in debris crushes your hull. Press R for a new run.",
+      i18n._("Cave-in debris crushes your hull. Press R for a new run."),
       "negative",
     )
   }
@@ -416,14 +416,14 @@ export function advanceTurn(
   const kelpMessage = cutKelp ? createLogMessage("You cut kelps.") : null
   const latestDetectionMessage = detectionLogs.at(-1) ?? null
   const capsuleMessage = capsuleRetrievedThisTurn
-    ? createLogMessage("Capsule retrieved. Return to dock.", "positive")
+    ? createLogMessage(i18n._("Capsule retrieved. Return to dock."), "positive")
     : null
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
-      createLogMessage("Your submarine is destroyed. Press R for a new run.", "negative")
+      createLogMessage(i18n._("Your submarine is destroyed. Press R for a new run."), "negative")
     : won
-    ? createLogMessage("Capsule delivered to dock. Press R for a new run.", "positive")
+    ? createLogMessage(i18n._("Capsule delivered to dock. Press R for a new run."), "positive")
     : capsuleMessage !== null
     ? capsuleMessage
     : pickupStep.message !== null
@@ -431,7 +431,7 @@ export function advanceTurn(
     : rammedFishCount > 0
     ? createLogMessage(
       rammedFishCount === 1
-        ? "You paste a fish against the bow."
+        ? i18n._("You paste a fish against the bow.")
         : i18n._("You paste {rammedFishCount} fish against the bow.", { rammedFishCount }),
     )
     : kelpMessage !== null
