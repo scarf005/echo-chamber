@@ -1,6 +1,9 @@
 import { clampAudioLevel } from "./settings.ts"
 
-const MOVEMENT_LOOP_URL = "/audio/underwater-deep-water-loop.mp3"
+const MOVEMENT_LOOP_URL = new URL(
+  "../assets/audio/underwater-deep-water-loop.mp3",
+  import.meta.url,
+).href
 const MOVING_VOLUME = 1
 const IDLE_VOLUME = 0.5
 const VOLUME_STEP = 0.1

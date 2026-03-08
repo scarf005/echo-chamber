@@ -1,6 +1,9 @@
 import { clampAudioLevel } from "./settings.ts"
 
-const BACKGROUND_MUSIC_URL = "/audio/unseen-presence.mp3"
+const BACKGROUND_MUSIC_URL = new URL(
+  "../assets/audio/unseen-presence.mp3",
+  import.meta.url,
+).href
 const BACKGROUND_MUSIC_VOLUME = 0.24
 
 export type BackgroundMusicController = {

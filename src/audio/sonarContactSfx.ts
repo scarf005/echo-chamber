@@ -3,8 +3,8 @@ import { sample } from "jsr:@std/random@0.1.5/sample"
 import { clampAudioLevel } from "./settings.ts"
 
 const SONAR_CONTACT_SAMPLE_URLS = [
-  "/audio/sonar-contact-kizilsungur.mp3",
-  "/audio/sonar-contact-digital.mp3",
+  new URL("../assets/audio/sonar-contact-kizilsungur.mp3", import.meta.url).href,
+  new URL("../assets/audio/sonar-contact-digital.mp3", import.meta.url).href,
 ] as const
 const SONAR_CONTACT_VOLUME = 0.5
 export const SONAR_CONTACT_COOLDOWN_MS = 2_000

@@ -1,6 +1,9 @@
 import { clampAudioLevel } from "./settings.ts"
 
-const SONAR_LOOP_URL = "/audio/sonar-tuned-to-f.mp3"
+const SONAR_LOOP_URL = new URL(
+  "../assets/audio/sonar-tuned-to-f.mp3",
+  import.meta.url,
+).href
 const SONAR_LOOP_VOLUME = 0.3
 
 export type SonarLoopController = {

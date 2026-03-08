@@ -3,18 +3,18 @@ import { sample } from "jsr:@std/random@0.1.5/sample"
 import { clampAudioLevel } from "./settings.ts"
 
 const NEAR_EXPLOSION_URLS = [
-  "/audio/underwater-explosion-1.mp3",
-  "/audio/underwater-explosion-2.mp3",
-  "/audio/underwater-explosion-3.mp3",
+  new URL("../assets/audio/underwater-explosion-1.mp3", import.meta.url).href,
+  new URL("../assets/audio/underwater-explosion-2.mp3", import.meta.url).href,
+  new URL("../assets/audio/underwater-explosion-3.mp3", import.meta.url).href,
 ] as const
 const MID_EXPLOSION_URLS = [
-  "/audio/underwater-explosion-2.mp3",
-  "/audio/underwater-explosion-3.mp3",
-  "/audio/underwater-explosion-far.mp3",
+  new URL("../assets/audio/underwater-explosion-2.mp3", import.meta.url).href,
+  new URL("../assets/audio/underwater-explosion-3.mp3", import.meta.url).href,
+  new URL("../assets/audio/underwater-explosion-far.mp3", import.meta.url).href,
 ] as const
 const FAR_EXPLOSION_URLS = [
-  "/audio/underwater-explosion-3.mp3",
-  "/audio/underwater-explosion-far.mp3",
+  new URL("../assets/audio/underwater-explosion-3.mp3", import.meta.url).href,
+  new URL("../assets/audio/underwater-explosion-far.mp3", import.meta.url).href,
 ] as const
 const MAX_AUDIBLE_DISTANCE = 24
 const MAX_EXPLOSION_VOLUME = 0.92

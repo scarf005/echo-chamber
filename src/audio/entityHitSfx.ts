@@ -1,6 +1,8 @@
 import { clampAudioLevel } from "./settings.ts"
 
-const ENTITY_HIT_SAMPLE_URLS = ["/audio/underwater-blub-03.mp3"] as const
+const ENTITY_HIT_SAMPLE_URLS = [
+  new URL("../assets/audio/underwater-blub-03.mp3", import.meta.url).href,
+] as const
 const ENTITY_HIT_VOLUME = 0.42
 const CHANNELS_PER_SAMPLE = 3
 

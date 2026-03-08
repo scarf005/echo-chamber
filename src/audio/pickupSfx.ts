@@ -1,6 +1,8 @@
 import { clampAudioLevel } from "./settings.ts"
 
-const PICKUP_SAMPLE_URLS = ["/audio/reload-gulfstreamav.mp3"] as const
+const PICKUP_SAMPLE_URLS = [
+  new URL("../assets/audio/reload-gulfstreamav.mp3", import.meta.url).href,
+] as const
 const PICKUP_VOLUME = 0.25
 const PICKUP_REVERB_MIX = 0.38
 const PICKUP_REVERB_DURATION_SECONDS = 1.8
