@@ -33,6 +33,7 @@ import { detonateTorpedo } from "./destruction.ts"
 const EXPLOSION_DAMAGE_RADIUS = Math.max(2, TORPEDO_BLAST_RADIUS)
 
 interface ExplosionResolution {
+  impactPoint: Point
   trails: FadeCell[]
   cracks: CrackCell[]
   structuralDamage: number[]
@@ -67,6 +68,7 @@ export function stepTorpedoes(
   dust: FadeCell[]
   fallingBoulders: FallingBoulder[]
   impacts: number
+  impactPoints: Point[]
   caveIns: number
   screenShake: number
   shockwaves: Shockwave[]
@@ -83,6 +85,7 @@ export function stepTorpedoes(
   const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
   const fallingBoulders: FallingBoulder[] = []
+  const impactPoints: Point[] = []
   const shockwaves: Shockwave[] = []
   let impacts = 0
   let caveIns = 0
@@ -135,6 +138,7 @@ export function stepTorpedoes(
           ...explosion.hostileSubmarines,
         )
         fallingBoulders.push(...explosion.fallingBoulders)
+        impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
         if (torpedo.senderId === "player") {
@@ -183,6 +187,7 @@ export function stepTorpedoes(
           ...explosion.hostileSubmarines,
         )
         fallingBoulders.push(...explosion.fallingBoulders)
+        impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
         if (torpedo.senderId === "player") {
@@ -214,6 +219,7 @@ export function stepTorpedoes(
     dust: nextDust,
     fallingBoulders,
     impacts,
+    impactPoints,
     caveIns,
     screenShake,
     shockwaves,
@@ -244,6 +250,7 @@ export function stepDepthCharges(
   dust: FadeCell[]
   fallingBoulders: FallingBoulder[]
   impacts: number
+  impactPoints: Point[]
   caveIns: number
   screenShake: number
   shockwaves: Shockwave[]
@@ -260,6 +267,7 @@ export function stepDepthCharges(
   const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
   const fallingBoulders: FallingBoulder[] = []
+  const impactPoints: Point[] = []
   const shockwaves: Shockwave[] = []
   let impacts = 0
   let caveIns = 0
@@ -318,6 +326,7 @@ export function stepDepthCharges(
           ...explosion.hostileSubmarines,
         )
         fallingBoulders.push(...explosion.fallingBoulders)
+        impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
         if (depthCharge.senderId === "player") {
@@ -363,6 +372,7 @@ export function stepDepthCharges(
           ...explosion.hostileSubmarines,
         )
         fallingBoulders.push(...explosion.fallingBoulders)
+        impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
         if (depthCharge.senderId === "player") {
@@ -413,6 +423,7 @@ export function stepDepthCharges(
           ...explosion.hostileSubmarines,
         )
         fallingBoulders.push(...explosion.fallingBoulders)
+        impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
         if (depthCharge.senderId === "player") {
@@ -451,6 +462,7 @@ export function stepDepthCharges(
           ...explosion.hostileSubmarines,
         )
         fallingBoulders.push(...explosion.fallingBoulders)
+        impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
         if (depthCharge.senderId === "player") {
@@ -481,6 +493,7 @@ export function stepDepthCharges(
     dust: nextDust,
     fallingBoulders,
     impacts,
+    impactPoints,
     caveIns,
     screenShake,
     shockwaves,
@@ -525,6 +538,7 @@ function detonateProjectile(
   nextDust = mergeFadeCells(nextDust, explosion.dust)
 
   return {
+    impactPoint: { ...impactPoint },
     trails: nextTrails,
     cracks: mergeCrackCells(cracks, explosion.cracks),
     structuralDamage: explosion.structuralDamage,

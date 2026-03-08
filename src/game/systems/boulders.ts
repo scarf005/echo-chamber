@@ -30,6 +30,7 @@ export function stepFallingBoulders(
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   landings: number
+  landingPoints: Point[]
   screenShake: number
   playerDestroyed: boolean
 } {
@@ -39,6 +40,7 @@ export function stepFallingBoulders(
   let nextFish = fish
   let nextHostiles = hostileSubmarines
   let landings = 0
+  const landingPoints: Point[] = []
   let playerDestroyed = false
 
   for (const boulder of boulders) {
@@ -79,6 +81,7 @@ export function stepFallingBoulders(
         )
         landed = true
         landings += 1
+        landingPoints.push({ ...current })
         break
       }
 
@@ -109,6 +112,7 @@ export function stepFallingBoulders(
     fish: nextFish,
     hostileSubmarines: nextHostiles,
     landings,
+    landingPoints,
     screenShake: landings > 0 ? 0.75 : 0,
     playerDestroyed,
   }

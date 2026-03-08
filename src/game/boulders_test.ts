@@ -12,7 +12,11 @@ Deno.test("falling boulders settle into wall debris when they hit the bottom", (
 
   assertEquals(next.fallingBoulders.length, 0)
   assertEquals(next.map.tiles[landingIndex], "wall")
-  assertEquals(next.message, "Cave-in debris slams through the silt.")
+  assertEquals(next.message, "loud falling rocks detected at ↘")
+  assertEquals(next.logs.at(-1), {
+    message: "loud falling rocks detected at ↘",
+    type: "warning",
+  })
 })
 
 Deno.test("falling boulders send bubbles upward until they hit a wall", () => {
@@ -72,7 +76,7 @@ Deno.test("falling boulders crush hostile submarines in their path", () => {
 
   assertEquals(next.status, "playing")
   assertEquals(next.hostileSubmarines.length, 0)
-  assertEquals(next.message, "Cave-in debris slams through the silt.")
+  assertEquals(next.message, "loud falling rocks detected at ↘")
 })
 
 function createBoulderLandingGame(overrides: Partial<GameState> = {}): GameState {

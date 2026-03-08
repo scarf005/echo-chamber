@@ -124,6 +124,11 @@ Deno.test("moving into kelp clears that strand upward", () => {
   assertEquals(tileAt(next.map, 3, 1), "water")
   assertEquals(tileAt(next.map, 3, 2), "water")
   assertEquals(tileAt(next.map, 3, 3), "water")
+  assertEquals(next.message, "You cut kelps.")
+  assertEquals(next.logs.at(-1), {
+    message: "You cut kelps.",
+    type: "neutral",
+  })
 })
 
 Deno.test("findPath returns an empty route for an impassable destination", () => {
@@ -573,6 +578,11 @@ Deno.test("fireTorpedo uses facing, deforms walls, and emits a shockwave", () =>
   assertEquals(next.memory[impactIndex], null)
   assert(next.screenShake > 0)
   assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.message, "loud explosion detected at →")
+  assertEquals(next.logs.at(-1), {
+    message: "loud explosion detected at →",
+    type: "warning",
+  })
 })
 
 Deno.test("fireTorpedo also follows left-facing launch direction", () => {
@@ -632,6 +642,11 @@ Deno.test("torpedoes keep cruising beyond sonar range until they hit a wall", ()
   assertEquals(current.torpedoes.length, 0)
   assertEquals(current.map.tiles[impactIndex], "water")
   assert(current.shockwaveFront.some((cell) => cell.index === impactIndex))
+  assertEquals(current.logs.some((entry) => entry.message === "small explosion detected at →"), true)
+  assertEquals(current.logs.find((entry) => entry.message === "small explosion detected at →"), {
+    message: "small explosion detected at →",
+    type: "warning",
+  })
 })
 
 Deno.test("large detached wall chunks stay put when 36 or more tiles remain", () => {

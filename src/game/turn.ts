@@ -101,14 +101,15 @@ export function advanceTurn(
       "negative",
     )
     : null
+  const playerMoved = nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y
 
-  if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
+  if (playerMoved) {
     trails = mergeTrailCell(trails, indexForPoint(map.width, game.player), 1)
   }
 
   trails = emitVentPlumes(map, game.seed, nextTurn, trails)
 
-  clearKelpStrandAt(map, nextPlayer)
+  const cutKelp = playerMoved && clearKelpStrandAt(map, nextPlayer)
 
   if (action?.kind === "torpedo") {
     torpedoes.push({
@@ -390,8 +391,21 @@ export function advanceTurn(
     torpedoStep.impacts,
     depthChargeStep.impacts,
     torpedoStep.caveIns,
-    boulderStep.landings,
+    0,
   )
+  const detectionLogs = [
+    ...torpedoStep.impactPoints.map((point) =>
+      createDirectionalDetectionLog(nextPlayer, point, "explosion")
+    ),
+    ...depthChargeStep.impactPoints.map((point) =>
+      createDirectionalDetectionLog(nextPlayer, point, "explosion")
+    ),
+    ...boulderStep.landingPoints.map((point) =>
+      createDirectionalDetectionLog(nextPlayer, point, "falling rocks")
+    ),
+  ]
+  const kelpMessage = cutKelp ? createLogMessage("You cut kelps.") : null
+  const latestDetectionMessage = detectionLogs.at(-1) ?? null
   const capsuleMessage = capsuleRetrievedThisTurn
     ? createLogMessage("Capsule retrieved. Return to dock.", "positive")
     : null
@@ -411,15 +425,24 @@ export function advanceTurn(
         ? "You paste a fish against the bow."
         : `You paste ${rammedFishCount} fish against the bow.`,
     )
+    : kelpMessage !== null
+    ? kelpMessage
+    : latestDetectionMessage !== null
+    ? latestDetectionMessage
     : impactMessage !== null
     ? impactMessage
     : hostileSonarMessage !== null
     ? hostileSonarMessage
     : fallbackMessage
   const nextMessageText = typeof nextMessage === "string" ? nextMessage : nextMessage.message
+  const detectionHistoryLogs = nextMessage === latestDetectionMessage
+    ? detectionLogs.slice(0, -1)
+    : detectionLogs
   const nextLogs = [
     ...game.logs,
     ...hostileAiLogs,
+    ...(kelpMessage !== null && nextMessage !== kelpMessage ? [kelpMessage] : []),
+    ...detectionHistoryLogs,
     ...(hostileSonarMessage !== null && nextMessage !== hostileSonarMessage
       ? [hostileSonarMessage]
       : []),
@@ -582,6 +605,69 @@ function describeHostileBearing(player: Point, origin: Point): string {
   }
 
   return deltaY < 0 ? "↑" : "↓"
+}
+
+function createDirectionalDetectionLog(
+  player: Point,
+  origin: Point,
+  kind: "explosion" | "falling rocks",
+): LogMessage {
+  const intensity = describeDetectionIntensity(player, origin)
+  const direction = describeDetectionBearing(player, origin)
+
+  return createLogMessage(
+    `${intensity} ${kind} detected at ${direction}`,
+    "warning",
+  )
+}
+
+function describeDetectionIntensity(player: Point, origin: Point): string {
+  const distance = chebyshevDistance(player, origin)
+
+  if (distance >= 30) {
+    return "faint"
+  }
+
+  if (distance >= 20) {
+    return "small"
+  }
+
+  if (distance >= 10) {
+    return "nearby"
+  }
+
+  return "loud"
+}
+
+function describeDetectionBearing(player: Point, origin: Point): string {
+  const deltaX = origin.x - player.x
+  const deltaY = origin.y - player.y
+
+  if (deltaX === 0 && deltaY === 0) {
+    return "•"
+  }
+
+  if (deltaX === 0) {
+    return deltaY < 0 ? "↑" : "↓"
+  }
+
+  if (deltaY === 0) {
+    return deltaX < 0 ? "←" : "→"
+  }
+
+  if (deltaX < 0 && deltaY < 0) {
+    return "↖"
+  }
+
+  if (deltaX > 0 && deltaY < 0) {
+    return "↗"
+  }
+
+  if (deltaX < 0 && deltaY > 0) {
+    return "↙"
+  }
+
+  return "↘"
 }
 
 function createSonarShockwave(origin: Point): Shockwave {
