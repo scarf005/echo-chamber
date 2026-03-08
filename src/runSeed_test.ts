@@ -2,7 +2,12 @@
 
 import { assertEquals } from "jsr:@std/assert"
 
-import { formatRunSeed, parseRunSeed, randomizeRunSeed } from "./runSeed.ts"
+import {
+  createRandomSeed,
+  formatRunSeed,
+  parseRunSeed,
+  randomizeRunSeed,
+} from "./runSeed.ts"
 
 Deno.test("parseRunSeed keeps a plain seed unchanged", () => {
   assertEquals(parseRunSeed("abyss", "fallback"), {
@@ -52,4 +57,10 @@ Deno.test("randomizeRunSeed preserves active prefixes with a new base seed", () 
     randomizeRunSeed("map:god:abyss", "fallback", "trench-42"),
     "god:map:trench-42",
   )
+})
+
+Deno.test("createRandomSeed returns a two-word hyphenated markov seed", () => {
+  const seed = createRandomSeed()
+
+  assertEquals(/^[a-z]{4,10}-[a-z]{4,10}$/.test(seed), true)
 })
