@@ -33,6 +33,7 @@ import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
 import { createEntityHitSfx } from "./audio/entityHitSfx.ts"
 import { createExplosionSfx } from "./audio/explosionSfx.ts"
 import { createMovementLoop } from "./audio/movementLoop.ts"
+import { createPickupSfx } from "./audio/pickupSfx.ts"
 import { createSonarContactSfx } from "./audio/sonarContactSfx.ts"
 import { createSonarLoop } from "./audio/sonarLoop.ts"
 import {
@@ -86,12 +87,14 @@ export function App() {
   const movementLoopRef = useRef<ReturnType<typeof createMovementLoop> | null>(
     null,
   )
+  const pickupSfxRef = useRef<ReturnType<typeof createPickupSfx> | null>(null)
   const sonarContactSfxRef = useRef<
     ReturnType<typeof createSonarContactSfx> | null
   >(null)
   const sonarLoopRef = useRef<ReturnType<typeof createSonarLoop> | null>(null)
   const playedExplosionCountsRef = useRef<Map<string, number>>(new Map())
   const playedEntityHitCueCountRef = useRef(0)
+  const playedPickupCueCountRef = useRef(0)
   const playedSonarContactCueCountRef = useRef(0)
   const autoMoveSeenAnomaliesRef = useRef<Set<string>>(new Set())
   const autoMoveSeenTargetRef = useRef<Point | null>(null)
@@ -140,6 +143,10 @@ export function App() {
     movementLoopRef.current?.setEnabled(
       pageAudioEnabled && currentAudioSettings.sfxEnabled,
     )
+    pickupSfxRef.current?.setVolume(currentAudioSettings.sfxVolume)
+    pickupSfxRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.sfxEnabled,
+    )
     sonarContactSfxRef.current?.setVolume(currentAudioSettings.sfxVolume)
     sonarContactSfxRef.current?.setEnabled(
       pageAudioEnabled && currentAudioSettings.sfxEnabled,
@@ -164,12 +171,14 @@ export function App() {
     const entityHitSfx = createEntityHitSfx()
     const explosionSfx = createExplosionSfx()
     const movementLoop = createMovementLoop()
+    const pickupSfx = createPickupSfx()
     const sonarContactSfx = createSonarContactSfx()
     const sonarLoop = createSonarLoop()
     backgroundMusicRef.current = backgroundMusic
     entityHitSfxRef.current = entityHitSfx
     explosionSfxRef.current = explosionSfx
     movementLoopRef.current = movementLoop
+    pickupSfxRef.current = pickupSfx
     sonarContactSfxRef.current = sonarContactSfx
     sonarLoopRef.current = sonarLoop
 
@@ -178,6 +187,7 @@ export function App() {
       void entityHitSfx.ensureStarted()
       void explosionSfx.ensureStarted()
       void movementLoop.ensureStarted()
+      void pickupSfx.ensureStarted()
       void sonarContactSfx.ensureStarted()
       void sonarLoop.ensureStarted()
     }
@@ -204,12 +214,14 @@ export function App() {
       entityHitSfxRef.current = null
       explosionSfxRef.current = null
       movementLoopRef.current = null
+      pickupSfxRef.current = null
       sonarContactSfxRef.current = null
       sonarLoopRef.current = null
       backgroundMusic.dispose()
       entityHitSfx.dispose()
       explosionSfx.dispose()
       movementLoop.dispose()
+      pickupSfx.dispose()
       sonarContactSfx.dispose()
       sonarLoop.dispose()
     }
@@ -272,6 +284,17 @@ export function App() {
   }, [game.playerEntityHitCueCount])
 
   useEffect(() => {
+    const cueCount = game.playerPickupCueCount ?? 0
+
+    if (cueCount <= playedPickupCueCountRef.current) {
+      return
+    }
+
+    playedPickupCueCountRef.current = cueCount
+    void pickupSfxRef.current?.playPickup()
+  }, [game.playerPickupCueCount])
+
+  useEffect(() => {
     const cueCount = game.playerSonarContactCueCount ?? 0
 
     if (cueCount <= playedSonarContactCueCountRef.current) {
@@ -291,9 +314,11 @@ export function App() {
     void entityHitSfxRef.current?.ensureStarted()
     void explosionSfxRef.current?.ensureStarted()
     void movementLoopRef.current?.ensureStarted()
+    void pickupSfxRef.current?.ensureStarted()
     void sonarContactSfxRef.current?.ensureStarted()
     void sonarLoopRef.current?.ensureStarted()
     playedEntityHitCueCountRef.current = 0
+    playedPickupCueCountRef.current = 0
     playedSonarContactCueCountRef.current = 0
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
     runSeedRef.current = normalizedSeed
@@ -946,6 +971,14 @@ export function App() {
                   rel="noreferrer"
                 >
                   Underwater Blub 03 by Department64 (CC-BY-4.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/gulfstreamav/sounds/841162/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Reload by gulfstreamav (CC0-1.0)
                 </a>
                 <a
                   class="credit-link"
