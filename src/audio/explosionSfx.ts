@@ -17,7 +17,7 @@ const FAR_EXPLOSION_URLS = [
   new URL("../assets/audio/underwater-explosion-far.mp3", import.meta.url).href,
 ] as const
 const MAX_AUDIBLE_DISTANCE = 24
-const MAX_EXPLOSION_VOLUME = 0.92
+const MAX_EXPLOSION_VOLUME = 1.38
 const CHANNELS_PER_SAMPLE = 3
 
 export type ExplosionSfxController = {
