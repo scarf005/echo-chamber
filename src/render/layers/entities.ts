@@ -250,7 +250,7 @@ export function drawEntitiesLayer(
         screenX,
         screenY,
         tileSize,
-        fish.facing === "left" ? "<" : ">",
+        fish.facing === "left" ? "↢" : "↣",
         COLORS.fish,
         1,
       )
