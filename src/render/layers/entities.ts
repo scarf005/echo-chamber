@@ -3,10 +3,12 @@ import type {
   EntityMemoryKind,
   Fish,
   GameState,
+  HorizontalDirection,
   HostileSubmarine,
   PickupItem,
   Torpedo,
 } from "../../game/game.ts"
+import type { Point } from "../../game/mapgen.ts"
 import { COLORS } from "../colors.ts"
 import { drawTileBackground } from "../helpers/draw.ts"
 import { drawGlyph } from "../helpers/draw.ts"
@@ -22,6 +24,66 @@ export function colorForHostileSubmarine(hostileSubmarine: HostileSubmarine): st
       return COLORS.hostileSubmarineGuard
     default:
       return COLORS.hostileSubmarine
+  }
+}
+
+export function playerGlyphForFacing(facing: HorizontalDirection): string {
+  return facing === "left" ? "◄" : "►"
+}
+
+export function resolveHostileEstimatedPlayerPosition(
+  hostileSubmarine: HostileSubmarine,
+): Point | null {
+  const guessedTarget = hostileSubmarine.debugState?.attack.guessedTarget
+
+  if (guessedTarget) {
+    return { ...guessedTarget }
+  }
+
+  const confirmedPlayerPosition = hostileSubmarine.debugState?.confirmedPlayerPosition
+
+  if (confirmedPlayerPosition) {
+    return { ...confirmedPlayerPosition }
+  }
+
+  return hostileSubmarine.lastKnownPlayerPosition
+    ? { ...hostileSubmarine.lastKnownPlayerPosition }
+    : null
+}
+
+export function resolveHostileEstimateOverlay(
+  game: GameState,
+  hoveredTile: Point | null,
+): {
+  estimatedIndexes: Set<number>
+  highlightedEstimatedIndex: number | null
+} {
+  const estimatedIndexes = new Set<number>()
+  const hoveredHostile = hoveredTile
+    ? game.hostileSubmarines.find((candidate) =>
+      candidate.position.x === hoveredTile.x && candidate.position.y === hoveredTile.y
+    )
+    : null
+  const highlightedEstimatedPosition = hoveredHostile
+    ? resolveHostileEstimatedPlayerPosition(hoveredHostile)
+    : null
+
+  for (const hostileSubmarine of game.hostileSubmarines) {
+    const estimatedPosition = resolveHostileEstimatedPlayerPosition(hostileSubmarine)
+
+    if (!estimatedPosition || !pointInBounds(game, estimatedPosition)) {
+      continue
+    }
+
+    estimatedIndexes.add(indexForPoint(game, estimatedPosition))
+  }
+
+  return {
+    estimatedIndexes,
+    highlightedEstimatedIndex:
+      highlightedEstimatedPosition && pointInBounds(game, highlightedEstimatedPosition)
+        ? indexForPoint(game, highlightedEstimatedPosition)
+        : null,
   }
 }
 
@@ -82,7 +144,7 @@ export function drawEntitiesLayer(
         screenX,
         screenY,
         tileSize,
-        game.facing === "left" ? "◄" : "►",
+        playerGlyphForFacing(game.facing),
         COLORS.player,
         1,
       )
@@ -229,7 +291,7 @@ export function drawEntitiesLayer(
       screenX,
       screenY,
       tileSize,
-      game.facing === "left" ? "◄" : "►",
+      playerGlyphForFacing(game.facing),
       COLORS.player,
       1,
     )
@@ -256,6 +318,14 @@ function colorForPickup(pickup: PickupItem): string {
     case "map":
       return COLORS.pickup
   }
+}
+
+function pointInBounds(game: GameState, point: Point): boolean {
+  return point.x >= 0 && point.x < game.map.width && point.y >= 0 && point.y < game.map.height
+}
+
+function indexForPoint(game: GameState, point: Point): number {
+  return point.y * game.map.width + point.x
 }
 
 function drawEntityMemory(
