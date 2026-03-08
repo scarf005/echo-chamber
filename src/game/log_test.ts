@@ -40,6 +40,7 @@ Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
     "Wait with .",
     "Launch torpedo with Z.",
     "Drop depth charge with X.",
+    "Toggle display with M.",
     "Press R for random run.",
   ])
 })

@@ -9,6 +9,7 @@ const HELP_LOG_MESSAGES = [
   "Wait with .",
   "Launch torpedo with Z.",
   "Drop depth charge with X.",
+  "Toggle display with M.",
   "Press R for random run.",
 ]
 const MAX_LOG_MESSAGES = 200
