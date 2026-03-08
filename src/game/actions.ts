@@ -160,7 +160,7 @@ export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
     game,
     game.torpedoes.map((torpedo) => ({
       point: torpedo.position,
-      reason: t`torpedo in sight`,
+      reason: "torpedo in sight",
     })),
   )
 
@@ -172,7 +172,7 @@ export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
     game,
     game.depthCharges.map((depthCharge) => ({
       point: depthCharge.position,
-      reason: t`depth charge in sight`,
+      reason: "depth charge in sight",
     })),
   )
 
@@ -184,7 +184,7 @@ export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
     game,
     game.fallingBoulders.map((boulder) => ({
       point: boulder.position,
-      reason: t`falling boulder in sight`,
+      reason: "falling boulder in sight",
     })),
   )
 
@@ -200,10 +200,10 @@ export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
         game,
         pickup.position,
         pickup.kind === "torpedo-cache"
-          ? t`torpedo cache in sight`
+          ? "torpedo cache in sight"
           : pickup.kind === "depth-charge-cache"
-          ? t`depth charge cache in sight`
-          : t`survey map in sight`,
+          ? "depth charge cache in sight"
+          : "survey map in sight",
       ),
     })),
   )
@@ -222,7 +222,7 @@ export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
   ) {
     return {
       point: game.map.capsule,
-      reason: t`capsule in sight`,
+      reason: "capsule in sight",
     }
   }
 
@@ -294,8 +294,8 @@ export function togglePlayerSonar(game: GameState): GameState {
       playerSonarEnabled: enabled,
     },
     enabled
-      ? createLogMessage(t`Player sonar enabled.`, "positive")
-      : createLogMessage(t`Player sonar disabled.`, "negative"),
+      ? createLogMessage("Player sonar enabled.", "positive")
+      : createLogMessage("Player sonar disabled.", "negative"),
   )
 }
 
@@ -314,7 +314,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     return withGameMessage({
       ...game,
       facing: horizontalFacingForMove(game.facing, direction),
-    }, createLogMessage(t`Hull blocked.`, "warning"))
+    }, createLogMessage("Hull blocked.", "warning"))
   }
 
   return advanceTurn(
@@ -322,7 +322,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     target,
     horizontalFacingForMove(game.facing, direction),
     null,
-    createLogMessage(t`Advance.`),
+    createLogMessage("Advance."),
   )
 }
 
@@ -336,7 +336,7 @@ export function holdPosition(game: GameState): GameState {
     game.player,
     game.facing,
     null,
-    createLogMessage(t`Holding position.`),
+    createLogMessage("Holding position."),
   )
 }
 
@@ -355,7 +355,7 @@ export function fireTorpedo(
     return withGameMessage({
       ...game,
       facing: nextFacing,
-      }, createLogMessage(t`No torpedoes remaining.`, "negative"))
+    }, createLogMessage(t`No torpedoes remaining.`, "negative"))
   }
 
   return advanceTurn(
