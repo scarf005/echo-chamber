@@ -4,11 +4,13 @@
     "jsr:@std/assert@*": "1.0.19",
     "jsr:@std/assert@1": "1.0.19",
     "jsr:@std/assert@^1.0.19": "1.0.19",
+    "jsr:@std/async@1.2.0": "1.2.0",
     "jsr:@std/internal@^1.0.12": "1.0.12",
     "jsr:@std/random@*": "0.1.5",
     "jsr:@std/random@0.1.5": "0.1.5",
     "npm:@deno/vite-plugin@^1.0.5": "1.0.6_vite@7.3.1",
     "npm:@preact/preset-vite@^2.10.2": "2.10.3_@babel+core@7.29.0_vite@7.3.1_preact@10.28.4",
+    "npm:@preact/signals@2": "2.8.1_preact@10.28.4",
     "npm:playwright@*": "1.58.0",
     "npm:preact@^10.28.0": "10.28.4",
     "npm:rot-js@*": "2.2.1",
@@ -22,6 +24,9 @@
       "dependencies": [
         "jsr:@std/internal"
       ]
+    },
+    "@std/async@1.2.0": {
+      "integrity": "c059c6f6d95ca7cc012ae8e8d7164d1697113d54b0b679e4372b354b11c2dee5"
     },
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
@@ -361,6 +366,16 @@
         "picocolors",
         "vite",
         "vite-prerender-plugin"
+      ]
+    },
+    "@preact/signals-core@1.13.0": {
+      "integrity": "sha512-slT6XeTCAbdql61GVLlGU4x7XHI7kCZV5Um5uhE4zLX4ApgiiXc0UYFvVOKq06xcovzp7p+61l68oPi563ARKg=="
+    },
+    "@preact/signals@2.8.1_preact@10.28.4": {
+      "integrity": "sha512-wX6U0SpcCukZTJBs5ChljvBZb3XmYzA5gd4vKHgX8wZZKaQCo2WHtmThdLx+mcVvlBa5u3XShC7ffbETJD4BiQ==",
+      "dependencies": [
+        "@preact/signals-core",
+        "preact"
       ]
     },
     "@prefresh/babel-plugin@0.5.2": {
@@ -865,8 +880,10 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@^1.0.19",
+      "jsr:@std/async@1.2.0",
       "npm:@deno/vite-plugin@^1.0.5",
       "npm:@preact/preset-vite@^2.10.2",
+      "npm:@preact/signals@^2.8.1",
       "npm:preact@^10.28.0",
       "npm:vite@^7.2.7"
     ]

@@ -1,4 +1,6 @@
 import "./app.css"
+import { effect as signalEffect, signal } from "@preact/signals"
+import { debounce } from "@std/async/debounce"
 import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 
@@ -15,8 +17,8 @@ import {
   groupLogMessages,
   holdPosition,
   isAutoMoveNavigable,
-  keyForAutoMoveAnomaly,
   isPlayerSonarEnabled,
+  keyForAutoMoveAnomaly,
   movePlayer,
   revealMap,
   shouldHaltAutoMoveForAnomaly,
@@ -36,10 +38,13 @@ import {
   type AudioSettings,
   isDocumentAudioAllowed,
   levelToSliderPercent,
-  readAudioSettings,
   sliderPercentToLevel,
-  writeAudioSettings,
 } from "./audio/settings.ts"
+import {
+  type AppSettings,
+  readAppSettings,
+  writeAppSettings,
+} from "./settings.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import { describeInspectorContact } from "./render/helpers/inspector.ts"
 import type { RenderOptions } from "./render/options.ts"
@@ -47,8 +52,11 @@ import type { RenderOptions } from "./render/options.ts"
 const DEFAULT_SEED = "echo-chamber"
 const AUTO_MOVE_DELAY_MS = 70
 const LOG_PANEL_LINES = 6
-const DEV_ENTITY_OVERLAY_STORAGE_KEY = "echo-chamber:dev-entity-overlay"
+const SETTINGS_PERSIST_DELAY_MS = 150
 const IS_DEV_BUILD = import.meta.env.DEV
+const appSettingsSignal = signal<AppSettings>(
+  readAppSettings(getBrowserStorage(), IS_DEV_BUILD),
+)
 
 export function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
@@ -57,12 +65,9 @@ export function App() {
   const [previewTarget, setPreviewTarget] = useState<Point | null>(null)
   const [autoMoveTarget, setAutoMoveTarget] = useState<Point | null>(null)
   const [hoveredTile, setHoveredTile] = useState<Point | null>(null)
-  const [showDevEntityOverlay, setShowDevEntityOverlay] = useState(() =>
-    readDevEntityOverlaySetting(getBrowserStorage())
-  )
-  const [audioSettings, setAudioSettings] = useState<AudioSettings>(() =>
-    readAudioSettings(getBrowserStorage())
-  )
+  const appSettings = appSettingsSignal.value
+  const audioSettings = appSettings.audio
+  const showDevEntityOverlay = appSettings.showDevEntityOverlay
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
   const backgroundMusicRef = useRef<
@@ -90,6 +95,12 @@ export function App() {
 
   audioSettingsRef.current = audioSettings
   gameRef.current = game
+
+  const updateAppSettings = (
+    update: (current: AppSettings) => AppSettings,
+  ) => {
+    appSettingsSignal.value = update(appSettingsSignal.value)
+  }
 
   const resetAutoMoveSeenAnomalies = () => {
     autoMoveSeenAnomaliesRef.current = new Set()
@@ -188,6 +199,24 @@ export function App() {
   }, [])
 
   useEffect(() => {
+    const persistAppSettings = debounce((nextAppSettings: AppSettings) => {
+      writeAppSettings(getBrowserStorage(), nextAppSettings, IS_DEV_BUILD)
+    }, SETTINGS_PERSIST_DELAY_MS)
+    const dispose = signalEffect(() => {
+      persistAppSettings(appSettingsSignal.value)
+    })
+
+    return () => {
+      dispose()
+      writeAppSettings(
+        getBrowserStorage(),
+        appSettingsSignal.value,
+        IS_DEV_BUILD,
+      )
+    }
+  }, [])
+
+  useEffect(() => {
     const nextCounts = new Map<string, number>()
 
     for (const shockwave of game.shockwaves) {
@@ -227,12 +256,7 @@ export function App() {
 
   useEffect(() => {
     syncAudioControllers()
-    writeAudioSettings(getBrowserStorage(), audioSettings)
   }, [audioSettings, game.playerSonarEnabled, game.status])
-
-  useEffect(() => {
-    writeDevEntityOverlaySetting(getBrowserStorage(), showDevEntityOverlay)
-  }, [showDevEntityOverlay])
 
   const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
@@ -296,7 +320,10 @@ export function App() {
         const anomaly = findAutoMoveAnomaly(current)
 
         if (
-          shouldHaltAutoMoveForAnomaly(autoMoveSeenAnomaliesRef.current, anomaly)
+          shouldHaltAutoMoveForAnomaly(
+            autoMoveSeenAnomaliesRef.current,
+            anomaly,
+          )
         ) {
           autoMoveSeenAnomaliesRef.current = new Set([
             ...autoMoveSeenAnomaliesRef.current,
@@ -565,7 +592,7 @@ export function App() {
     .map(formatGroupedLogMessage)
   const renderOptions: RenderOptions = {
     debugEntityOverlay: IS_DEV_BUILD && showDevEntityOverlay,
-    debugPlannedPaths: IS_DEV_BUILD,
+    debugPlannedPaths: IS_DEV_BUILD && showDevEntityOverlay,
   }
   const hoveredInspectorRows = IS_DEV_BUILD
     ? describeHoveredTile(game, hoveredTile)
@@ -575,9 +602,12 @@ export function App() {
     event: JSX.TargetedEvent<HTMLInputElement>,
   ) => {
     const { checked } = event.currentTarget
-    setAudioSettings((current) => ({
+    updateAppSettings((current) => ({
       ...current,
-      musicEnabled: checked,
+      audio: {
+        ...current.audio,
+        musicEnabled: checked,
+      },
     }))
   }
 
@@ -585,9 +615,12 @@ export function App() {
     event: JSX.TargetedEvent<HTMLInputElement>,
   ) => {
     const nextVolume = sliderPercentToLevel(Number(event.currentTarget.value))
-    setAudioSettings((current) => ({
+    updateAppSettings((current) => ({
       ...current,
-      musicVolume: nextVolume,
+      audio: {
+        ...current.audio,
+        musicVolume: nextVolume,
+      },
     }))
   }
 
@@ -595,9 +628,12 @@ export function App() {
     event: JSX.TargetedEvent<HTMLInputElement>,
   ) => {
     const { checked } = event.currentTarget
-    setAudioSettings((current) => ({
+    updateAppSettings((current) => ({
       ...current,
-      sfxEnabled: checked,
+      audio: {
+        ...current.audio,
+        sfxEnabled: checked,
+      },
     }))
   }
 
@@ -605,16 +641,22 @@ export function App() {
     event: JSX.TargetedEvent<HTMLInputElement>,
   ) => {
     const nextVolume = sliderPercentToLevel(Number(event.currentTarget.value))
-    setAudioSettings((current) => ({
+    updateAppSettings((current) => ({
       ...current,
-      sfxVolume: nextVolume,
+      audio: {
+        ...current.audio,
+        sfxVolume: nextVolume,
+      },
     }))
   }
 
   const handleDevEntityOverlayChange = (
     event: JSX.TargetedEvent<HTMLInputElement>,
   ) => {
-    setShowDevEntityOverlay(event.currentTarget.checked)
+    updateAppSettings((current) => ({
+      ...current,
+      showDevEntityOverlay: event.currentTarget.checked,
+    }))
   }
 
   return (
@@ -809,7 +851,10 @@ export function App() {
                         type="button"
                         onClick={() => {
                           setGame((current) =>
-                            withGameMessage(revealMap(current), "Dev reveal: full map charted.")
+                            withGameMessage(
+                              revealMap(current),
+                              "Dev reveal: full map charted.",
+                            )
                           )
                           setIsOptionsOpen(false)
                         }}
@@ -822,7 +867,7 @@ export function App() {
                         <span>map overlay</span>
                         <div class="audio-setting-row">
                           <span>
-                            show exact entities at 50% opacity
+                            show exact entities and paths at 50% opacity
                           </span>
                           <input
                             class="audio-toggle"
@@ -1106,7 +1151,10 @@ function describeHoveredTile(
     rows.push({ label: "entity", value: "fish" })
     rows.push({ label: "facing", value: fish.facing })
     rows.push({ label: "mode", value: fish.mode })
-    rows.push({ label: "target", value: fish.target ? formatPoint(fish.target) : "--" })
+    rows.push({
+      label: "target",
+      value: fish.target ? formatPoint(fish.target) : "--",
+    })
   }
 
   const torpedo = game.torpedoes.find((candidate) =>
@@ -1155,32 +1203,6 @@ function describeHoveredTile(
   }
 
   return rows
-}
-
-function readDevEntityOverlaySetting(
-  storage: Pick<Storage, "getItem"> | null,
-): boolean {
-  if (!IS_DEV_BUILD || !storage) {
-    return IS_DEV_BUILD
-  }
-
-  try {
-    const raw = storage.getItem(DEV_ENTITY_OVERLAY_STORAGE_KEY)
-    return raw === null ? true : raw === "true"
-  } catch {
-    return true
-  }
-}
-
-function writeDevEntityOverlaySetting(
-  storage: Pick<Storage, "setItem"> | null,
-  enabled: boolean,
-): void {
-  if (!IS_DEV_BUILD || !storage) {
-    return
-  }
-
-  storage.setItem(DEV_ENTITY_OVERLAY_STORAGE_KEY, String(enabled))
 }
 
 function getBrowserStorage(): Storage | null {
