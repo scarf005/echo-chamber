@@ -1305,6 +1305,7 @@ Deno.test("torpedo pickups add four ammo and respect the sixteen-round cap", () 
     depthChargeAmmo: 6,
   })
   const next = movePlayer(game, "right")
+  const recovered = next.torpedoAmmo - game.torpedoAmmo
 
   assertEquals(next.torpedoAmmo >= 14 && next.torpedoAmmo <= 16, true)
   assertEquals(next.pickups.length, 0)
@@ -1318,9 +1319,9 @@ Deno.test("depth charge pickups add four ammo and respect the sixteen-round cap"
     depthChargeAmmo: 14,
   })
   const next = movePlayer(game, "right")
+  const recovered = next.depthChargeAmmo - game.depthChargeAmmo
 
   assertEquals(next.depthChargeAmmo >= 15 && next.depthChargeAmmo <= 16, true)
-  const recovered = next.torpedoAmmo - game.torpedoAmmo
   assertEquals(next.pickups.length, 0)
   assertEquals(next.playerPickupCueCount, 1)
   assertEquals(next.message, `Recovered ${recovered} depth charges.`)
@@ -1333,7 +1334,6 @@ Deno.test("map pickups reveal an unexplored terrain sector", () => {
   assertEquals(next.pickups.length, 0)
   assertEquals(next.playerPickupCueCount, 1)
   assertEquals(next.message, "Recovered a survey map.")
-  const recovered = next.depthChargeAmmo - game.depthChargeAmmo
   assertEquals(hasKnownTileBeyondPassiveRange(game), false)
   assertEquals(hasKnownTileBeyondPassiveRange(next), true)
 })
