@@ -705,11 +705,7 @@ export function App() {
 
       if (event.key === "q" || event.key === "Q") {
         event.preventDefault()
-        updateGame((current) => {
-          const next = togglePlayerSonar(current)
-          void sonarLoopRef.current?.playToggleCue(isPlayerSonarEnabled(next))
-          return next
-        })
+        updateGame((current) => togglePlayerSonar(current))
         return
       }
 
