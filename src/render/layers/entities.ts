@@ -152,7 +152,7 @@ export function drawEntitiesLayer(
         screenY,
         tileSize,
         fish.facing === "left" ? "<" : ">",
-        COLORS.sonar,
+        COLORS.fish,
         1,
       )
     } else {
@@ -166,7 +166,7 @@ export function drawEntitiesLayer(
         screenY,
         tileSize,
         fish.facing === "left" ? "<" : ">",
-        COLORS.hostileSubmarine,
+        COLORS.fish,
         debugOverlayAlpha,
       )
     }
@@ -268,7 +268,7 @@ export function markerForEntityMemory(
     case "enemy":
       return { glyph: "!", color: COLORS.hostileSubmarine }
     case "non-hostile":
-      return { glyph: "~", color: COLORS.sonar }
+      return { glyph: "~", color: COLORS.fish }
   }
 }
 
@@ -360,7 +360,7 @@ function drawExactEntityOverlay(
       screenY,
       tileSize,
       fish.facing === "left" ? "<" : ">",
-      COLORS.hostileSubmarine,
+      COLORS.fish,
       alpha,
     )
   }

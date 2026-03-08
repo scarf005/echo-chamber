@@ -7,6 +7,7 @@ export const COLORS = {
   player: "#ffc857",
   capsule: "#ff6b6b",
   hostileSubmarine: "#ff8c69",
+  fish: "#7dff9b",
   trail: "#9ad9ff",
   dust: "#8c7a5b",
   dustGlow: "#382e23",
