@@ -47,6 +47,8 @@ import {
 } from "./audio/settings.ts"
 import {
   type AppSettings,
+  difficultyToHostileSubmarineCount,
+  type DifficultySetting,
   readAppSettings,
   writeAppSettings,
 } from "./settings.ts"
@@ -94,7 +96,10 @@ function shouldRevealDevMap(settings: AppSettings): boolean {
 
 function createConfiguredGame(rawSeed: string, settings: AppSettings) {
   const runSeed = parseRunSeed(rawSeed, DEFAULT_SEED)
-  const game = createGame({ seed: runSeed.gameSeed })
+  const game = createGame({
+    seed: runSeed.gameSeed,
+    hostileSubmarineCount: difficultyToHostileSubmarineCount(settings.difficulty),
+  })
   return shouldRevealDevMap(settings) || runSeed.enableMapMode
     ? revealMap(game)
     : game
@@ -118,6 +123,7 @@ export function App() {
   const locale = languageSignal.value
   const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
+  const difficulty = appSettings.difficulty
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
   const activeRunSeedConfig = parseRunSeed(activeRunSeed, DEFAULT_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
@@ -894,6 +900,13 @@ export function App() {
     languageSignal.value = nextLocale
   }
 
+  const handleDifficultyChange = (nextDifficulty: DifficultySetting) => {
+    updateAppSettings((current) => ({
+      ...current,
+      difficulty: nextDifficulty,
+    }))
+  }
+
   const handleDevEntityOverlayChange = (
     event: JSX.TargetedEvent<HTMLInputElement>,
   ) => {
@@ -1112,6 +1125,38 @@ export function App() {
                     onClick={() => handleLanguageChange("ko")}
                   >
                     Korean
+                  </button>
+                </div>
+              </div>
+              <div class="language-switch-row">
+                <span class="sidebar-heading">{t`difficulty`}</span>
+                <div class="language-switch" role="group" aria-label={t`difficulty`}>
+                  <button
+                    type="button"
+                    class={`language-switch-button${difficulty === "easy" ? " is-active" : ""}`}
+                    aria-pressed={difficulty === "easy"}
+                    aria-label={t`easy`}
+                    onClick={() => handleDifficultyChange("easy")}
+                  >
+                    {t`easy`} (1x)
+                  </button>
+                  <button
+                    type="button"
+                    class={`language-switch-button${difficulty === "medium" ? " is-active" : ""}`}
+                    aria-pressed={difficulty === "medium"}
+                    aria-label={t`medium`}
+                    onClick={() => handleDifficultyChange("medium")}
+                  >
+                    {t`medium`} (2x)
+                  </button>
+                  <button
+                    type="button"
+                    class={`language-switch-button${difficulty === "hard" ? " is-active" : ""}`}
+                    aria-pressed={difficulty === "hard"}
+                    aria-label={t`hard`}
+                    onClick={() => handleDifficultyChange("hard")}
+                  >
+                    {t`hard`} (4x)
                   </button>
                 </div>
               </div>
