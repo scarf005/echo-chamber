@@ -1,5 +1,6 @@
 # Agent Mandatory Rule
 
+- NEVER remove existing `/// <reference lib="deno.ns" />`
 - **MUST** Commit after given task is finished
 - NEVER use `use*` hooks when preact signals can do the job/
 - use ROT.js (https://ondras.github.io/rot.js/manual/, https://ondras.github.io/rot.js/doc/) and jsr (e.g [@std/random](https://jsr.io/@std/random))
