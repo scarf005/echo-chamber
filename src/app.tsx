@@ -48,6 +48,7 @@ import {
   readAppSettings,
   writeAppSettings,
 } from "./settings.ts"
+import { shouldRestartFromKey } from "./input.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
   describeNotableHostileAiDecision,
@@ -653,6 +654,12 @@ export function App() {
         target instanceof HTMLElement &&
         target.closest("button, input, textarea, select, a")
       ) {
+        return
+      }
+
+      if (shouldRestartFromKey(event.key, gameRef.current.status)) {
+        event.preventDefault()
+        startRun()
         return
       }
 
