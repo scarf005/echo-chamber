@@ -5,6 +5,7 @@ import type { JSX } from "preact"
 import { useEffect, useRef, useState } from "preact/hooks"
 
 import {
+  classifyLogMessageTone,
   createGame,
   createRandomSeed,
   directionBetweenPoints,
@@ -662,9 +663,7 @@ export function App() {
   const targetCoordinates = previewTarget ? formatPoint(previewTarget) : "--"
   const musicVolumePercent = levelToSliderPercent(audioSettings.musicVolume)
   const sfxVolumePercent = levelToSliderPercent(audioSettings.sfxVolume)
-  const visibleLogMessages = groupLogMessages(game.logs)
-    .slice(-LOG_PANEL_LINES)
-    .map(formatGroupedLogMessage)
+  const visibleLogMessages = groupLogMessages(game.logs).slice(-LOG_PANEL_LINES)
   const renderOptions: RenderOptions = {
     debugEntityOverlay: IS_DEV_BUILD && showDevEntityOverlay,
     debugPlannedPaths: IS_DEV_BUILD && showDevEntityOverlay,
@@ -804,7 +803,16 @@ export function App() {
 
         <section class="sidebar-panel">
           <div class="sidebar-heading">orders</div>
-          <div class="sidebar-text-block">{visibleLogMessages.join("\n")}</div>
+          <div class="sidebar-text-block sidebar-log-list">
+            {visibleLogMessages.map((entry, index) => (
+              <div
+                class={`sidebar-log-message sidebar-log-message-${classifyLogMessageTone(entry.message)}`}
+                key={`${index}:${entry.message}:${entry.count}`}
+              >
+                {formatGroupedLogMessage(entry)}
+              </div>
+            ))}
+          </div>
         </section>
 
         {IS_DEV_BUILD

@@ -194,6 +194,27 @@
   line-height: 1.5;
 }
 
+.sidebar-log-list {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.sidebar-log-message {
+  color: rgba(217, 255, 249, 0.9);
+}
+
+.sidebar-log-message-positive {
+  color: #97f5a4;
+}
+
+.sidebar-log-message-warning {
+  color: #f4d35e;
+}
+
+.sidebar-log-message-negative {
+  color: #ff8c82;
+}
+
 .dev-inspector-grid {
   display: grid;
   gap: 0;
