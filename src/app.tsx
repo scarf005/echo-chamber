@@ -51,7 +51,6 @@ import {
 import { shouldRestartFromKey } from "./input.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
-  describeNotableHostileAiDecision,
   describeHoveredInspectorRows,
   filterInspectorRows,
 } from "./render/helpers/inspector.ts"
@@ -747,16 +746,8 @@ export function App() {
   const targetCoordinates = previewTarget ? formatPoint(previewTarget) : "--"
   const musicVolumePercent = levelToSliderPercent(audioSettings.musicVolume)
   const sfxVolumePercent = levelToSliderPercent(audioSettings.sfxVolume)
-  const godModeAiLogMessages = isGodMode
-    ? game.hostileSubmarines.flatMap((hostileSubmarine) => {
-      const message = describeNotableHostileAiDecision(hostileSubmarine)
-
-      return message ? [createLogMessage(message, "ai")] : []
-    })
-    : []
   const allLogMessages = groupVisibleLogMessages([
     ...game.logs,
-    ...godModeAiLogMessages,
   ], isGodMode)
   const visibleLogMessages = allLogMessages.slice(-LOG_PANEL_LINES)
   const renderOptions: RenderOptions = {
