@@ -541,14 +541,18 @@ export function stepHostileSubmarines(
       : describePlannedPath(
         map,
         hostileSubmarine,
+        currentHostiles,
         archetype,
         position,
         movementTarget,
         occupied,
         context.player,
+        lastKnownPlayerPosition,
+        lastKnownPlayerTurn,
         reload,
         knowledge.directDetection,
         repositioningForSalvo,
+        turn,
       )
 
     const nextStep = plannedPath[1] ?? null
@@ -611,14 +615,18 @@ export function stepHostileSubmarines(
       : describePlannedPath(
         map,
         hostileSubmarine,
+        currentHostiles,
         archetype,
         position,
         finalMovementTarget,
         occupied,
         context.player,
+        lastKnownPlayerPosition,
+        lastKnownPlayerTurn,
         reload,
         knowledge.directDetection,
         false,
+        turn,
       )
 
     const sonarInterval = sonarIntervalForHostile(
@@ -1243,14 +1251,18 @@ function findCeilingTrapShot(
 function chooseNextStep(
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
+  hostileSubmarines: ResolvedHostileSubmarine[],
   archetype: HostileSubmarineArchetype,
   position: Point,
   target: Point | null,
   occupied: Set<string>,
   player: Point,
+  lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerTurn: number | null,
   reload: number,
   directDetection: boolean,
   repositioningForSalvo: boolean,
+  turn: number,
 ): Point | null {
   if (archetype === "turtle") {
     return null
@@ -1271,20 +1283,22 @@ function chooseNextStep(
 
   if (
     archetype === "scout" &&
-    hostileSubmarine.lastKnownPlayerPosition &&
     shouldScoutHoldForEstimatedShot(
       map,
       hostileSubmarine,
+      hostileSubmarines,
       position,
-      hostileSubmarine.lastKnownPlayerPosition,
+      lastKnownPlayerPosition,
+      lastKnownPlayerTurn,
       occupied,
       reload,
+      turn,
     )
   ) {
     return null
   }
 
-  if (archetype === "scout" && hostileSubmarine.lastKnownPlayerPosition) {
+  if (archetype === "scout" && lastKnownPlayerPosition) {
     return chooseRetreatStep(
       map,
       position,
@@ -1305,14 +1319,18 @@ function chooseNextStep(
 function describePlannedPath(
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
+  hostileSubmarines: ResolvedHostileSubmarine[],
   archetype: HostileSubmarineArchetype,
   position: Point,
   target: Point | null,
   occupied: Set<string>,
   player: Point,
+  lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerTurn: number | null,
   reload: number,
   directDetection: boolean,
   repositioningForSalvo: boolean,
+  turn: number,
 ): Point[] {
   if (archetype === "turtle") {
     return [{ ...position }]
@@ -1333,14 +1351,16 @@ function describePlannedPath(
 
   if (
     archetype === "scout" &&
-    hostileSubmarine.lastKnownPlayerPosition &&
     shouldScoutHoldForEstimatedShot(
       map,
       hostileSubmarine,
+      hostileSubmarines,
       position,
-      hostileSubmarine.lastKnownPlayerPosition,
+      lastKnownPlayerPosition,
+      lastKnownPlayerTurn,
       occupied,
       reload,
+      turn,
     )
   ) {
     return [{ ...position }]
@@ -1350,7 +1370,7 @@ function describePlannedPath(
     return [{ ...position }]
   }
 
-  if (archetype === "scout" && hostileSubmarine.lastKnownPlayerPosition) {
+  if (archetype === "scout" && lastKnownPlayerPosition) {
     const retreatStep = chooseRetreatStep(
       map,
       position,
@@ -1436,14 +1456,28 @@ function shouldHoldAttackPosition(
 function shouldScoutHoldForEstimatedShot(
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
+  hostileSubmarines: ResolvedHostileSubmarine[],
   position: Point,
-  target: Point,
+  target: Point | null,
+  targetTurn: number | null,
   occupied: ReadonlySet<string>,
   reload: number,
+  turn: number,
 ): boolean {
-  if (reload > 0 || !hasRangedAmmo(hostileSubmarine)) {
+  if (reload > 0 || !target || !hasRangedAmmo(hostileSubmarine)) {
     return false
   }
+
+  const turnAge = targetTurn === null ? Number.POSITIVE_INFINITY : turn - targetTurn
+
+  if (turnAge > 1) {
+    return false
+  }
+
+  const horizontalShotOpportunity = hostileSubmarine.torpedoAmmo > 0 &&
+    hasHorizontalShotOpportunity(map, position, target)
+  const verticalShotOpportunity = hostileSubmarine.vlsAmmo > 0 &&
+    hasVerticalShotOpportunity(map, position, target)
 
   const ceilingTrapShot = findCeilingTrapShot(map, position, target)
   const safeCeilingTrap = ceilingTrapShot !== null &&
@@ -1452,12 +1486,18 @@ function shouldScoutHoldForEstimatedShot(
     ? ceilingTrapShot
     : null
 
-  return (hostileSubmarine.torpedoAmmo > 0 &&
-      hasHorizontalShotOpportunity(map, position, target)) ||
-    (hostileSubmarine.vlsAmmo > 0 && hasVerticalShotOpportunity(map, position, target)) ||
-    (safeCeilingTrap !== null &&
-      ((safeCeilingTrap.direction === "up" && hostileSubmarine.vlsAmmo > 0) ||
-        (safeCeilingTrap.direction !== "up" && hostileSubmarine.torpedoAmmo > 0)))
+  const attackTarget = horizontalShotOpportunity
+    ? createHorizontalShotTarget(position, target)
+    : verticalShotOpportunity
+    ? createVerticalShotTarget(position, target)
+    : safeCeilingTrap !== null &&
+        ((safeCeilingTrap.direction === "up" && hostileSubmarine.vlsAmmo > 0) ||
+          (safeCeilingTrap.direction !== "up" && hostileSubmarine.torpedoAmmo > 0))
+    ? safeCeilingTrap.impactPoint
+    : null
+
+  return attackTarget !== null &&
+    isAttackLaneSafe(attackTarget, hostileSubmarine, hostileSubmarines)
 }
 
 function hasRangedAmmo(hostileSubmarine: ResolvedHostileSubmarine): boolean {

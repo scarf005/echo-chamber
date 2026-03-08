@@ -993,10 +993,43 @@ Deno.test("scouts fire at their estimated player position before retreating", ()
 
   assertEquals(fired.torpedoes.length, 1)
   assertEquals(fired.torpedoes[0].senderId, "hostile-1")
+  assertEquals(fired.torpedoes[0].direction, "left")
   assertEquals(fired.hostileSubmarines[0].position, { x: 10, y: 4 })
   assertEquals(fired.hostileSubmarines[0].lastKnownPlayerPosition, { x: 4, y: 4 })
+  assertEquals(fired.hostileSubmarines[0].reload, 3)
   assertEquals(retreated.hostileSubmarines[0].position, { x: 11, y: 4 })
+  assertEquals(retreated.hostileSubmarines[0].reload, 2)
   assertEquals(retreated.status, "playing")
+})
+
+Deno.test("scouts hold and fire on the same turn they gain a fresh fix", () => {
+  const game = createScoutFreshFixGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.torpedoes.length, 1)
+  assertEquals(next.torpedoes[0].senderId, "hostile-1")
+  assertEquals(next.torpedoes[0].direction, "left")
+  assertEquals(next.hostileSubmarines[0].position, { x: 8, y: 2 })
+  assertEquals(next.hostileSubmarines[0].lastKnownPlayerPosition, next.player)
+  assertEquals(next.hostileSubmarines[0].reload, 3)
+})
+
+Deno.test("scouts do not pause retreat for stale player fixes", () => {
+  const game = createScoutStaleFixGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.hostileSubmarines[0].position, { x: 11, y: 4 })
+  assertEquals(next.hostileSubmarines[0].reload, 0)
+})
+
+Deno.test("scouts do not pause retreat when a shot risks friendly fire", () => {
+  const game = createScoutFriendlyFireGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.hostileSubmarines[0].position, { x: 11, y: 4 })
+  assertEquals(next.hostileSubmarines[0].reload, 0)
 })
 
 Deno.test("scouts keep a valid exploration target instead of retargeting every turn", () => {
@@ -2711,6 +2744,120 @@ function createHostileCommunicationGame(): GameState {
 }
 
 function createScoutFireBeforeRetreatGame(): GameState {
+  return createScoutRetreatGame({
+    seed: "scout-fire-before-retreat-test",
+    player: { x: 2, y: 1 },
+    scout: {
+      position: { x: 10, y: 4 },
+      lastKnownPlayerPosition: { x: 4, y: 4 },
+      lastKnownPlayerTurn: 0,
+    },
+    allies: [{
+      hostile: createHostile({
+        id: "hostile-2",
+        position: { x: 12, y: 5 },
+        archetype: "hunter",
+      }),
+      torpedoAmmo: 0,
+      vlsAmmo: 0,
+      depthChargeAmmo: 0,
+    }],
+  })
+}
+
+function createScoutFreshFixGame(): GameState {
+  return createScoutRetreatGame({
+    seed: "scout-fresh-fix-test",
+    player: { x: 4, y: 2 },
+    scout: {
+      position: { x: 8, y: 2 },
+      lastKnownPlayerPosition: null,
+      lastKnownPlayerTurn: null,
+    },
+    allies: [{
+      hostile: createHostile({
+        id: "hostile-2",
+        position: { x: 10, y: 3 },
+        archetype: "hunter",
+      }),
+      torpedoAmmo: 0,
+      vlsAmmo: 0,
+      depthChargeAmmo: 0,
+    }],
+  })
+}
+
+function createScoutStaleFixGame(): GameState {
+  return createScoutRetreatGame({
+    seed: "scout-stale-fix-test",
+    player: { x: 2, y: 1 },
+    scout: {
+      position: { x: 10, y: 4 },
+      lastKnownPlayerPosition: { x: 4, y: 4 },
+      lastKnownPlayerTurn: -2,
+    },
+    allies: [{
+      hostile: createHostile({
+        id: "hostile-2",
+        position: { x: 12, y: 5 },
+        archetype: "hunter",
+      }),
+      torpedoAmmo: 0,
+      vlsAmmo: 0,
+      depthChargeAmmo: 0,
+    }],
+  })
+}
+
+function createScoutFriendlyFireGame(): GameState {
+  return createScoutRetreatGame({
+    seed: "scout-friendly-fire-test",
+    player: { x: 1, y: 1 },
+    scout: {
+      position: { x: 10, y: 4 },
+      lastKnownPlayerPosition: { x: 4, y: 4 },
+      lastKnownPlayerTurn: 0,
+    },
+    allies: [
+      {
+        hostile: createHostile({
+          id: "hostile-2",
+          position: { x: 5, y: 5 },
+          archetype: "turtle",
+        }),
+        torpedoAmmo: 0,
+        vlsAmmo: 0,
+        depthChargeAmmo: 0,
+      },
+      {
+        hostile: createHostile({
+          id: "hostile-3",
+          position: { x: 12, y: 5 },
+          archetype: "hunter",
+        }),
+        torpedoAmmo: 0,
+        vlsAmmo: 0,
+        depthChargeAmmo: 0,
+      },
+    ],
+  })
+}
+
+function createScoutRetreatGame(options: {
+  seed: string
+  player: Point
+  scout: {
+    position: Point
+    lastKnownPlayerPosition: Point | null
+    lastKnownPlayerTurn: number | null
+  }
+  allies: Array<{
+    hostile: GameState["hostileSubmarines"][number]
+    torpedoAmmo: number
+    vlsAmmo: number
+    depthChargeAmmo: number
+  }>
+}): GameState {
   const map = createMapFromRows(
     [
       "##############",
@@ -2727,8 +2874,8 @@ function createScoutFireBeforeRetreatGame(): GameState {
 
   return {
     map,
-    player: { x: 2, y: 1 },
-    seed: "scout-fire-before-retreat-test",
+    player: options.player,
+    seed: options.seed,
     turn: 0,
     status: "playing",
     capsuleKnown: false,
@@ -2744,21 +2891,17 @@ function createScoutFireBeforeRetreatGame(): GameState {
     hostileSubmarines: [
       createHostile({
         id: "hostile-1",
-        position: { x: 10, y: 4 },
+        position: options.scout.position,
         archetype: "scout",
-        lastKnownPlayerPosition: { x: 4, y: 4 },
-        lastKnownPlayerTurn: 0,
+        lastKnownPlayerPosition: options.scout.lastKnownPlayerPosition,
+        lastKnownPlayerTurn: options.scout.lastKnownPlayerTurn,
       }),
-      {
-        ...createHostile({
-          id: "hostile-2",
-          position: { x: 12, y: 5 },
-          archetype: "hunter",
-        }),
-        torpedoAmmo: 0,
-        vlsAmmo: 0,
-        depthChargeAmmo: 0,
-      },
+      ...options.allies.map((ally) => ({
+        ...ally.hostile,
+        torpedoAmmo: ally.torpedoAmmo,
+        vlsAmmo: ally.vlsAmmo,
+        depthChargeAmmo: ally.depthChargeAmmo,
+      })),
     ],
     trails: [],
     dust: [],
