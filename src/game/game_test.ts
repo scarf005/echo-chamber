@@ -3,6 +3,7 @@
 import { assert, assertEquals } from "jsr:@std/assert"
 
 import { indexForPoint } from "./helpers.ts"
+import { WIN_SEED_MODE_HINT } from "../runSeed.ts"
 
 import {
   advanceTurn,
@@ -537,6 +538,7 @@ Deno.test("game is won by bringing the capsule back to the dock", () => {
     current.message,
     "Capsule delivered to dock. Press R for a new run.",
   )
+  assertEquals(current.logs.some((entry) => entry.message === WIN_SEED_MODE_HINT), true)
   assertEquals(current.memory, current.map.tiles)
 })
 

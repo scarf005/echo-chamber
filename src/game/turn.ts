@@ -33,6 +33,7 @@ import {
 import { isPlayerSonarEnabled } from "./actions.ts"
 import { createLogMessage, MAX_LOG_MESSAGES, withGameMessage } from "./log.ts"
 import { collectPickups } from "./items.ts"
+import { WIN_SEED_MODE_HINT } from "../runSeed.ts"
 import { emitVentPlumes } from "./vents.ts"
 import type {
   EntityReveal,
@@ -450,6 +451,7 @@ export function advanceTurn(
     ...(hostileSonarMessage !== null && nextMessage !== hostileSonarMessage
       ? [hostileSonarMessage]
       : []),
+    ...(won ? [createLogMessage(WIN_SEED_MODE_HINT)] : []),
   ].slice(-MAX_LOG_MESSAGES)
 
   const nextStatus: GameStatus = playerDestroyed ? "lost" : won ? "won" : "playing"
