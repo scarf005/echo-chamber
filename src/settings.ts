@@ -5,9 +5,35 @@ import {
   normalizeAudioSettings,
   readAudioSettings,
 } from "./audio/settings.ts"
+import { DEFAULT_HOSTILE_SUBMARINE_COUNT } from "./game/constants.ts"
+
+export type DifficultySetting = "easy" | "medium" | "hard"
+
+export const DEFAULT_DIFFICULTY_SETTING: DifficultySetting = "easy"
+
+export function normalizeDifficultySetting(
+  value: unknown,
+): DifficultySetting {
+  return value === "medium" || value === "hard"
+    ? value
+    : DEFAULT_DIFFICULTY_SETTING
+}
+
+export function difficultyToHostileSubmarineCount(
+  difficulty: DifficultySetting,
+  hardCount = DEFAULT_HOSTILE_SUBMARINE_COUNT,
+): number {
+  if (difficulty === "hard") {
+    return hardCount
+  }
+
+  const divisor = difficulty === "medium" ? 2 : 4
+  return Math.max(1, Math.floor(hardCount / divisor))
+}
 
 export type AppSettings = {
   audio: AudioSettings
+  difficulty: DifficultySetting
   revealMap: boolean
   showDevEntityOverlay: boolean
 }
@@ -18,6 +44,7 @@ export const DEV_ENTITY_OVERLAY_STORAGE_KEY = "echo-chamber:dev-entity-overlay"
 export function defaultAppSettings(isDevBuild: boolean): AppSettings {
   return {
     audio: DEFAULT_AUDIO_SETTINGS,
+    difficulty: DEFAULT_DIFFICULTY_SETTING,
     revealMap: false,
     showDevEntityOverlay: isDevBuild,
   }
@@ -29,6 +56,7 @@ export function normalizeAppSettings(
 ): AppSettings {
   return {
     audio: normalizeAudioSettings(value?.audio),
+    difficulty: normalizeDifficultySetting(value?.difficulty),
     revealMap: isDevBuild ? (value?.revealMap ?? false) : false,
     showDevEntityOverlay: value?.showDevEntityOverlay ?? isDevBuild,
   }
@@ -57,6 +85,7 @@ export function readAppSettings(
   } catch {
     return {
       audio: readAudioSettings(storage),
+      difficulty: defaults.difficulty,
       revealMap: defaults.revealMap,
       showDevEntityOverlay: readLegacyDevEntityOverlaySetting(
         storage,
@@ -67,6 +96,7 @@ export function readAppSettings(
 
   return {
     audio: readAudioSettings(storage),
+    difficulty: defaults.difficulty,
     revealMap: defaults.revealMap,
     showDevEntityOverlay: readLegacyDevEntityOverlaySetting(
       storage,

@@ -3,11 +3,15 @@
 import { assertEquals } from "@std/assert"
 
 import { DEFAULT_AUDIO_SETTINGS } from "./audio/settings.ts"
+import { DEFAULT_HOSTILE_SUBMARINE_COUNT } from "./game/constants.ts"
 import {
   APP_SETTINGS_STORAGE_KEY,
   AUDIO_SETTINGS_STORAGE_KEY,
+  DEFAULT_DIFFICULTY_SETTING,
   defaultAppSettings,
+  difficultyToHostileSubmarineCount,
   DEV_ENTITY_OVERLAY_STORAGE_KEY,
+  normalizeDifficultySetting,
   readAppSettings,
   writeAppSettings,
 } from "./settings.ts"
@@ -15,14 +19,37 @@ import {
 Deno.test("defaultAppSettings follows the build mode", () => {
   assertEquals(defaultAppSettings(true), {
     audio: DEFAULT_AUDIO_SETTINGS,
+    difficulty: DEFAULT_DIFFICULTY_SETTING,
     revealMap: false,
     showDevEntityOverlay: true,
   })
   assertEquals(defaultAppSettings(false), {
     audio: DEFAULT_AUDIO_SETTINGS,
+    difficulty: DEFAULT_DIFFICULTY_SETTING,
     revealMap: false,
     showDevEntityOverlay: false,
   })
+})
+
+Deno.test("difficulty settings normalize and scale hostile counts", () => {
+  assertEquals(normalizeDifficultySetting("easy"), "easy")
+  assertEquals(normalizeDifficultySetting("medium"), "medium")
+  assertEquals(normalizeDifficultySetting("hard"), "hard")
+  assertEquals(normalizeDifficultySetting("unknown"), DEFAULT_DIFFICULTY_SETTING)
+
+  assertEquals(
+    difficultyToHostileSubmarineCount("easy"),
+    Math.max(1, Math.floor(DEFAULT_HOSTILE_SUBMARINE_COUNT / 4)),
+  )
+  assertEquals(
+    difficultyToHostileSubmarineCount("medium"),
+    Math.max(1, Math.floor(DEFAULT_HOSTILE_SUBMARINE_COUNT / 2)),
+  )
+  assertEquals(
+    difficultyToHostileSubmarineCount("hard"),
+    DEFAULT_HOSTILE_SUBMARINE_COUNT,
+  )
+  assertEquals(difficultyToHostileSubmarineCount("easy", 3), 1)
 })
 
 Deno.test("readAppSettings restores the unified payload", () => {
@@ -38,6 +65,7 @@ Deno.test("readAppSettings restores the unified payload", () => {
                 sfxEnabled: true,
                 sfxVolume: 0.4,
               },
+              difficulty: "medium",
               revealMap: true,
               showDevEntityOverlay: false,
             })
@@ -52,6 +80,7 @@ Deno.test("readAppSettings restores the unified payload", () => {
         sfxEnabled: true,
         sfxVolume: 0.4,
       },
+      difficulty: "medium",
       revealMap: true,
       showDevEntityOverlay: false,
     },
@@ -89,6 +118,7 @@ Deno.test("readAppSettings falls back to legacy storage keys", () => {
         sfxEnabled: false,
         sfxVolume: 0.9,
       },
+      difficulty: DEFAULT_DIFFICULTY_SETTING,
       revealMap: false,
       showDevEntityOverlay: false,
     },
@@ -113,6 +143,7 @@ Deno.test("writeAppSettings stores a normalized unified payload", () => {
         sfxEnabled: false,
         sfxVolume: -1,
       },
+      difficulty: "hard",
       revealMap: true,
       showDevEntityOverlay: false,
     },
@@ -127,6 +158,7 @@ Deno.test("writeAppSettings stores a normalized unified payload", () => {
       sfxEnabled: false,
       sfxVolume: 0,
     },
+    difficulty: "hard",
     revealMap: true,
     showDevEntityOverlay: false,
   })
