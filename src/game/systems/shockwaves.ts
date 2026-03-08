@@ -364,6 +364,7 @@ function toEntityRevealKind(
     case "item":
       return "item"
     case "hostile-submarine":
+    case "fish":
       return "enemy"
     default:
       return null

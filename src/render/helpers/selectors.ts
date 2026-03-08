@@ -2,6 +2,7 @@ import type {
   CrackCell,
   DepthCharge,
   FadeCell,
+  Fish,
   FallingBoulder,
   GameState,
   HostileSubmarine,
@@ -51,6 +52,7 @@ export function buildEntityMaps(game: GameState): {
   torpedoes: Map<number, Torpedo>
   depthCharges: Map<number, DepthCharge>
   boulders: Map<number, FallingBoulder>
+  fish: Map<number, Fish>
   hostileSubmarines: Map<number, HostileSubmarine>
   pickups: Map<number, PickupItem>
 } {
@@ -58,6 +60,7 @@ export function buildEntityMaps(game: GameState): {
     torpedoes: buildEntityMap(game.torpedoes, game.map.width),
     depthCharges: buildEntityMap(game.depthCharges, game.map.width),
     boulders: buildEntityMap(game.fallingBoulders, game.map.width),
+    fish: buildEntityMap(game.fish ?? [], game.map.width),
     hostileSubmarines: buildEntityMap(game.hostileSubmarines, game.map.width),
     pickups: buildEntityMap(game.pickups, game.map.width),
   }
