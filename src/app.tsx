@@ -58,6 +58,9 @@ import {
   filterInspectorRows,
 } from "./render/helpers/inspector.ts"
 import type { RenderOptions, ViewportMode } from "./render/options.ts"
+import { activateLocale } from "./i18n.ts"
+import { languageSignal } from "./signals.ts"
+import { localizeAutoMoveReason } from "./game/localize.ts"
 
 const DEFAULT_SEED = "echo-chamber"
 const AUTO_MOVE_DELAY_MS = 70
@@ -75,6 +78,15 @@ const activeRunSeedSignal = signal(DEFAULT_SEED)
 const previewTargetSignal = signal<Point | null>(null)
 const autoMoveTargetSignal = signal<Point | null>(null)
 const hoveredTileSignal = signal<Point | null>(null)
+
+signalEffect(() => {
+  const locale = languageSignal.value
+  activateLocale(locale)
+
+  if (typeof document !== "undefined") {
+    document.documentElement.lang = locale
+  }
+})
 
 function shouldRevealDevMap(settings: AppSettings): boolean {
   return IS_DEV_BUILD && settings.revealMap
@@ -103,6 +115,7 @@ export function App() {
   const autoMoveTarget = autoMoveTargetSignal.value
   const hoveredTile = hoveredTileSignal.value
   const appSettings = appSettingsSignal.value
+  const locale = languageSignal.value
   const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
@@ -805,11 +818,12 @@ export function App() {
     cameraTileWidth: 30,
     cameraTileHeight: 20,
   }
-  const viewportLabel = viewportMode === "full" ? "FULL MAP (M)" : "TRACKING (M)"
+  const viewportLabel = viewportMode === "full" ? t`FULL MAP (M)` : t`TRACKING (M)`
   const hoveredInspectorRows = describeHoveredInspectorRows(game, hoveredTile, {
     revealAllEntities: isGodMode,
   })
   const visibleInspectorRows = filterInspectorRows(hoveredInspectorRows, isGodMode)
+  const onOffLabel = (enabled: boolean) => enabled ? t`ON` : t`OFF`
 
   const handleMusicEnabledChange = (
     event: JSX.TargetedEvent<HTMLInputElement>,
@@ -861,6 +875,10 @@ export function App() {
         sfxVolume: nextVolume,
       },
     }))
+  }
+
+  const handleLanguageChange = (nextLocale: typeof locale) => {
+    languageSignal.value = nextLocale
   }
 
   const handleDevEntityOverlayChange = (
@@ -933,7 +951,7 @@ export function App() {
           </div>
           <div class="stat-row">
             <span>{t`sonar in`}</span>
-            <strong>{playerSonarEnabled ? sonarIn : "OFF"}</strong>
+            <strong>{playerSonarEnabled ? sonarIn : onOffLabel(false)}</strong>
           </div>
           <div class="stat-row">
             <span>{t`torpedoes`}</span>
@@ -1072,6 +1090,23 @@ export function App() {
                   )
                   : null}
               </div>
+              <div class="sidebar-heading">{t`language`}</div>
+              <div class="button-stack">
+                <button
+                  type="button"
+                  aria-pressed={locale === "en"}
+                  onClick={() => handleLanguageChange("en")}
+                >
+                  {t`English`}
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={locale === "ko"}
+                  onClick={() => handleLanguageChange("ko")}
+                >
+                  {t`Korean`}
+                </button>
+              </div>
               <div class="sidebar-heading">{t`audio`}</div>
               <div class="audio-controls">
                 <div class="audio-setting">
@@ -1137,7 +1172,7 @@ export function App() {
                             aria-label={t`reveal map`}
                             onChange={handleRevealMapChange}
                           />
-                          <strong>{appSettings.revealMap ? "ON" : "OFF"}</strong>
+                          <strong>{onOffLabel(isRevealMapEnabled)}</strong>
                         </div>
                       </div>
                       <div class="audio-setting">
@@ -1153,7 +1188,7 @@ export function App() {
                             aria-label={t`god mode`}
                             onChange={handleDevEntityOverlayChange}
                           />
-                          <strong>{showDevEntityOverlay ? "ON" : "OFF"}</strong>
+                          <strong>{onOffLabel(showDevEntityOverlay)}</strong>
                         </div>
                       </div>
                     </div>
@@ -1316,7 +1351,9 @@ function createAutoMoveStopMessage(
   point: Point,
 ): string {
   const bearing = formatBearing(origin, point)
-  return `Auto-nav halted: ${reason} at ${formatPoint(point)}${
+  const localizedReason = localizeAutoMoveReason(reason)
+
+  return t`Auto-nav halted: ${localizedReason} at ${formatPoint(point)}${
     bearing ? ` ${bearing}` : ""
   }.`
 }
