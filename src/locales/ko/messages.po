@@ -20,75 +20,75 @@ msgstr "플레이어 잠수함"
 
 #. js-lingui-explicit-id
 #: src/game/entity_labels.ts:14
-#: src/game/localize.ts:72
+#: src/game/localize.ts:85
 msgid "capsule"
 msgstr "캡슐"
 
 #. js-lingui-explicit-id
-#: src/game/entity_labels.ts:20
+#: src/game/entity_labels.ts:22
 msgid "enemy submarine"
 msgstr "적 잠수함"
 
 #. js-lingui-explicit-id
-#: src/game/entity_labels.ts:26
+#: src/game/entity_labels.ts:30
 msgid "fish"
 msgstr "물고기"
 
 #. js-lingui-explicit-id
-#: src/game/entity_labels.ts:32
-#: src/game/localize.ts:23
+#: src/game/entity_labels.ts:38
+#: src/game/localize.ts:25
 msgid "item"
 msgstr "아이템"
 
 #. js-lingui-explicit-id
-#: src/game/entity_labels.ts:38
-#: src/game/localize.ts:63
+#: src/game/entity_labels.ts:46
+#: src/game/localize.ts:67
 msgid "torpedo"
 msgstr "어뢰"
 
 #. js-lingui-explicit-id
-#: src/game/entity_labels.ts:44
-#: src/game/localize.ts:65
+#: src/game/entity_labels.ts:54
+#: src/game/localize.ts:69
 msgid "depth charge"
 msgstr "기뢰"
 
 #. js-lingui-explicit-id
-#: src/game/entity_labels.ts:50
+#: src/game/entity_labels.ts:62
 msgid "falling boulder"
 msgstr "낙석"
 
 #. js-lingui-explicit-id
-#: src/game/entity_labels.ts:57
+#: src/game/entity_labels.ts:69
 msgid "{name} in sight"
 msgstr "{name} 발견"
 
 #. js-lingui-explicit-id
-#: src/game/items.ts:92
-#: src/game/items.ts:94
+#: src/game/items.ts:111
+#: src/game/items.ts:113
 msgid "Recovered {recovered} torpedoes."
 msgstr "어뢰 {recovered}발 회수."
 
 #. js-lingui-explicit-id
-#: src/game/items.ts:96
-#: src/game/items.ts:96
+#: src/game/items.ts:116
+#: src/game/items.ts:118
 msgid "Torpedo tubes already full."
 msgstr "어뢰관이 이미 가득 찼습니다."
 
 #. js-lingui-explicit-id
-#: src/game/items.ts:108
-#: src/game/items.ts:110
+#: src/game/items.ts:134
+#: src/game/items.ts:136
 msgid "Recovered {recovered} depth charges."
 msgstr "기뢰 {recovered}발 회수."
 
 #. js-lingui-explicit-id
-#: src/game/items.ts:112
-#: src/game/items.ts:112
+#: src/game/items.ts:139
+#: src/game/items.ts:141
 msgid "Depth charge racks already full."
 msgstr "기뢰 적재함이 이미 가득 찼습니다."
 
 #. js-lingui-explicit-id
-#: src/game/items.ts:118
-#: src/game/items.ts:118
+#: src/game/items.ts:153
+#: src/game/items.ts:155
 msgid "Recovered a survey map."
 msgstr "조사 맵을 회수했다."
 
@@ -99,125 +99,125 @@ msgid "Recover the capsule and return it to the dock. Hostile subs stalk the cav
 msgstr "캡슐을 회수하여 도크로 복귀하세요. 적 잠수함이 동굴을 배회합니다. 소나는 5턴마다 순환합니다."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:17
-#: src/game/log.ts:17
+#: src/game/log.ts:18
+#: src/game/log.ts:20
 msgid "Move with WASD or arrows."
 msgstr "WASD 또는 방향키로 이동하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:18
-#: src/game/log.ts:18
+#: src/game/log.ts:23
+#: src/game/log.ts:25
 msgid "Click once to plot a course."
 msgstr "한 번 클릭하여 항로를 표시하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:19
-#: src/game/log.ts:19
+#: src/game/log.ts:28
+#: src/game/log.ts:30
 msgid "Click the same tile again to engage auto-nav."
 msgstr "같은 칸을 다시 클릭해 자동 항법을 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:20
-#: src/game/log.ts:20
+#: src/game/log.ts:33
+#: src/game/log.ts:35
 msgid "Wait with ."
 msgstr "마침표로 대기하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:21
-#: src/game/log.ts:21
+#: src/game/log.ts:38
+#: src/game/log.ts:40
 msgid "Launch torpedo with Z."
 msgstr "Z로 어뢰를 발사하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:22
-#: src/game/log.ts:22
+#: src/game/log.ts:43
+#: src/game/log.ts:45
 msgid "Launch torpedo upwards with C."
 msgstr "C로 위쪽으로 VLS 어뢰를 발사하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:23
-#: src/game/log.ts:23
+#: src/game/log.ts:48
+#: src/game/log.ts:50
 msgid "Drop depth charge with X."
 msgstr "X로 기뢰를 투하하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:24
-#: src/game/log.ts:24
+#: src/game/log.ts:53
+#: src/game/log.ts:55
 msgid "Toggle display with M."
 msgstr "M으로 표시를 전환하세요."
 
 #. js-lingui-explicit-id
-#: src/game/log.ts:26
-#: src/game/log.ts:28
+#: src/game/log.ts:58
+#: src/game/log.ts:63
 msgid "When sunk, press R to restart. Use Options for restart or random run anytime."
 msgstr "침몰 시 R을 눌러 재시작하세요. 언제든지 옵션에서 재시작하거나 무작위 실행할 수 있습니다."
 
 #. js-lingui-explicit-id
 #: src/game/turn.ts:108
-#: src/game/turn.ts:110
-#: src/game/turn.ts:323
+#: src/game/turn.ts:111
+#: src/game/turn.ts:332
 msgid "A hostile submarine rams your hull. Press R for a new run."
 msgstr "적 잠수함이 선체를 들이받았습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:170
 #: src/game/turn.ts:172
+#: src/game/turn.ts:177
 msgid "A hostile torpedo tears through your hull. Press R for a new run."
 msgstr "적 어뢰가 선체를 관통했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:202
-#: src/game/turn.ts:204
+#: src/game/turn.ts:209
+#: src/game/turn.ts:212
 msgid "A hostile blast caves in your hull. Press R for a new run."
 msgstr "적의 폭발로 선체가 붕괴했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:227
-#: src/game/turn.ts:229
+#: src/game/turn.ts:235
+#: src/game/turn.ts:237
 msgid "Cave-in debris crushes your hull. Press R for a new run."
 msgstr "낙반 잔해가 선체를 짓눌렀습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:351
-#: src/game/turn.ts:353
+#: src/game/turn.ts:360
+#: src/game/turn.ts:365
 msgid "hostile sonar from {direction}"
 msgstr "{direction}에서 적 소나"
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:430
-#: src/game/turn.ts:430
+#: src/game/turn.ts:445
+#: src/game/turn.ts:447
 msgid "Capsule retrieved. Return to dock."
 msgstr "캡슐 회수 완료. 도크로 복귀하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:435
-#: src/game/turn.ts:435
+#: src/game/turn.ts:454
+#: src/game/turn.ts:456
 msgid "Your submarine is destroyed. Press R for a new run."
 msgstr "잠수함이 파괴되었습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:437
-#: src/game/turn.ts:437
+#: src/game/turn.ts:460
+#: src/game/turn.ts:462
 msgid "Capsule delivered to dock. Press R for a new run."
 msgstr "캡슐을 도크에 인도했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:445
-#: src/game/turn.ts:450
+#: src/game/turn.ts:471
+#: src/game/turn.ts:478
 msgid "You paste a fish against the bow."
 msgstr "선수로 물고기 한 마리를 짓이겼다."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:446
-#: src/game/turn.ts:451
+#: src/game/turn.ts:472
+#: src/game/turn.ts:479
 msgid "You paste {rammedFishCount} fish against the bow."
 msgstr "선수로 물고기 {rammedFishCount}마리를 짓이겼다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:339
-#: src/game/actions.ts:339
-#: src/game/log_test.ts:93
+#: src/game/actions.ts:359
+#: src/game/actions.ts:361
 #: src/game/log_test.ts:95
+#: src/game/log_test.ts:97
 msgid "Holding position."
 msgstr "위치 유지."
 
@@ -247,247 +247,247 @@ msgid "void"
 msgstr "빈 공간"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:24
+#: src/game/localize.ts:26
 msgid "hostile entity"
 msgstr "적 개체"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:25
+#: src/game/localize.ts:27
 msgid "non-hostile contact"
 msgstr "비적대 접촉"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:26
+#: src/game/localize.ts:28
 msgid "unknown"
 msgstr "알 수 없음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:30
+#: src/game/localize.ts:32
 msgid "torpedo cache"
 msgstr "어뢰 보급함"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:31
+#: src/game/localize.ts:33
 msgid "depth charge cache"
 msgstr "기뢰 보급함"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:32
+#: src/game/localize.ts:34
 msgid "survey map"
 msgstr "조사 맵"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:36
+#: src/game/localize.ts:38
 msgid "up"
 msgstr "상"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:37
+#: src/game/localize.ts:39
 msgid "down"
 msgstr "하"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:38
+#: src/game/localize.ts:40
 msgid "left"
 msgstr "좌"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:39
+#: src/game/localize.ts:41
 msgid "right"
 msgstr "우"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:43
+#: src/game/localize.ts:45
 msgid "idle"
 msgstr "대기"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:44
+#: src/game/localize.ts:46
 msgid "wander"
 msgstr "배회"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:45
+#: src/game/localize.ts:47
 msgid "travel"
 msgstr "이동"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:49
+#: src/game/localize.ts:51
 msgid "patrol"
 msgstr "순찰"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:50
+#: src/game/localize.ts:52
 msgid "investigate"
 msgstr "조사"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:51
+#: src/game/localize.ts:53
 msgid "attack"
 msgstr "공격"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:52
+#: src/game/localize.ts:54
 msgid "retreat"
 msgstr "후퇴"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:56
+#: src/game/localize.ts:60
 msgid "scout"
 msgstr "정찰"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:57
+#: src/game/localize.ts:61
 msgid "guard"
 msgstr "경비"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:58
+#: src/game/localize.ts:62
 msgid "turtle"
 msgstr "터틀"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:59
+#: src/game/localize.ts:63
 msgid "hunter"
 msgstr "추격"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:64
+#: src/game/localize.ts:68
 msgid "VLS"
 msgstr "VLS"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:69
+#: src/game/localize.ts:82
 msgid "visual"
 msgstr "시야"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:70
+#: src/game/localize.ts:83
 msgid "player sonar"
 msgstr "플레이어 소나"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:71
+#: src/game/localize.ts:84
 msgid "relay"
 msgstr "중계"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:73
+#: src/game/localize.ts:86
 msgid "message"
 msgstr "메시지"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:74
+#: src/game/localize.ts:87
 msgid "clue"
 msgstr "단서"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:75
+#: src/game/localize.ts:88
 msgid "none"
 msgstr "없음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:79
+#: src/game/localize.ts:92
 msgid "yes"
 msgstr "예"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:79
+#: src/game/localize.ts:92
 msgid "no"
 msgstr "아니오"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:83
+#: src/game/localize.ts:96
 msgid "reloading"
 msgstr "재장전 중"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:84
+#: src/game/localize.ts:97
 msgid "no player fix"
 msgstr "플레이어 위치 정보 없음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:85
+#: src/game/localize.ts:99
 msgid "needs direct detection"
 msgstr "직접 탐지가 필요함"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:86
+#: src/game/localize.ts:102
 msgid "player outside attack radius"
 msgstr "플레이어가 공격 반경 밖에 있음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:87
+#: src/game/localize.ts:104
 msgid "stale player fix"
 msgstr "오래된 플레이어 위치 정보"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:88
+#: src/game/localize.ts:106
 msgid "low confidence shot skipped"
 msgstr "신뢰도 낮은 사격 건너뜀"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:89
+#: src/game/localize.ts:108
 msgid "friendly fire risk"
 msgstr "아군 오사 위험"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:90
+#: src/game/localize.ts:110
 msgid "no valid weapon solution"
 msgstr "유효한 무장 해법 없음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:95
+#: src/game/localize.ts:116
 msgid "wall ahead"
 msgstr "전방에 벽"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:96
+#: src/game/localize.ts:117
 msgid "no plotted course"
 msgstr "설정된 항로 없음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:97
+#: src/game/localize.ts:119
 msgid "charted wall at destination"
 msgstr "목적지에 기록된 벽"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:98
+#: src/game/localize.ts:121
 msgid "torpedo in sight"
 msgstr "어뢰 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:99
+#: src/game/localize.ts:122
 msgid "depth charge in sight"
 msgstr "기뢰 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:100
+#: src/game/localize.ts:124
 msgid "falling boulder in sight"
 msgstr "낙석 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:101
+#: src/game/localize.ts:127
 msgid "torpedo cache in sight"
 msgstr "어뢰 보급함 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:102
+#: src/game/localize.ts:130
 msgid "depth charge cache in sight"
 msgstr "기뢰 보급함 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:103
+#: src/game/localize.ts:132
 msgid "survey map in sight"
 msgstr "조사 맵 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:104
+#: src/game/localize.ts:133
 msgid "capsule in sight"
 msgstr "캡슐 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:105
+#: src/game/localize.ts:134
 msgid "sonar"
 msgstr "소나"
 
@@ -516,301 +516,301 @@ msgid "Depth charge detonates below."
 msgstr "아래에서 기뢰가 폭발했다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:297
-#: src/game/actions.ts:297
+#: src/game/actions.ts:302
+#: src/game/actions.ts:304
 msgid "Player sonar enabled."
 msgstr "플레이어 소나 활성화됨."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:298
-#: src/game/actions.ts:298
+#: src/game/actions.ts:307
+#: src/game/actions.ts:309
 msgid "Player sonar disabled."
 msgstr "플레이어 소나 비활성화됨."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:317
-#: src/game/actions.ts:317
+#: src/game/actions.ts:332
+#: src/game/actions.ts:334
 msgid "Hull blocked."
 msgstr "선체 차단됨."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:325
-#: src/game/actions.ts:325
+#: src/game/actions.ts:344
+#: src/game/actions.ts:344
 msgid "Advance."
 msgstr "전진."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:358
-#: src/game/actions.ts:358
+#: src/game/actions.ts:384
+#: src/game/actions.ts:386
 msgid "No torpedoes remaining."
 msgstr "남은 어뢰가 없습니다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:368
-#: src/game/actions.ts:375
+#: src/game/actions.ts:398
+#: src/game/actions.ts:405
 msgid "Tube away to port."
 msgstr "좌현으로 발사."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:370
-#: src/game/actions.ts:377
+#: src/game/actions.ts:400
+#: src/game/actions.ts:407
 msgid "Tube away to starboard."
 msgstr "우현으로 발사."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:371
-#: src/game/actions.ts:378
+#: src/game/actions.ts:401
+#: src/game/actions.ts:408
 msgid "VLS launch upward."
 msgstr "VLS 상향 발사."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:391
-#: src/game/actions.ts:391
+#: src/game/actions.ts:424
+#: src/game/actions.ts:426
 msgid "No depth charges remaining."
 msgstr "남은 기뢰가 없습니다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:399
-#: src/game/actions.ts:399
+#: src/game/actions.ts:437
+#: src/game/actions.ts:439
 msgid "Depth charge away."
 msgstr "기뢰 투하."
 
 #. js-lingui-explicit-id
-#: src/render/helpers/inspector.ts:314
+#: src/render/helpers/inspector.ts:340
 msgid "retreating to {target}"
 msgstr "{target}로 후퇴 중"
 
 #. js-lingui-explicit-id
-#: src/render/helpers/inspector.ts:318
+#: src/render/helpers/inspector.ts:346
 msgid "pressing attack at {target}"
 msgstr "{target}에 공격 압박 중"
 
 #. js-lingui-explicit-id
-#: src/render/helpers/inspector.ts:322
+#: src/render/helpers/inspector.ts:352
 msgid "investigating {target}"
 msgstr "{target} 조사 중"
 
 #. js-lingui-explicit-id
-#: src/render/helpers/inspector.ts:326
+#: src/render/helpers/inspector.ts:358
 msgid "holding near {target}"
 msgstr "{target} 부근 대기 중"
 
 #. js-lingui-explicit-id
-#: src/render/helpers/inspector.ts:338
+#: src/render/helpers/inspector.ts:372
 msgid "{id}: will {mode}{targetSuffix}"
 msgstr "{id}: {mode}{targetSuffix} 예정"
 
-#: src/app.tsx:1103
+#: src/app.tsx:1165
 msgid "active seed modes"
 msgstr "활성 시드 모드"
 
-#: src/app.tsx:1163
+#: src/app.tsx:1243
 msgid "audio"
 msgstr "오디오"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:666
-#: src/app.tsx:668
+#: src/app.tsx:708
+#: src/app.tsx:710
 msgid "Auto-nav engaged to {0}."
 msgstr "자동 항법 {0}로 활성화됨."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1409
+#: src/app.tsx:1492
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "자동 항법 중지: {localizedReason} @ {0}{1}."
 
-#: src/app.tsx:1077
-#: src/app.tsx:1380
+#: src/app.tsx:1139
+#: src/app.tsx:1463
 msgid "close"
 msgstr "닫기"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:686
-#: src/app.tsx:688
+#: src/app.tsx:729
+#: src/app.tsx:732
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "{0}로 항로 표시됨. 다시 클릭하여 시작하세요."
 
-#: src/app.tsx:1251
+#: src/app.tsx:1331
 msgid "credits"
 msgstr "크레딧"
 
-#: src/app.tsx:987
+#: src/app.tsx:1046
 msgid "depth charges"
 msgstr "기뢰"
 
-#: src/app.tsx:1215
+#: src/app.tsx:1295
 msgid "dev"
 msgstr "개발"
 
-#: src/app.tsx:1132
-#: src/app.tsx:1133
+#: src/app.tsx:1202
+#: src/app.tsx:1206
 msgid "difficulty"
 msgstr "난이도"
 
-#: src/app.tsx:999
+#: src/app.tsx:1058
 msgid "display"
 msgstr "표시"
 
-#: src/app.tsx:446
-#: src/app.tsx:451
+#: src/app.tsx:453
+#: src/app.tsx:458
 msgid "Display set to full map."
 msgstr "전체 맵으로 표시 설정됨."
 
-#: src/app.tsx:447
-#: src/app.tsx:452
+#: src/app.tsx:454
+#: src/app.tsx:459
 msgid "Display set to tracking camera."
 msgstr "추적 카메라로 표시 설정됨."
 
-#: src/app.tsx:1138
-#: src/app.tsx:1141
+#: src/app.tsx:1214
+#: src/app.tsx:1217
 msgid "easy"
 msgstr "쉬움"
 
-#: src/app.tsx:1182
+#: src/app.tsx:1262
 msgid "enable music"
 msgstr "음악 활성화"
 
-#: src/app.tsx:1205
+#: src/app.tsx:1285
 msgid "enable sfx"
 msgstr "효과음 활성화"
 
-#: src/app.tsx:1115
+#: src/app.tsx:1183
 msgid "English"
 msgstr "영어"
 
-#: src/app.tsx:840
+#: src/app.tsx:895
 msgid "FULL MAP (M)"
 msgstr "전체 맵 (M)"
 
-#: src/app.tsx:1235
-#: src/app.tsx:1241
+#: src/app.tsx:1315
+#: src/app.tsx:1321
 msgid "god mode"
 msgstr "신 모드"
 
-#: src/app.tsx:1156
-#: src/app.tsx:1159
+#: src/app.tsx:1236
+#: src/app.tsx:1239
 msgid "hard"
 msgstr "어려움"
 
-#: src/app.tsx:1054
+#: src/app.tsx:1113
 msgid "hover any tile to inspect terrain and contacts."
 msgstr "타일에 마우스를 올려 지형과 접촉을 검사하세요."
 
-#: src/app.tsx:1035
+#: src/app.tsx:1094
 msgid "hover tile"
 msgstr "마우스 오버 타일"
 
-#: src/app.tsx:1033
+#: src/app.tsx:1092
 msgid "inspector"
 msgstr "검사기"
 
-#: src/app.tsx:1124
+#: src/app.tsx:1194
 msgid "Korean"
 msgstr "한국어"
 
-#: src/app.tsx:1109
-#: src/app.tsx:1110
+#: src/app.tsx:1171
+#: src/app.tsx:1175
 msgid "language"
 msgstr "언어"
 
-#: src/app.tsx:1232
+#: src/app.tsx:1312
 msgid "map overlay"
 msgstr "맵 오버레이"
 
-#: src/app.tsx:1218
+#: src/app.tsx:1298
 msgid "map visibility"
 msgstr "맵 가시성"
 
-#: src/app.tsx:1147
-#: src/app.tsx:1150
+#: src/app.tsx:1225
+#: src/app.tsx:1228
 msgid "medium"
 msgstr "보통"
 
-#: src/app.tsx:957
+#: src/app.tsx:1016
 msgid "mission status"
 msgstr "임무 상태"
 
-#: src/app.tsx:1166
+#: src/app.tsx:1246
 msgid "music"
 msgstr "음악"
 
-#: src/app.tsx:1175
+#: src/app.tsx:1255
 msgid "music volume"
 msgstr "음악 볼륨"
 
-#: src/app.tsx:845
+#: src/app.tsx:904
 msgid "OFF"
 msgstr "끔"
 
-#: src/app.tsx:845
+#: src/app.tsx:904
 msgid "ON"
 msgstr "켬"
 
-#: src/app.tsx:1009
+#: src/app.tsx:1068
 msgid "open full order log"
 msgstr "전체 명령 로그 열기"
 
-#: src/app.tsx:961
+#: src/app.tsx:1020
 msgid "open options"
 msgstr "옵션 열기"
 
-#: src/app.tsx:1067
-#: src/app.tsx:1071
+#: src/app.tsx:1129
+#: src/app.tsx:1133
 msgid "options"
 msgstr "옵션"
 
-#: src/app.tsx:1017
-#: src/app.tsx:1370
-#: src/app.tsx:1374
+#: src/app.tsx:1076
+#: src/app.tsx:1453
+#: src/app.tsx:1457
 msgid "orders"
 msgstr "명령"
 
-#: src/app.tsx:991
+#: src/app.tsx:1050
 msgid "position"
 msgstr "위치"
 
-#: src/app.tsx:1097
+#: src/app.tsx:1159
 msgid "restart"
 msgstr "재시작"
 
-#: src/app.tsx:1220
-#: src/app.tsx:1225
+#: src/app.tsx:1300
+#: src/app.tsx:1305
 msgid "reveal map"
 msgstr "맵 공개"
 
-#: src/app.tsx:1087
+#: src/app.tsx:1149
 msgid "run seed"
 msgstr "실행 시드"
 
-#: src/app.tsx:1086
+#: src/app.tsx:1148
 msgid "seed"
 msgstr "시드"
 
-#: src/app.tsx:1189
+#: src/app.tsx:1269
 msgid "sfx"
 msgstr "효과음"
 
-#: src/app.tsx:1198
+#: src/app.tsx:1278
 msgid "sfx volume"
 msgstr "효과음 볼륨"
 
-#: src/app.tsx:979
+#: src/app.tsx:1038
 msgid "sonar in"
 msgstr "소나 입력"
 
-#: src/app.tsx:995
+#: src/app.tsx:1054
 msgid "target"
 msgstr "목표"
 
-#: src/app.tsx:983
+#: src/app.tsx:1042
 msgid "torpedoes"
 msgstr "어뢰"
 
-#: src/app.tsx:840
+#: src/app.tsx:896
 msgid "TRACKING (M)"
 msgstr "추적 화면 (M)"
 
-#: src/app.tsx:975
+#: src/app.tsx:1034
 msgid "turn"
 msgstr "턴"
