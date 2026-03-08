@@ -46,7 +46,36 @@ Deno.test("falling boulders send bubbles upward until they hit a wall", () => {
   )
 })
 
-function createBoulderLandingGame(): GameState {
+Deno.test("falling boulders crush the player instead of only logging impact text", () => {
+  const game = createBoulderLandingGame({ player: { x: 3, y: 3 } })
+
+  const next = holdPosition(game)
+
+  assertEquals(next.status, "lost")
+  assertEquals(next.fallingBoulders.length, 0)
+  assertEquals(next.message, "Cave-in debris crushes your hull. Press R for a new run.")
+})
+
+Deno.test("falling boulders crush hostile submarines in their path", () => {
+  const game = createBoulderLandingGame({
+    hostileSubmarines: [{
+      id: "hostile-1",
+      position: { x: 3, y: 3 },
+      facing: "left",
+      mode: "patrol",
+      target: null,
+      reload: 0,
+    }],
+  })
+
+  const next = holdPosition(game)
+
+  assertEquals(next.status, "playing")
+  assertEquals(next.hostileSubmarines.length, 0)
+  assertEquals(next.message, "Cave-in debris slams through the silt.")
+})
+
+function createBoulderLandingGame(overrides: Partial<GameState> = {}): GameState {
   const map = createMapFromRows(
     [
       "#######",
@@ -59,7 +88,7 @@ function createBoulderLandingGame(): GameState {
     { x: 5, y: 2 },
   )
 
-  return {
+  const base: GameState = {
     map,
     player: { x: 1, y: 1 },
     seed: "boulder-landing-test",
@@ -86,6 +115,27 @@ function createBoulderLandingGame(): GameState {
     screenShake: 0,
     message: "",
     logs: [],
+  }
+
+  return {
+    ...base,
+    ...overrides,
+    map,
+    player: overrides.player ? { ...overrides.player } : base.player,
+    hostileSubmarines: overrides.hostileSubmarines?.map((hostileSubmarine) => ({
+      ...hostileSubmarine,
+      position: { ...hostileSubmarine.position },
+      target: hostileSubmarine.target ? { ...hostileSubmarine.target } : null,
+    })) ?? base.hostileSubmarines,
+    fish: overrides.fish?.map((fish) => ({
+      ...fish,
+      position: { ...fish.position },
+      target: fish.target ? { ...fish.target } : null,
+    })),
+    fallingBoulders: overrides.fallingBoulders?.map((boulder) => ({
+      ...boulder,
+      position: { ...boulder.position },
+    })) ?? base.fallingBoulders,
   }
 }
 

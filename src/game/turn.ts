@@ -166,11 +166,27 @@ export function advanceTurn(
       "A hostile blast caves in your hull. Press R for a new run."
   }
 
-  const boulderStep = stepFallingBoulders(map, fallingBoulders, trails, dust)
+  const boulderStep = stepFallingBoulders(
+    map,
+    fallingBoulders,
+    trails,
+    dust,
+    nextPlayer,
+    fish,
+    hostileSubmarines,
+  )
   fallingBoulders = boulderStep.fallingBoulders
   trails = boulderStep.trails
   dust = boulderStep.dust
+  fish = boulderStep.fish
+  hostileSubmarines = boulderStep.hostileSubmarines
   screenShake = Math.max(screenShake, boulderStep.screenShake)
+  playerDestroyed = playerDestroyed || boulderStep.playerDestroyed
+
+  if (boulderStep.playerDestroyed) {
+    hostileMessage = "Cave-in debris crushes your hull. Press R for a new run."
+  }
+
   const capsuleRetrievedThisTurn = !hadCapsule && !playerDestroyed &&
     pointsEqual(nextPlayer, map.capsule)
 

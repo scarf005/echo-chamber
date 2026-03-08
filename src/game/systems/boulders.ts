@@ -5,32 +5,57 @@ import {
   mergeFadeCells,
   mergeTrailCell,
 } from "../effects.ts"
-import type { FadeCell, FallingBoulder } from "../model.ts"
-import { indexForPoint } from "../helpers.ts"
+import { indexForPoint, pointsEqual } from "../helpers.ts"
 import { type GeneratedMap, tileAt } from "../mapgen.ts"
+import type {
+  FadeCell,
+  FallingBoulder,
+  Fish,
+  HostileSubmarine,
+} from "../model.ts"
+import type { Point } from "../mapgen.ts"
 
 export function stepFallingBoulders(
   map: GeneratedMap,
   boulders: FallingBoulder[],
   trails: FadeCell[],
   dust: FadeCell[],
+  player: Point,
+  fish: Fish[],
+  hostileSubmarines: HostileSubmarine[],
 ): {
   fallingBoulders: FallingBoulder[]
   trails: FadeCell[]
   dust: FadeCell[]
+  fish: Fish[]
+  hostileSubmarines: HostileSubmarine[]
   landings: number
   screenShake: number
+  playerDestroyed: boolean
 } {
   const nextBoulders: FallingBoulder[] = []
   let nextTrails = trails
   let nextDust = dust
+  let nextFish = fish
+  let nextHostiles = hostileSubmarines
   let landings = 0
+  let playerDestroyed = false
 
   for (const boulder of boulders) {
     let current = { ...boulder.position }
     let landed = false
 
     for (let step = 0; step < boulder.speed; step += 1) {
+      const crushedAtCurrent = crushEntitiesAtPoint(
+        current,
+        player,
+        nextFish,
+        nextHostiles,
+      )
+      nextFish = crushedAtCurrent.fish
+      nextHostiles = crushedAtCurrent.hostileSubmarines
+      playerDestroyed = playerDestroyed || crushedAtCurrent.playerDestroyed
+
       nextTrails = mergeTrailCell(
         nextTrails,
         indexForPoint(map.width, current),
@@ -58,6 +83,15 @@ export function stepFallingBoulders(
       }
 
       current = nextPoint
+      const crushedAfterMove = crushEntitiesAtPoint(
+        current,
+        player,
+        nextFish,
+        nextHostiles,
+      )
+      nextFish = crushedAfterMove.fish
+      nextHostiles = crushedAfterMove.hostileSubmarines
+      playerDestroyed = playerDestroyed || crushedAfterMove.playerDestroyed
     }
 
     if (!landed) {
@@ -72,7 +106,29 @@ export function stepFallingBoulders(
     fallingBoulders: nextBoulders,
     trails: nextTrails,
     dust: nextDust,
+    fish: nextFish,
+    hostileSubmarines: nextHostiles,
     landings,
     screenShake: landings > 0 ? 0.75 : 0,
+    playerDestroyed,
+  }
+}
+
+function crushEntitiesAtPoint(
+  point: Point,
+  player: Point,
+  fish: Fish[],
+  hostileSubmarines: HostileSubmarine[],
+): {
+  fish: Fish[]
+  hostileSubmarines: HostileSubmarine[]
+  playerDestroyed: boolean
+} {
+  return {
+    fish: fish.filter((candidate) => !pointsEqual(candidate.position, point)),
+    hostileSubmarines: hostileSubmarines.filter((candidate) =>
+      !pointsEqual(candidate.position, point)
+    ),
+    playerDestroyed: pointsEqual(player, point),
   }
 }
