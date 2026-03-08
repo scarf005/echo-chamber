@@ -36,6 +36,8 @@ The itch.io game id defaults to the repository name, so this repository publishe
 - [Underwater Blub 03 by Department64 (CC-BY-4.0)](https://freesound.org/people/Department64/sounds/651744/)
 - `src/assets/audio/reload-gulfstreamav.mp3`
 - [Reload by gulfstreamav (CC0-1.0)](https://freesound.org/people/gulfstreamav/sounds/841162/)
+- `src/assets/audio/death-bang-explosion-metallic.mp3`
+- [Bang/Explosion Metallic by Werra (CC0-1.0)](https://freesound.org/people/Werra/sounds/244394/)
 - `src/assets/audio/underwater-explosion-1.mp3`
 - [UnderWater_Explosion1 by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819743/)
 - `src/assets/audio/underwater-explosion-2.mp3`
