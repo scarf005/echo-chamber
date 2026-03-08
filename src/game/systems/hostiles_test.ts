@@ -56,6 +56,71 @@ Deno.test("hostile step emits notable ai decisions", () => {
   assertEquals(next.hostileSubmarines[0].lastAiLog, "hostile-1: will attack 3,2")
 })
 
+Deno.test("hostiles carry their planned path forward after moving", () => {
+  const map = createMapFromRows(
+    [
+      "####################",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    { x: 1, y: 1 },
+    { x: 18, y: 3 },
+  )
+  const hostile: HostileSubmarine = {
+    id: "hostile-1",
+    position: { x: 15, y: 2 },
+    facing: "left",
+    mode: "investigate",
+    target: { x: 11, y: 2 },
+    reload: 2,
+    archetype: "hunter",
+    initialPosition: { x: 15, y: 2 },
+    torpedoAmmo: 6,
+    vlsAmmo: 6,
+    depthChargeAmmo: 6,
+    lastSonarTurn: 0,
+    lastKnownPlayerPosition: null,
+    lastKnownPlayerVector: null,
+    lastKnownPlayerTurn: null,
+    previousPosition: null,
+    plannedPath: [
+      { x: 15, y: 2 },
+      { x: 14, y: 2 },
+      { x: 13, y: 2 },
+      { x: 12, y: 2 },
+      { x: 11, y: 2 },
+    ],
+    lastAiLog: null,
+  }
+
+  const next = stepHostileSubmarines(
+    map,
+    [hostile],
+    {
+      player: { x: 1, y: 1 },
+      previousPlayer: { x: 1, y: 1 },
+      shockwaves: [],
+      trails: [],
+      memory: Array.from({ length: map.tiles.length }, () => "water"),
+      playerSonarHitHostiles: new Set(),
+      capsuleRetrievedThisTurn: false,
+    },
+    "hostile-planned-path-test",
+    1,
+  )
+
+  assertEquals(next.hostileSubmarines[0].position, { x: 14, y: 2 })
+  assertEquals(next.hostileSubmarines[0].target, { x: 11, y: 2 })
+  assertEquals(next.hostileSubmarines[0].plannedPath, [
+    { x: 14, y: 2 },
+    { x: 13, y: 2 },
+    { x: 12, y: 2 },
+    { x: 11, y: 2 },
+  ])
+})
+
 function createMapFromRows(
   rows: string[],
   spawn: Point,

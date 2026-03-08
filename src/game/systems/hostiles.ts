@@ -318,6 +318,7 @@ export function stepHostileSubmarines(
     let plannedPath = hostileSubmarine.plannedPath.map((point) => ({
       ...point,
     }))
+    let retainedPlannedPath: Point[] | null = null
     let lastAiLog = hostileSubmarine.lastAiLog
     let salvoShotsRemaining = hostileSubmarine.salvoShotsRemaining
     let salvoStepDirection = hostileSubmarine.salvoStepDirection
@@ -371,13 +372,17 @@ export function stepHostileSubmarines(
         HOSTILE_GUARD_MAX_CAPSULE_DISTANCE + PROJECTILE_PROXIMITY_RADIUS
     ) {
       mode = "investigate"
-      target = target && shouldKeepInvestigationTarget(
+      retainedPlannedPath = target
+        ? keepInvestigationPath(
           map,
           position,
           target,
           knowledge.cluePosition,
           occupied,
+          plannedPath,
         )
+        : null
+      target = retainedPlannedPath
         ? target
         : chooseCoordinatedClueTarget(
           map,
@@ -389,13 +394,17 @@ export function stepHostileSubmarines(
         )
     } else if (knowledge.cluePosition) {
       mode = "investigate"
-      target = target && shouldKeepInvestigationTarget(
+      retainedPlannedPath = target
+        ? keepInvestigationPath(
           map,
           position,
           target,
           knowledge.cluePosition,
           occupied,
+          plannedPath,
         )
+        : null
+      target = retainedPlannedPath
         ? target
         : chooseCoordinatedClueTarget(
           map,
@@ -407,7 +416,10 @@ export function stepHostileSubmarines(
         )
     } else if (archetype === "scout") {
       mode = "investigate"
-      target = target && shouldKeepPatrolTarget(map, position, target, occupied)
+      retainedPlannedPath = target
+        ? keepPatrolPath(map, position, target, occupied, plannedPath)
+        : null
+      target = retainedPlannedPath
         ? target
         : (enemiesKnowFullMap
           ? chooseCoordinatedSearchTarget(
@@ -427,7 +439,10 @@ export function stepHostileSubmarines(
           )) ?? choosePatrolStep(map, position, occupied, random, previousPosition)
     } else if (archetype === "guard") {
       mode = "patrol"
-      target = target && shouldKeepPatrolTarget(map, position, target, occupied)
+      retainedPlannedPath = target
+        ? keepPatrolPath(map, position, target, occupied, plannedPath)
+        : null
+      target = retainedPlannedPath
         ? target
         : chooseGuardPatrolTarget(
           map,
@@ -440,7 +455,10 @@ export function stepHostileSubmarines(
         )
     } else {
       mode = "investigate"
-      target = target && shouldKeepPatrolTarget(map, position, target, occupied)
+      retainedPlannedPath = target
+        ? keepPatrolPath(map, position, target, occupied, plannedPath)
+        : null
+      target = retainedPlannedPath
         ? target
         : chooseCoordinatedSearchTarget(
           map,
@@ -474,18 +492,46 @@ export function stepHostileSubmarines(
 
     lastAiLog = nextAiLog ?? lastAiLog
 
-    plannedPath = describePlannedPath(
+    plannedPath = canUsePlannedPathForMovement(
       map,
       hostileSubmarine,
       archetype,
       position,
+      target,
       movementTarget,
       occupied,
       context.player,
       reload,
       knowledge.directDetection,
       repositioningForSalvo,
+      retainedPlannedPath,
     )
+      ? retainedPlannedPath.map((point) => ({ ...point }))
+      : canReuseCurrentPlannedPath(
+        map,
+        hostileSubmarine,
+        archetype,
+        position,
+        movementTarget,
+        occupied,
+        context.player,
+        reload,
+        knowledge.directDetection,
+        repositioningForSalvo,
+      )
+      ? hostileSubmarine.plannedPath.map((point) => ({ ...point }))
+      : describePlannedPath(
+        map,
+        hostileSubmarine,
+        archetype,
+        position,
+        movementTarget,
+        occupied,
+        context.player,
+        reload,
+        knowledge.directDetection,
+        repositioningForSalvo,
+      )
 
     const nextStep = plannedPath[1] ?? null
 
@@ -532,6 +578,25 @@ export function stepHostileSubmarines(
     salvoShotsRemaining = attack.salvoShotsRemaining
     salvoStepDirection = attack.salvoStepDirection
     salvoMoveTarget = attack.salvoMoveTarget
+    const finalMovementTarget = salvoMoveTarget ?? target
+    const storedPlannedPath = canAdvancePlannedPath(
+      plannedPath,
+      movementTarget,
+      finalMovementTarget,
+    )
+      ? advancePlannedPath(plannedPath)
+      : describePlannedPath(
+        map,
+        hostileSubmarine,
+        archetype,
+        position,
+        finalMovementTarget,
+        occupied,
+        context.player,
+        reload,
+        knowledge.directDetection,
+        false,
+      )
 
     const sonarInterval = sonarIntervalForHostile(
       archetype,
@@ -588,18 +653,7 @@ export function stepHostileSubmarines(
       lastKnownPlayerTurn,
       previousPosition,
       lastAiLog,
-      plannedPath: describePlannedPath(
-        map,
-        hostileSubmarine,
-        archetype,
-        position,
-        salvoMoveTarget ?? target,
-        occupied,
-        context.player,
-        reload,
-        knowledge.directDetection,
-        false,
-      ),
+      plannedPath: storedPlannedPath,
       salvoShotsRemaining,
       salvoStepDirection,
       salvoMoveTarget,
@@ -1707,32 +1761,185 @@ function choosePatrolStep(
   return nonBacktrackingOptions[0] ?? options[0] ?? null
 }
 
-function shouldKeepPatrolTarget(
+function keepPatrolPath(
   map: GeneratedMap,
   start: Point,
   target: Point,
   occupied: Set<string>,
-): boolean {
+  plannedPath: readonly Point[],
+): Point[] | null {
   if (
     pointsEqual(start, target) ||
     !isPassableTile(tileAt(map, target.x, target.y)) ||
     occupied.has(keyOfPoint(target))
   ) {
-    return false
+    return null
   }
 
-  return findPathToward(map, start, target, occupied).length > 1
+  if (isReusablePlannedPath(map, start, target, occupied, plannedPath)) {
+    return plannedPath.map((point) => ({ ...point }))
+  }
+
+  const nextPath = findPathToward(map, start, target, occupied)
+  return nextPath.length > 1 ? nextPath : null
 }
 
-function shouldKeepInvestigationTarget(
+function keepInvestigationPath(
   map: GeneratedMap,
   start: Point,
   target: Point,
   cluePosition: Point,
   occupied: Set<string>,
+  plannedPath: readonly Point[],
+): Point[] | null {
+  if (chebyshevDistance(target, cluePosition) > HOSTILE_PLAYER_CLUE_RADIUS) {
+    return null
+  }
+
+  return keepPatrolPath(map, start, target, occupied, plannedPath)
+}
+
+function isReusablePlannedPath(
+  map: GeneratedMap,
+  start: Point,
+  target: Point,
+  occupied: ReadonlySet<string>,
+  plannedPath: readonly Point[],
 ): boolean {
-  return shouldKeepPatrolTarget(map, start, target, occupied) &&
-    chebyshevDistance(target, cluePosition) <= HOSTILE_PLAYER_CLUE_RADIUS
+  if (plannedPath.length <= 1) {
+    return false
+  }
+
+  if (
+    !pointsEqual(plannedPath[0], start) ||
+    !pointsEqual(plannedPath[plannedPath.length - 1], target)
+  ) {
+    return false
+  }
+
+  for (let index = 0; index < plannedPath.length; index += 1) {
+    const point = plannedPath[index]
+
+    if (!isPassableTile(tileAt(map, point.x, point.y))) {
+      return false
+    }
+
+    if (index > 0) {
+      const previousPoint = plannedPath[index - 1]
+
+      if (!areCardinalNeighbors(previousPoint, point) || occupied.has(keyOfPoint(point))) {
+        return false
+      }
+    }
+  }
+
+  return true
+}
+
+function canAdvancePlannedPath(
+  plannedPath: readonly Point[],
+  movementTarget: Point | null,
+  finalTarget: Point | null,
+): boolean {
+  return movementTarget !== null && finalTarget !== null &&
+    pointsEqual(movementTarget, finalTarget) && plannedPath.length > 0 &&
+    pointsEqual(plannedPath[plannedPath.length - 1], movementTarget)
+}
+
+function canReuseCurrentPlannedPath(
+  map: GeneratedMap,
+  hostileSubmarine: ResolvedHostileSubmarine,
+  archetype: HostileSubmarineArchetype,
+  position: Point,
+  movementTarget: Point | null,
+  occupied: ReadonlySet<string>,
+  player: Point,
+  reload: number,
+  directDetection: boolean,
+  repositioningForSalvo: boolean,
+): boolean {
+  if (
+    movementTarget === null ||
+    repositioningForSalvo ||
+    archetype === "turtle" ||
+    (archetype === "scout" && hostileSubmarine.lastKnownPlayerPosition)
+  ) {
+    return false
+  }
+
+  if (shouldHoldAttackPosition(
+    map,
+    hostileSubmarine,
+    archetype,
+    position,
+    movementTarget,
+    reload,
+    directDetection,
+  )) {
+    return false
+  }
+
+  return isReusablePlannedPath(
+    map,
+    position,
+    movementTarget,
+    occupied,
+    hostileSubmarine.plannedPath,
+  )
+}
+
+function canUsePlannedPathForMovement(
+  map: GeneratedMap,
+  hostileSubmarine: ResolvedHostileSubmarine,
+  archetype: HostileSubmarineArchetype,
+  position: Point,
+  target: Point | null,
+  movementTarget: Point | null,
+  occupied: ReadonlySet<string>,
+  player: Point,
+  reload: number,
+  directDetection: boolean,
+  repositioningForSalvo: boolean,
+  plannedPath: readonly Point[] | null,
+): plannedPath is Point[] {
+  if (plannedPath === null || target === null || movementTarget === null) {
+    return false
+  }
+
+  if (!pointsEqual(target, movementTarget)) {
+    return false
+  }
+
+  if (
+    repositioningForSalvo ||
+    archetype === "turtle" ||
+    (archetype === "scout" && hostileSubmarine.lastKnownPlayerPosition)
+  ) {
+    return false
+  }
+
+  if (shouldHoldAttackPosition(
+    map,
+    hostileSubmarine,
+    archetype,
+    position,
+    movementTarget,
+    reload,
+    directDetection,
+  )) {
+    return false
+  }
+
+  return isReusablePlannedPath(map, position, movementTarget, occupied, plannedPath)
+}
+
+function advancePlannedPath(plannedPath: readonly Point[]): Point[] {
+  const nextPath = plannedPath.length > 1 ? plannedPath.slice(1) : plannedPath
+  return nextPath.map((point) => ({ ...point }))
+}
+
+function areCardinalNeighbors(left: Point, right: Point): boolean {
+  return Math.abs(left.x - right.x) + Math.abs(left.y - right.y) === 1
 }
 
 function chooseCoordinatedClueTarget(
@@ -1743,27 +1950,17 @@ function chooseCoordinatedClueTarget(
   reservedTargets: ReadonlySet<string>,
   random: () => number,
 ): Point {
-  const clueCandidates = shufflePoints(
-    allWaterTiles(map).filter((point) =>
-      !pointsEqual(point, position) &&
-      !occupied.has(keyOfPoint(point)) &&
-      chebyshevDistance(point, cluePosition) <= HOSTILE_PLAYER_CLUE_RADIUS &&
-      findPathToward(map, position, point, occupied).length > 1
-    ),
-    random,
-  )
-  const rankedCandidates = clueCandidates.sort((left, right) => {
-    const leftScore = scoreInvestigationTarget(left, cluePosition, position, reservedTargets)
-    const rightScore = scoreInvestigationTarget(
-      right,
-      cluePosition,
-      position,
-      reservedTargets,
-    )
-    return rightScore - leftScore
-  })
+  const reservedPoints = pointsFromReservedTargets(reservedTargets)
 
-  return rankedCandidates[0] ?? { ...cluePosition }
+  return findBestReachableTarget(
+    map,
+    position,
+    occupied,
+    random,
+    (point) => chebyshevDistance(point, cluePosition) <= HOSTILE_PLAYER_CLUE_RADIUS,
+    (point) =>
+      scoreInvestigationTarget(point, cluePosition, position, reservedPoints),
+  ) ?? { ...cluePosition }
 }
 
 function chooseCoordinatedSearchTarget(
@@ -1774,31 +1971,25 @@ function chooseCoordinatedSearchTarget(
   random: () => number,
   previousPosition: Point | null,
 ): Point | null {
-  const candidates = shufflePoints(
-    allWaterTiles(map).filter((point) =>
-      !pointsEqual(point, position) &&
-      !occupied.has(keyOfPoint(point)) &&
-      (!previousPosition || !pointsEqual(point, previousPosition)) &&
-      findPathToward(map, position, point, occupied).length > 1
-    ),
-    random,
-  )
-  const rankedCandidates = candidates.sort((left, right) => {
-    const leftScore = scoreSearchTarget(left, position, reservedTargets)
-    const rightScore = scoreSearchTarget(right, position, reservedTargets)
-    return rightScore - leftScore
-  })
+  const reservedPoints = pointsFromReservedTargets(reservedTargets)
 
-  return rankedCandidates[0] ?? null
+  return findBestReachableTarget(
+    map,
+    position,
+    occupied,
+    random,
+    (point) => !previousPosition || !pointsEqual(point, previousPosition),
+    (point) => scoreSearchTarget(point, position, reservedPoints),
+  )
 }
 
 function scoreInvestigationTarget(
   point: Point,
   cluePosition: Point,
   start: Point,
-  reservedTargets: ReadonlySet<string>,
+  reservedPoints: readonly Point[],
 ): number {
-  return reservationSeparationScore(point, reservedTargets) * 18 -
+  return reservationSeparationScore(point, reservedPoints) * 18 -
     chebyshevDistance(point, cluePosition) * 9 -
     chebyshevDistance(point, start)
 }
@@ -1806,28 +1997,106 @@ function scoreInvestigationTarget(
 function scoreSearchTarget(
   point: Point,
   start: Point,
-  reservedTargets: ReadonlySet<string>,
+  reservedPoints: readonly Point[],
 ): number {
-  return reservationSeparationScore(point, reservedTargets) * 16 +
+  return reservationSeparationScore(point, reservedPoints) * 16 +
     chebyshevDistance(point, start) * 2
 }
 
 function reservationSeparationScore(
   point: Point,
-  reservedTargets: ReadonlySet<string>,
+  reservedPoints: readonly Point[],
 ): number {
   let bestDistance = HOSTILE_COMMUNICATION_RADIUS
 
-  for (const reservedTarget of reservedTargets) {
-    const [xText, yText] = reservedTarget.split(":")
-    const distance = chebyshevDistance(point, {
-      x: Number(xText),
-      y: Number(yText),
-    })
+  for (const reservedTarget of reservedPoints) {
+    const distance = chebyshevDistance(point, reservedTarget)
     bestDistance = Math.min(bestDistance, distance)
   }
 
   return bestDistance
+}
+
+function pointsFromReservedTargets(
+  reservedTargets: ReadonlySet<string>,
+): Point[] {
+  return Array.from(reservedTargets, (reservedTarget) => {
+    const [xText, yText] = reservedTarget.split(":")
+    return {
+      x: Number(xText),
+      y: Number(yText),
+    }
+  })
+}
+
+function findBestReachableTarget(
+  map: GeneratedMap,
+  start: Point,
+  occupied: ReadonlySet<string>,
+  random: () => number,
+  isCandidate: (point: Point) => boolean,
+  scoreCandidate: (point: Point) => number,
+): Point | null {
+  const width = map.width
+  const totalTiles = map.tiles.length
+  const queue = new Int32Array(totalTiles)
+  const visited = new Uint8Array(totalTiles)
+  const occupiedIndexes = occupiedIndexesForPath(width, occupied)
+  const startIndex = indexForPoint(width, start)
+  const neighborIndexes = new Int32Array(4)
+  const neighborScores = new Int32Array(4)
+  let queueStart = 0
+  let queueEnd = 1
+  let bestIndex = -1
+  let bestScore = Number.NEGATIVE_INFINITY
+
+  queue[0] = startIndex
+  visited[startIndex] = 1
+
+  while (queueStart < queueEnd) {
+    const currentIndex = queue[queueStart]
+    queueStart += 1
+    const current = pointFromIndex(width, currentIndex)
+
+    if (currentIndex !== startIndex && isCandidate(current)) {
+      const score = scoreCandidate(current)
+
+      if (
+        score > bestScore ||
+        (score === bestScore && random() >= 0.5)
+      ) {
+        bestIndex = currentIndex
+        bestScore = score
+      }
+    }
+
+    const neighborCount = fillOrderedNeighborIndexes(
+      width,
+      map.height,
+      currentIndex,
+      start,
+      neighborIndexes,
+      neighborScores,
+    )
+
+    for (let index = 0; index < neighborCount; index += 1) {
+      const nextIndex = neighborIndexes[index]
+
+      if (
+        visited[nextIndex] === 1 ||
+        !isPassableTile(map.tiles[nextIndex]) ||
+        occupiedIndexes.has(nextIndex)
+      ) {
+        continue
+      }
+
+      visited[nextIndex] = 1
+      queue[queueEnd] = nextIndex
+      queueEnd += 1
+    }
+  }
+
+  return bestIndex >= 0 ? pointFromIndex(width, bestIndex) : null
 }
 
 function chooseGuardPatrolTarget(
@@ -2023,57 +2292,174 @@ function findPathToward(
   goal: Point,
   occupied: Set<string>,
 ): Point[] {
-  const queue: Point[] = [{ ...start }]
-  let queueIndex = 0
-  const parents = new Map<string, Point | null>()
-  parents.set(keyOfPoint(start), null)
+  const width = map.width
+  const totalTiles = map.tiles.length
+  const startIndex = indexForPoint(width, start)
+  const goalIndex = indexForPoint(width, goal)
 
-  while (queueIndex < queue.length) {
-    const current = queue[queueIndex]
-    queueIndex += 1
+  if (startIndex === goalIndex) {
+    return [{ ...start }]
+  }
 
-    if (pointsEqual(current, goal)) {
+  const queue = new Int32Array(totalTiles)
+  const parents = new Int32Array(totalTiles)
+  const occupiedIndexes = occupiedIndexesForPath(width, occupied)
+  const neighborIndexes = new Int32Array(4)
+  const neighborScores = new Int32Array(4)
+  let queueStart = 0
+  let queueEnd = 1
+
+  parents.fill(-2)
+  parents[startIndex] = -1
+  queue[0] = startIndex
+
+  while (queueStart < queueEnd) {
+    const currentIndex = queue[queueStart]
+    queueStart += 1
+
+    if (currentIndex === goalIndex) {
       break
     }
 
-    for (const next of orderedNeighbors(current, goal)) {
-      const key = keyOfPoint(next)
+    const neighborCount = fillOrderedNeighborIndexes(
+      width,
+      map.height,
+      currentIndex,
+      goal,
+      neighborIndexes,
+      neighborScores,
+    )
 
-      if (parents.has(key) || !isPassableTile(tileAt(map, next.x, next.y))) {
+    for (let index = 0; index < neighborCount; index += 1) {
+      const nextIndex = neighborIndexes[index]
+
+      if (parents[nextIndex] !== -2 || !isPassableTile(map.tiles[nextIndex])) {
         continue
       }
 
-      if (occupied.has(key) && !pointsEqual(next, goal)) {
+      if (occupiedIndexes.has(nextIndex) && nextIndex !== goalIndex) {
         continue
       }
 
-      parents.set(key, current)
-      queue.push(next)
+      parents[nextIndex] = currentIndex
+      queue[queueEnd] = nextIndex
+      queueEnd += 1
     }
   }
 
-  if (!parents.has(keyOfPoint(goal))) {
+  if (parents[goalIndex] === -2) {
     return [{ ...start }]
   }
 
   const path: Point[] = []
-  let cursor: Point | null = { ...goal }
+  let cursorIndex = goalIndex
 
-  while (cursor) {
-    path.push(cursor)
-    cursor = parents.get(keyOfPoint(cursor)) ?? null
+  while (cursorIndex !== -1) {
+    path.push(pointFromIndex(width, cursorIndex))
+    cursorIndex = parents[cursorIndex]
   }
 
   path.reverse()
   return path
 }
 
+function occupiedIndexesForPath(
+  width: number,
+  occupied: ReadonlySet<string>,
+): Set<number> {
+  const indexes = new Set<number>()
+
+  for (const pointKey of occupied) {
+    indexes.add(indexForPoint(width, pointFromKey(pointKey)))
+  }
+
+  return indexes
+}
+
+function pointFromKey(pointKey: string): Point {
+  const separatorIndex = pointKey.indexOf(":")
+  return {
+    x: Number(pointKey.slice(0, separatorIndex)),
+    y: Number(pointKey.slice(separatorIndex + 1)),
+  }
+}
+
+function pointFromIndex(width: number, index: number): Point {
+  return {
+    x: index % width,
+    y: Math.floor(index / width),
+  }
+}
+
+function fillOrderedNeighborIndexes(
+  width: number,
+  height: number,
+  pointIndex: number,
+  goal: Point,
+  neighborIndexes: Int32Array,
+  neighborScores: Int32Array,
+): number {
+  const x = pointIndex % width
+  const y = Math.floor(pointIndex / width)
+  let neighborCount = 0
+
+  const insertNeighbor = (nextIndex: number, nextX: number, nextY: number) => {
+    const score = Math.abs(nextX - goal.x) + Math.abs(nextY - goal.y)
+    let insertIndex = neighborCount
+
+    while (insertIndex > 0 && neighborScores[insertIndex - 1] > score) {
+      neighborIndexes[insertIndex] = neighborIndexes[insertIndex - 1]
+      neighborScores[insertIndex] = neighborScores[insertIndex - 1]
+      insertIndex -= 1
+    }
+
+    neighborIndexes[insertIndex] = nextIndex
+    neighborScores[insertIndex] = score
+    neighborCount += 1
+  }
+
+  if (x + 1 < width) {
+    insertNeighbor(pointIndex + 1, x + 1, y)
+  }
+
+  if (x > 0) {
+    insertNeighbor(pointIndex - 1, x - 1, y)
+  }
+
+  if (y + 1 < height) {
+    insertNeighbor(pointIndex + width, x, y + 1)
+  }
+
+  if (y > 0) {
+    insertNeighbor(pointIndex - width, x, y - 1)
+  }
+
+  return neighborCount
+}
+
 function orderedNeighbors(point: Point, goal: Point): Point[] {
-  return CARDINAL_STEPS
-    .map((step) => ({ x: point.x + step.x, y: point.y + step.y }))
-    .sort((left, right) =>
-      distanceScore(left, goal) - distanceScore(right, goal)
-    )
+  const neighbors = CARDINAL_STEPS.map((step) => ({
+    x: point.x + step.x,
+    y: point.y + step.y,
+  }))
+  const scores = neighbors.map((neighbor) => distanceScore(neighbor, goal))
+
+  for (let index = 1; index < neighbors.length; index += 1) {
+    const neighbor = neighbors[index]
+    const score = scores[index]
+    let previousIndex = index - 1
+
+    while (previousIndex >= 0 && scores[previousIndex] > score) {
+      neighbors[previousIndex + 1] = neighbors[previousIndex]
+      scores[previousIndex + 1] = scores[previousIndex]
+      previousIndex -= 1
+    }
+
+    neighbors[previousIndex + 1] = neighbor
+    scores[previousIndex + 1] = score
+  }
+
+  return neighbors
 }
 
 function distanceScore(point: Point, goal: Point): number {
