@@ -7,6 +7,7 @@ import {
   HOSTILE_GUARD_MIN_COUNT,
   HOSTILE_GUARD_SONAR_INTERVAL,
   HOSTILE_HUNTER_SONAR_INTERVAL,
+  HOSTILE_HUNTER_MIN_COUNT,
   HOSTILE_MIN_CAPSULE_DISTANCE,
   HOSTILE_MIN_SPAWN_DISTANCE,
   HOSTILE_PLAYER_CLUE_RADIUS,
@@ -161,9 +162,14 @@ export function spawnHostileSubmarines(
   const requiredGuardCount = count >= HOSTILE_SCOUT_MIN_COUNT + HOSTILE_GUARD_MIN_COUNT
     ? HOSTILE_GUARD_MIN_COUNT
     : 0
-  const requiredScoutCount = count >= HOSTILE_SCOUT_MIN_COUNT + requiredGuardCount
+  const requiredScoutCount = count >=
+      HOSTILE_SCOUT_MIN_COUNT + requiredGuardCount + HOSTILE_HUNTER_MIN_COUNT
     ? HOSTILE_SCOUT_MIN_COUNT
-    : Math.min(3, Math.max(0, count - requiredGuardCount))
+    : Math.max(0, count - requiredGuardCount - HOSTILE_HUNTER_MIN_COUNT)
+  const requiredHunterCount = Math.min(
+    HOSTILE_HUNTER_MIN_COUNT,
+    Math.max(0, count - requiredGuardCount - requiredScoutCount),
+  )
 
   for (const point of candidates) {
     const currentGuardCount = hostileSubmarines.filter((candidate) =>
@@ -172,12 +178,17 @@ export function spawnHostileSubmarines(
     const currentScoutCount = hostileSubmarines.filter((candidate) =>
       candidate.archetype === "scout"
     ).length
+    const currentHunterCount = hostileSubmarines.filter((candidate) =>
+      candidate.archetype === "hunter"
+    ).length
     const provisionalArchetype = chooseArchetype(random)
     const archetype = currentGuardCount < requiredGuardCount
       ? "guard"
       : currentScoutCount < requiredScoutCount
-      ? "scout"
-      : provisionalArchetype
+        ? "scout"
+        : currentHunterCount < requiredHunterCount
+          ? "hunter"
+          : provisionalArchetype
 
     if (!canSpawnHostileAt(map, point, archetype, hostileSubmarines)) {
       continue

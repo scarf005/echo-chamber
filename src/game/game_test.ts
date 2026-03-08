@@ -8,6 +8,7 @@ import {
   advanceTurn,
   createGame,
   HOSTILE_GUARD_MAX_CAPSULE_DISTANCE,
+  HOSTILE_HUNTER_MIN_COUNT,
   HOSTILE_SALVO_OFFSET,
   type Direction,
   directionBetweenPoints,
@@ -48,7 +49,7 @@ Deno.test("createGame is deterministic for the same seed", () => {
   assertEquals(first, second)
 })
 
-Deno.test("hostile spawns include ten scouts two guards and matching fish", () => {
+Deno.test("hostile spawns include minimum composition and matching fish", () => {
   const game = createGame({
     seed: "scout-guard-spawn-test",
     width: 72,
@@ -62,8 +63,13 @@ Deno.test("hostile spawns include ten scouts two guards and matching fish", () =
     hostileSubmarine.archetype === "guard"
   )
 
-  assertEquals(scoutCount >= 10, true)
+  const hunterCount = game.hostileSubmarines.filter((hostileSubmarine) =>
+    hostileSubmarine.archetype === "hunter"
+  ).length
+
+  assertEquals(scoutCount >= 6, true)
   assertEquals(guards.length >= 2, true)
+  assertEquals(hunterCount >= HOSTILE_HUNTER_MIN_COUNT, true)
   assertEquals(game.fish?.length, scoutCount)
   assertEquals(
     guards.every((guard) =>
