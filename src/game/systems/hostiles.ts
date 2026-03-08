@@ -1274,6 +1274,7 @@ function chooseNextStep(
       target ?? hostileSubmarine.initialPosition,
       occupied,
       player,
+      hostileSubmarine.recentPositions,
     )
   }
 
@@ -1323,6 +1324,7 @@ function describePlannedPath(
       target,
       occupied,
       player,
+      hostileSubmarine.recentPositions,
     )
     return retreatStep ? [{ ...position }, retreatStep] : [{ ...position }]
   }
@@ -1336,6 +1338,7 @@ function chooseRetreatStep(
   retreatTarget: Point,
   occupied: Set<string>,
   player: Point,
+  recentPositions: readonly Point[],
 ): Point | null {
   const options = orderedNeighbors(position, retreatTarget)
     .filter((point) =>
@@ -1349,11 +1352,17 @@ function chooseRetreatStep(
 
   return options.sort((left, right) => {
     const leftScore = chebyshevDistance(left, player) * 10 -
-      chebyshevDistance(left, retreatTarget)
+      chebyshevDistance(left, retreatTarget) - retreatLoopPenalty(left, recentPositions)
     const rightScore = chebyshevDistance(right, player) * 10 -
-      chebyshevDistance(right, retreatTarget)
+      chebyshevDistance(right, retreatTarget) - retreatLoopPenalty(right, recentPositions)
     return rightScore - leftScore
   })[0]
+}
+
+function retreatLoopPenalty(point: Point, recentPositions: readonly Point[]): number {
+  const recentIndex = recentPositions.findIndex((recentPoint) => pointsEqual(recentPoint, point))
+
+  return recentIndex < 0 ? 0 : (HOSTILE_POSITION_MEMORY_LIMIT - recentIndex) * 12
 }
 
 function shouldHoldAttackPosition(

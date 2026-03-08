@@ -184,6 +184,81 @@ Deno.test("hostiles carry their planned path forward after moving", () => {
   assertEquals(next.hostileSubmarines[0].recentPositions, [{ x: 15, y: 2 }])
 })
 
+Deno.test("scout retreat penalizes recently visited tiles", () => {
+  const map = createMapFromRows(
+    [
+      "###########",
+      "#.........#",
+      "#.........#",
+      "#.........#",
+      "#.........#",
+      "###########",
+    ],
+    { x: 1, y: 3 },
+    { x: 9, y: 3 },
+  )
+  const scout: HostileSubmarine = {
+    id: "hostile-1",
+    position: { x: 5, y: 2 },
+    facing: "left",
+    mode: "retreat",
+    target: { x: 1, y: 1 },
+    reload: 0,
+    archetype: "scout",
+    initialPosition: { x: 5, y: 2 },
+    torpedoAmmo: 2,
+    vlsAmmo: 2,
+    depthChargeAmmo: 2,
+    lastSonarTurn: 0,
+    lastKnownPlayerPosition: { x: 3, y: 4 },
+    lastKnownPlayerVector: null,
+    lastKnownPlayerTurn: 1,
+    previousPosition: { x: 5, y: 1 },
+    recentPositions: [{ x: 5, y: 1 }, { x: 5, y: 2 }],
+    plannedPath: [],
+    lastAiLog: null,
+  }
+  const relay: HostileSubmarine = {
+    id: "hostile-2",
+    position: { x: 1, y: 1 },
+    facing: "left",
+    mode: "patrol",
+    target: null,
+    reload: 0,
+    archetype: "hunter",
+    initialPosition: { x: 1, y: 1 },
+    torpedoAmmo: 6,
+    vlsAmmo: 6,
+    depthChargeAmmo: 6,
+    lastSonarTurn: 0,
+    lastKnownPlayerPosition: null,
+    lastKnownPlayerVector: null,
+    lastKnownPlayerTurn: null,
+    previousPosition: null,
+    recentPositions: [],
+    plannedPath: [],
+    lastAiLog: null,
+  }
+
+  const next = stepHostileSubmarines(
+    map,
+    [scout, relay],
+    {
+      player: { x: 3, y: 4 },
+      previousPlayer: { x: 3, y: 4 },
+      shockwaves: [],
+      trails: [],
+      memory: Array.from({ length: map.tiles.length }, () => "water"),
+      playerSonarHitHostiles: new Set(),
+      capsuleRetrievedThisTurn: false,
+    },
+    "scout-retreat-memory-test",
+    2,
+  )
+
+  assertEquals(next.hostileSubmarines[0].position, { x: 6, y: 2 })
+})
+
 function createMapFromRows(
   rows: string[],
   spawn: Point,
