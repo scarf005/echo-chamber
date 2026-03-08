@@ -12,7 +12,7 @@ import { drawTileBackground } from "../helpers/draw.ts"
 import { drawGlyph } from "../helpers/draw.ts"
 import type { RenderOptions } from "../options.ts"
 
-function colorForHostileSubmarine(hostileSubmarine: HostileSubmarine): string {
+export function colorForHostileSubmarine(hostileSubmarine: HostileSubmarine): string {
   switch (hostileSubmarine.archetype) {
     case "turtle":
       return COLORS.hostileSubmarineTurtle

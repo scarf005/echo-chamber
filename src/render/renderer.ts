@@ -15,7 +15,10 @@ import {
   indexCrackMap,
   indexFadeMap,
 } from "./helpers/selectors.ts"
-import { drawEntitiesLayer } from "./layers/entities.ts"
+import {
+  colorForHostileSubmarine,
+  drawEntitiesLayer,
+} from "./layers/entities.ts"
 import { drawEffectsLayer, drawShockwaveLayer } from "./layers/effects.ts"
 import { drawTileMemoryLayer } from "./layers/tileMemory.ts"
 
@@ -315,7 +318,6 @@ function drawHostilePlannedPaths(
   },
 ): void {
   context.save()
-  context.strokeStyle = COLORS.hostileSubmarine
   context.globalAlpha = 0.35
   context.lineWidth = Math.max(1, viewport.tileSize * 0.12)
 
@@ -326,6 +328,7 @@ function drawHostilePlannedPaths(
       continue
     }
 
+    context.strokeStyle = colorForHostileSubmarine(hostileSubmarine)
     context.beginPath()
 
     for (let index = 0; index < path.length; index += 1) {
