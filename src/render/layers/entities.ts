@@ -33,8 +33,14 @@ export function drawEntitiesLayer(
   const visibility = game.visibility[index]
   const entityMemory = game.entityMemory?.[index] ?? null
   const debugOverlayAlpha = renderOptions.debugEntityOverlay ? 0.5 : 0
+  const capsuleCollected = game.capsuleCollected ?? false
+
+  if (x === game.map.spawn.x && y === game.map.spawn.y) {
+    drawGlyph(context, screenX, screenY, tileSize, "D", COLORS.player, 1)
+  }
 
   if (
+    !capsuleCollected &&
     x === game.map.capsule.x && y === game.map.capsule.y && game.capsuleKnown
   ) {
     drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, 1)
@@ -285,8 +291,14 @@ function drawExactEntityOverlay(
   },
   alpha: number,
 ): void {
+  if (x === game.map.spawn.x && y === game.map.spawn.y) {
+    drawGlyph(context, screenX, screenY, tileSize, "D", COLORS.player, alpha)
+  }
+
   if (x === game.map.capsule.x && y === game.map.capsule.y) {
-    drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, alpha)
+    if (!(game.capsuleCollected ?? false)) {
+      drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, alpha)
+    }
   }
 
   const pickup = entityMaps.pickups.get(index)

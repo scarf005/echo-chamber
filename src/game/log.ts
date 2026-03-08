@@ -1,7 +1,7 @@
 import type { GameState } from "./model.ts"
 
 const INITIAL_MISSION_MESSAGE =
-  "Recover the capsule. Hostile subs stalk the caverns. Sonar cycles every 5 turns."
+  "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns."
 const HELP_LOG_MESSAGES = [
   "Move with WASD or arrows.",
   "Click once to plot a course.",

@@ -18,9 +18,9 @@ import {
   resolveImpactMessage,
 } from "./effects.ts"
 import {
-  cloneFish,
   cloneBoulder,
   cloneDepthCharge,
+  cloneFish,
   cloneHostileSubmarine,
   cloneMap,
   cloneTorpedo,
@@ -58,6 +58,7 @@ export function advanceTurn(
 ): GameState {
   const nextTurn = game.turn + 1
   const map = cloneMap(game.map)
+  const hadCapsule = game.capsuleCollected ?? false
   let torpedoes = game.torpedoes.map(cloneTorpedo)
   let depthCharges = game.depthCharges.map(cloneDepthCharge)
   let fish = (game.fish ?? []).map(cloneFish)
@@ -73,9 +74,12 @@ export function advanceTurn(
   let torpedoAmmo = game.torpedoAmmo
   let depthChargeAmmo = game.depthChargeAmmo
   let screenShake = decayShake(game.screenShake, SHAKE_DECAY)
-  let rammedFishCount = fish.filter((candidate) => pointsEqual(candidate.position, nextPlayer))
-    .length
-  fish = fish.filter((candidate) => !pointsEqual(candidate.position, nextPlayer))
+  let rammedFishCount =
+    fish.filter((candidate) => pointsEqual(candidate.position, nextPlayer))
+      .length
+  fish = fish.filter((candidate) =>
+    !pointsEqual(candidate.position, nextPlayer)
+  )
   let playerDestroyed = hostileSubmarines.some((hostileSubmarine) =>
     pointsEqual(hostileSubmarine.position, nextPlayer)
   )
@@ -167,6 +171,8 @@ export function advanceTurn(
   trails = boulderStep.trails
   dust = boulderStep.dust
   screenShake = Math.max(screenShake, boulderStep.screenShake)
+  const capsuleRetrievedThisTurn = !hadCapsule && !playerDestroyed &&
+    pointsEqual(nextPlayer, map.capsule)
 
   const playerSonarEnabled = isPlayerSonarEnabled(game)
   const shouldEmitSonar = playerSonarEnabled && nextTurn % SONAR_INTERVAL === 0
@@ -179,6 +185,7 @@ export function advanceTurn(
   const revealableEntitiesBeforeHostiles = collectRevealableEntities(
     nextPlayer,
     map.capsule,
+    hadCapsule || capsuleRetrievedThisTurn,
     torpedoes,
     depthCharges,
     pickups,
@@ -235,6 +242,7 @@ export function advanceTurn(
         trails,
         memory: game.memory,
         playerSonarHitHostiles,
+        capsuleRetrievedThisTurn,
       },
       game.seed,
       nextTurn,
@@ -263,6 +271,7 @@ export function advanceTurn(
     collectRevealableEntities(
       nextPlayer,
       map.capsule,
+      hadCapsule || capsuleRetrievedThisTurn,
       torpedoes,
       depthCharges,
       pickups,
@@ -273,7 +282,8 @@ export function advanceTurn(
   )
   const playerSonarMadeContact = playerSonarMadePreHostileContact ||
     shockwaveStep.revealedEntities.some(
-      (reveal) => reveal.sourceSenderId === "player" && reveal.kind !== "player",
+      (reveal) =>
+        reveal.sourceSenderId === "player" && reveal.kind !== "player",
     )
   const pickupStep = collectPickups(
     {
@@ -291,20 +301,28 @@ export function advanceTurn(
   pickups = pickupStep.pickups
   torpedoAmmo = pickupStep.torpedoAmmo
   depthChargeAmmo = pickupStep.depthChargeAmmo
+  const capsuleCollected = playerDestroyed
+    ? hadCapsule
+    : hadCapsule || capsuleRetrievedThisTurn
 
-  const won = nextPlayer.x === map.capsule.x && nextPlayer.y === map.capsule.y
+  const won = capsuleCollected && pointsEqual(nextPlayer, map.spawn)
   const impactMessage = resolveImpactMessage(
     torpedoStep.impacts,
     depthChargeStep.impacts,
     torpedoStep.caveIns,
     boulderStep.landings,
   )
+  const capsuleMessage = capsuleRetrievedThisTurn
+    ? "Capsule retrieved. Return to dock."
+    : null
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
       "Your submarine is destroyed. Press R for a new run."
     : won
-    ? "Capsule secured. Press R for a new run."
+    ? "Capsule delivered to dock. Press R for a new run."
+    : capsuleMessage !== null
+    ? capsuleMessage
     : pickupStep.message !== null
     ? pickupStep.message
     : rammedFishCount > 0
@@ -326,6 +344,7 @@ export function advanceTurn(
         turn: nextTurn,
         status: playerDestroyed ? "lost" : won ? "won" : "playing",
         playerSonarEnabled,
+        capsuleCollected,
         lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
         playerSonarContactCueCount: playerSonarMadeContact
           ? (game.playerSonarContactCueCount ?? 0) + 1
@@ -368,6 +387,7 @@ function createSonarShockwave(origin: Point): Shockwave {
 function collectRevealableEntities(
   player: Point,
   capsule: Point,
+  capsuleCollected: boolean,
   torpedoes: GameState["torpedoes"],
   depthCharges: GameState["depthCharges"],
   pickups: GameState["pickups"],
@@ -377,7 +397,9 @@ function collectRevealableEntities(
 ): RevealableEntity[] {
   return [
     { kind: "player", position: { ...player } },
-    { kind: "capsule", position: { ...capsule } },
+    ...(capsuleCollected
+      ? []
+      : [{ kind: "capsule" as const, position: { ...capsule } }]),
     ...torpedoes.map((torpedo) => ({
       kind: "torpedo" as const,
       position: { ...torpedo.position },

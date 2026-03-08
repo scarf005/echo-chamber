@@ -25,8 +25,8 @@ import {
   type GeneratedMap,
   isPassableTile,
   type Point,
-  type TileKind,
   tileAt,
+  type TileKind,
 } from "./mapgen.ts"
 
 Deno.test("createGame is deterministic for the same seed", () => {
@@ -330,26 +330,45 @@ Deno.test("sonar emits on the fifth successful move", () => {
   )
 })
 
-Deno.test("game can be won by following a valid path to the capsule", () => {
+Deno.test("game is won by bringing the capsule back to the dock", () => {
   const game = createGame({
     seed: "win-seed",
     width: 48,
     height: 24,
     hostileSubmarineCount: 0,
   })
-  const path = findPath(game.map, game.player, game.map.capsule)
+  const toCapsule = findPath(game.map, game.player, game.map.capsule)
 
   let current = game
 
-  for (let index = 1; index < path.length; index += 1) {
+  for (let index = 1; index < toCapsule.length; index += 1) {
     current = movePlayer(
       current,
-      directionBetween(path[index - 1], path[index]),
+      directionBetween(toCapsule[index - 1], toCapsule[index]),
+    )
+  }
+
+  assertEquals(current.status, "playing")
+  assertEquals(current.player, current.map.capsule)
+  assertEquals(current.capsuleCollected, true)
+  assertEquals(current.message, "Capsule retrieved. Return to dock.")
+
+  const toDock = findPath(current.map, current.player, current.map.spawn)
+
+  for (let index = 1; index < toDock.length; index += 1) {
+    current = movePlayer(
+      current,
+      directionBetween(toDock[index - 1], toDock[index]),
     )
   }
 
   assertEquals(current.status, "won")
-  assertEquals(current.player, current.map.capsule)
+  assertEquals(current.player, current.map.spawn)
+  assertEquals(current.capsuleCollected, true)
+  assertEquals(
+    current.message,
+    "Capsule delivered to dock. Press R for a new run.",
+  )
 })
 
 Deno.test("passive visibility uses 1 tile exact and 2 tiles coarse", () => {
@@ -701,6 +720,21 @@ Deno.test("enemies hit by player sonar immediately relay the player position", (
   assertEquals(secondHostile?.mode, "attack")
 })
 
+Deno.test("retrieving the capsule alerts every hostile immediately", () => {
+  const game = createCapsuleAlarmGame()
+  const next = movePlayer(game, "right")
+
+  assertEquals(next.capsuleCollected, true)
+  assertEquals(next.message, "Capsule retrieved. Return to dock.")
+  assertEquals(
+    next.hostileSubmarines.every((hostile) =>
+      hostile.lastKnownPlayerPosition?.x === next.player.x &&
+      hostile.lastKnownPlayerPosition?.y === next.player.y
+    ),
+    true,
+  )
+})
+
 Deno.test("same-turn hostile relay does not depend on hostile iteration order", () => {
   const game = createReversedPlayerSonarAlertGame()
   const next = holdPosition(game)
@@ -789,12 +823,12 @@ Deno.test("enemy explosion fronts stay visibility-gated", () => {
   )
 })
 
-Deno.test("destruction takes priority over capsule recovery on the same turn", () => {
-  const game = createHostileCapsuleCollisionGame()
-  const next = movePlayer(game, "right")
+Deno.test("destruction takes priority over dock extraction on the same turn", () => {
+  const game = createHostileDockCollisionGame()
+  const next = movePlayer(game, "left")
 
   assertEquals(next.status, "lost")
-  assertEquals(next.player, next.map.capsule)
+  assertEquals(next.player, next.map.spawn)
   assertEquals(
     next.message,
     "A hostile submarine rams your hull. Press R for a new run.",
@@ -1660,7 +1694,7 @@ function createHostileRamGame(): GameState {
   }
 }
 
-function createHostileCapsuleCollisionGame(): GameState {
+function createHostileDockCollisionGame(): GameState {
   const map = createMapFromRows(
     [
       "#####",
@@ -1674,7 +1708,57 @@ function createHostileCapsuleCollisionGame(): GameState {
   return {
     map,
     player: { x: 2, y: 1 },
-    seed: "hostile-capsule-collision-test",
+    seed: "hostile-dock-collision-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    capsuleCollected: true,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [{
+      id: "hostile-1",
+      position: { x: 1, y: 1 },
+      facing: "left",
+      mode: "patrol",
+      target: null,
+      reload: 0,
+    }],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createCapsuleAlarmGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 1, y: 1 },
+    { x: 3, y: 1 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 1 },
+    seed: "capsule-alarm-test",
     turn: 0,
     status: "playing",
     capsuleKnown: false,
@@ -1687,14 +1771,18 @@ function createHostileCapsuleCollisionGame(): GameState {
     torpedoes: [],
     depthCharges: [],
     pickups: [],
-    hostileSubmarines: [{
-      id: "hostile-1",
-      position: { x: 3, y: 1 },
-      facing: "left",
-      mode: "patrol",
-      target: null,
-      reload: 0,
-    }],
+    hostileSubmarines: [
+      createHostile({
+        id: "hostile-1",
+        position: { x: 8, y: 1 },
+        archetype: "hunter",
+      }),
+      createHostile({
+        id: "hostile-2",
+        position: { x: 10, y: 2 },
+        archetype: "hunter",
+      }),
+    ],
     trails: [],
     dust: [],
     cracks: [],

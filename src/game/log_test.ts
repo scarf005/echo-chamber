@@ -33,7 +33,7 @@ Deno.test("groupLogMessages groups consecutive duplicates", () => {
 
 Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
   assertEquals(createInitialLogs(), [
-    "Recover the capsule. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
+    "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
     "Move with WASD or arrows.",
     "Click once to plot a course.",
     "Click the same tile again to engage auto-nav.",

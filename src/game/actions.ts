@@ -199,6 +199,7 @@ export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
   const capsuleIndex = game.map.capsule.y * game.map.width + game.map.capsule.x
 
   if (
+    !(game.capsuleCollected ?? false) &&
     game.capsuleKnown &&
     game.visibility[capsuleIndex] > 0 &&
     !pointsEqual(game.player, game.map.capsule)

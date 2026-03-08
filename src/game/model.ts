@@ -135,6 +135,7 @@ export interface GameState {
   status: GameStatus
   playerSonarEnabled?: boolean
   capsuleKnown: boolean
+  capsuleCollected?: boolean
   memory: Array<TileKind | null>
   entityMemory?: Array<EntityMemoryKind | null>
   visibility: VisibilityLevel[]

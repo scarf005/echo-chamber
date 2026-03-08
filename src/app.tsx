@@ -1064,10 +1064,21 @@ function describeHoveredTile(
   if (point.x === game.player.x && point.y === game.player.y) {
     rows.push({ label: "entity", value: "player submarine" })
     rows.push({ label: "facing", value: game.facing })
+    rows.push({
+      label: "objective load",
+      value: game.capsuleCollected ? "capsule secured" : "empty",
+    })
+  }
+
+  if (point.x === game.map.spawn.x && point.y === game.map.spawn.y) {
+    rows.push({ label: "objective", value: "dock" })
   }
 
   if (point.x === game.map.capsule.x && point.y === game.map.capsule.y) {
-    rows.push({ label: "objective", value: "capsule" })
+    rows.push({
+      label: "objective",
+      value: game.capsuleCollected ? "capsule origin" : "capsule",
+    })
   }
 
   const hostileSubmarine = game.hostileSubmarines.find((candidate) =>

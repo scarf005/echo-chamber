@@ -62,6 +62,7 @@ interface HostileTurnContext {
   trails: FadeCell[]
   memory: Array<TileKind | null>
   playerSonarHitHostiles: ReadonlySet<string>
+  capsuleRetrievedThisTurn: boolean
 }
 
 interface ResolvedHostileSubmarine extends HostileSubmarine {
@@ -87,6 +88,7 @@ interface HostileKnowledge {
   directDetection: boolean
   detectedByPlayerSonar: boolean
   receivedImmediateRelay: boolean
+  alertedByCapsuleRecovery: boolean
 }
 
 interface AttackResolution {
@@ -410,11 +412,13 @@ export function stepHostileSubmarines(
     )
     const shouldEmitSonar = knowledge.detectedByPlayerSonar ||
       knowledge.receivedImmediateRelay ||
+      knowledge.alertedByCapsuleRecovery ||
       (sonarInterval !== null && turn - lastSonarTurn >= sonarInterval)
 
     if (shouldEmitSonar) {
       lastSonarTurn = turn
       const shouldBroadcastFix = knowledge.detectedByPlayerSonar ||
+        knowledge.alertedByCapsuleRecovery ||
         (lastKnownPlayerPosition && lastKnownPlayerTurn !== null &&
           turn - lastKnownPlayerTurn <= 2 &&
           shouldBroadcastPlayerPosition(archetype, random))
@@ -580,6 +584,7 @@ function gatherKnowledge(
       directDetection: true,
       detectedByPlayerSonar: false,
       receivedImmediateRelay: false,
+      alertedByCapsuleRecovery: false,
     }
   }
 
@@ -595,6 +600,19 @@ function gatherKnowledge(
       directDetection: false,
       detectedByPlayerSonar: true,
       receivedImmediateRelay: false,
+      alertedByCapsuleRecovery: false,
+    }
+  }
+
+  if (context.capsuleRetrievedThisTurn) {
+    return {
+      confirmedPlayerPosition: { ...context.player },
+      cluePosition: { ...context.player },
+      playerVector,
+      directDetection: false,
+      detectedByPlayerSonar: false,
+      receivedImmediateRelay: false,
+      alertedByCapsuleRecovery: true,
     }
   }
 
@@ -611,6 +629,7 @@ function gatherKnowledge(
       directDetection: false,
       detectedByPlayerSonar: false,
       receivedImmediateRelay: false,
+      alertedByCapsuleRecovery: false,
     }
   }
 
@@ -632,6 +651,7 @@ function gatherKnowledge(
     directDetection: false,
     detectedByPlayerSonar: false,
     receivedImmediateRelay: false,
+    alertedByCapsuleRecovery: false,
   }
 }
 
