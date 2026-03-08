@@ -421,10 +421,6 @@ export function App() {
     gameSignal.value = createConfiguredGame(normalizedSeed, appSettingsSignal.peek())
   }
 
-  const startRandomizedRun = (rawSeed = runSeedSignal.peek()) => {
-    startRun(randomizeRunSeed(rawSeed, DEFAULT_SEED, createRandomSeed()))
-  }
-
   const setViewportModeWithMessage = (nextViewportMode: ViewportMode) => {
     if (viewportModeSignal.peek() === nextViewportMode) {
       return
@@ -733,7 +729,7 @@ export function App() {
 
       if (shouldRestartFromKey(event.key, gameSignal.peek().status)) {
         event.preventDefault()
-        startRandomizedRun()
+        startRun()
         return
       }
 
@@ -1081,18 +1077,7 @@ export function App() {
                   <button
                     type="button"
                     onClick={() => {
-                      startRun(
-                        randomizeRunSeed(runSeed, DEFAULT_SEED, createRandomSeed()),
-                      )
-                      isOptionsOpenSignal.value = false
-                    }}
-                  >
-                    {t`random seed`}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      startRun(runSeed)
+                      startRun()
                       isOptionsOpenSignal.value = false
                     }}
                   >
