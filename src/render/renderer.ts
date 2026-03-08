@@ -18,6 +18,18 @@ import { drawEntitiesLayer } from "./layers/entities.ts"
 import { drawEffectsLayer, drawShockwaveLayer } from "./layers/effects.ts"
 import { drawTileMemoryLayer } from "./layers/tileMemory.ts"
 
+type EffectMaps = {
+  trails: Map<number, number>
+  dust: Map<number, number>
+  shockwaveFront: Map<number, FadeCell>
+  cracks: Map<number, CrackCell>
+}
+
+type EntityMaps = ReturnType<typeof buildEntityMaps>
+
+const effectMapsCache = new WeakMap<GameState, EffectMaps>()
+const entityMapsCache = new WeakMap<GameState, EntityMaps>()
+
 export function drawGame(
   canvas: HTMLCanvasElement,
   container: HTMLDivElement,
@@ -81,18 +93,8 @@ export function drawGame(
   context.textAlign = "center"
   context.textBaseline = "middle"
 
-  const effectMaps: {
-    trails: Map<number, number>
-    dust: Map<number, number>
-    shockwaveFront: Map<number, FadeCell>
-    cracks: Map<number, CrackCell>
-  } = {
-    shockwaveFront: indexFadeMap(game.shockwaveFront),
-    trails: indexAlphaMap(game.trails),
-    dust: indexAlphaMap(game.dust),
-    cracks: indexCrackMap(game.cracks),
-  }
-  const entityMaps = buildEntityMaps(game)
+  const effectMaps = resolveEffectMaps(game)
+  const entityMaps = resolveEntityMaps(game)
 
   for (let y = viewport.top; y < viewport.top + viewport.height; y += 1) {
     for (let x = viewport.left; x < viewport.left + viewport.width; x += 1) {
@@ -145,6 +147,38 @@ export function drawGame(
   if (selectedTarget) {
     drawTargetHighlight(context, selectedTarget, viewport)
   }
+}
+
+function resolveEffectMaps(game: GameState): EffectMaps {
+  const cachedMaps = effectMapsCache.get(game)
+
+  if (cachedMaps) {
+    return cachedMaps
+  }
+
+  const nextMaps = {
+    shockwaveFront: indexFadeMap(game.shockwaveFront),
+    trails: indexAlphaMap(game.trails),
+    dust: indexAlphaMap(game.dust),
+    cracks: indexCrackMap(game.cracks),
+  }
+
+  effectMapsCache.set(game, nextMaps)
+
+  return nextMaps
+}
+
+function resolveEntityMaps(game: GameState): EntityMaps {
+  const cachedMaps = entityMapsCache.get(game)
+
+  if (cachedMaps) {
+    return cachedMaps
+  }
+
+  const nextMaps = buildEntityMaps(game)
+  entityMapsCache.set(game, nextMaps)
+
+  return nextMaps
 }
 
 function drawPathPreview(
