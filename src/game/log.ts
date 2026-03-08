@@ -19,6 +19,8 @@ export interface GroupedLogMessage {
   count: number
 }
 
+export type LogMessageTone = "positive" | "negative" | "warning" | "neutral"
+
 export function createInitialLogs(): string[] {
   return [INITIAL_MISSION_MESSAGE, ...HELP_LOG_MESSAGES]
 }
@@ -66,4 +68,41 @@ export function groupLogMessages(
 
 export function formatGroupedLogMessage(entry: GroupedLogMessage): string {
   return entry.count > 1 ? `${entry.message} (x${entry.count})` : entry.message
+}
+
+export function classifyLogMessageTone(message: string): LogMessageTone {
+  const normalized = message.trim().toLowerCase()
+
+  if (normalized.includes("sonar contact")) {
+    return "warning"
+  }
+
+  if (
+    normalized.includes("destroyed") ||
+    normalized.includes("incoming torpedo") ||
+    normalized.includes("rams your hull") ||
+    normalized.includes("tears through your hull") ||
+    normalized.includes("caves in your hull") ||
+    normalized.includes("crushes your hull") ||
+    normalized.includes("hull blocked") ||
+    normalized.includes("no torpedoes remaining") ||
+    normalized.includes("no depth charges remaining") ||
+    normalized.includes("violent torpedo impact") ||
+    normalized.includes("depth charge detonates below") ||
+    normalized.includes("cave-in debris") ||
+    normalized.includes("disabled")
+  ) {
+    return "negative"
+  }
+
+  if (
+    normalized.includes("recovered") ||
+    normalized.includes("capsule retrieved") ||
+    normalized.includes("capsule delivered") ||
+    normalized.includes("enabled")
+  ) {
+    return "positive"
+  }
+
+  return "neutral"
 }

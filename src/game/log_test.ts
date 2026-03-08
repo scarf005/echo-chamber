@@ -3,6 +3,7 @@
 import { assertEquals } from "jsr:@std/assert"
 
 import {
+  classifyLogMessageTone,
   createInitialLogs,
   formatGroupedLogMessage,
   groupLogMessages,
@@ -43,6 +44,24 @@ Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
     "Toggle display with M.",
     "Press R for random run.",
   ])
+})
+
+Deno.test("classifyLogMessageTone marks positive and negative status messages", () => {
+  assertEquals(classifyLogMessageTone("Recovered 3 torpedoes."), "positive")
+  assertEquals(classifyLogMessageTone("sonar contact"), "warning")
+  assertEquals(
+    classifyLogMessageTone("Capsule delivered to dock. Press R for a new run."),
+    "positive",
+  )
+  assertEquals(
+    classifyLogMessageTone("Cave-in debris slams through the silt."),
+    "negative",
+  )
+  assertEquals(
+    classifyLogMessageTone("A hostile torpedo tears through your hull. Press R for a new run."),
+    "negative",
+  )
+  assertEquals(classifyLogMessageTone("Holding position."), "neutral")
 })
 
 function createGameStateForLogs(): GameState {
