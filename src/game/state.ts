@@ -8,6 +8,7 @@ import { createCornerPickups } from "./items.ts"
 import type { GameOptions, GameState } from "./model.ts"
 import { refreshPerception } from "./perception.ts"
 import { generateMap } from "./mapgen.ts"
+import { spawnFish } from "./systems/fish.ts"
 import { spawnHostileSubmarines } from "./systems/hostiles.ts"
 
 export function createGame(options: GameOptions = {}): GameState {
@@ -24,13 +25,18 @@ export function createGame(options: GameOptions = {}): GameState {
     map.seed,
     options.hostileSubmarineCount ?? DEFAULT_HOSTILE_SUBMARINE_COUNT,
   )
+  const fish = spawnFish(map, map.seed, hostileSubmarines)
   const occupiedByHostiles = new Set(
     hostileSubmarines.map((hostileSubmarine) =>
       `${hostileSubmarine.position.x}:${hostileSubmarine.position.y}`
     ),
   )
+  const occupiedByFish = new Set(
+    fish.map((candidate) => `${candidate.position.x}:${candidate.position.y}`),
+  )
   const pickups = createCornerPickups(map, map.seed).filter((pickup) =>
-    !occupiedByHostiles.has(`${pickup.position.x}:${pickup.position.y}`)
+    !occupiedByHostiles.has(`${pickup.position.x}:${pickup.position.y}`) &&
+    !occupiedByFish.has(`${pickup.position.x}:${pickup.position.y}`)
   )
   const game: GameState = {
     map,
@@ -53,6 +59,7 @@ export function createGame(options: GameOptions = {}): GameState {
     torpedoes: [],
     depthCharges: [],
     pickups,
+    fish,
     hostileSubmarines,
     trails: [],
     dust: [],
