@@ -609,8 +609,8 @@ msgid "audio"
 msgstr "오디오"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:662
-#: src/app.tsx:664
+#: src/app.tsx:666
+#: src/app.tsx:668
 msgid "Auto-nav engaged to {0}."
 msgstr "자동 항법 {0}로 활성화됨."
 
@@ -626,8 +626,8 @@ msgid "close"
 msgstr "닫기"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:682
-#: src/app.tsx:684
+#: src/app.tsx:686
+#: src/app.tsx:688
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "{0}로 항로 표시됨. 다시 클릭하여 시작하세요."
 
@@ -652,13 +652,13 @@ msgstr "난이도"
 msgid "display"
 msgstr "표시"
 
-#: src/app.tsx:442
-#: src/app.tsx:447
+#: src/app.tsx:446
+#: src/app.tsx:451
 msgid "Display set to full map."
 msgstr "전체 맵으로 표시 설정됨."
 
-#: src/app.tsx:443
-#: src/app.tsx:448
+#: src/app.tsx:447
+#: src/app.tsx:452
 msgid "Display set to tracking camera."
 msgstr "추적 카메라로 표시 설정됨."
 

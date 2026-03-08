@@ -609,8 +609,8 @@ msgid "audio"
 msgstr "audio"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:662
-#: src/app.tsx:664
+#: src/app.tsx:666
+#: src/app.tsx:668
 msgid "Auto-nav engaged to {0}."
 msgstr "Auto-nav engaged to {0}."
 
@@ -626,8 +626,8 @@ msgid "close"
 msgstr "close"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:682
-#: src/app.tsx:684
+#: src/app.tsx:686
+#: src/app.tsx:688
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "Course plotted to {0}. Click again to engage."
 
@@ -652,13 +652,13 @@ msgstr "difficulty"
 msgid "display"
 msgstr "display"
 
-#: src/app.tsx:442
-#: src/app.tsx:447
+#: src/app.tsx:446
+#: src/app.tsx:451
 msgid "Display set to full map."
 msgstr "Display set to full map."
 
-#: src/app.tsx:443
-#: src/app.tsx:448
+#: src/app.tsx:447
+#: src/app.tsx:452
 msgid "Display set to tracking camera."
 msgstr "Display set to tracking camera."
 
