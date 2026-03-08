@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro"
 import { exactEntityNameAtPoint } from "../../game/entity_labels.ts"
 import type { GameState, HostileAiDebugState, HostileSubmarine } from "../../game/game.ts"
 import type { Point } from "../../game/mapgen.ts"
@@ -28,33 +29,33 @@ export function describeHoveredInspectorRows(
     ? tileAt(game.map, point.x, point.y) ?? "void"
     : game.memory[index] ?? "unknown"
   const rows: InspectorRow[] = [
-    { label: "terrain", value: terrain },
-    { label: "contact", value: describeInspectorContact(game, point, options) ?? "--" },
+    { label: t`terrain`, value: terrain },
+    { label: t`contact`, value: describeInspectorContact(game, point, options) ?? "--" },
     {
-      label: "visibility",
+      label: t`visibility`,
       value: String(game.visibility[index] ?? 0),
       devOnly: true,
     },
-    { label: "memory", value: game.memory[index] ?? "unknown", devOnly: true },
+    { label: t`memory`, value: game.memory[index] ?? t`unknown`, devOnly: true },
   ]
 
   if (point.x === game.player.x && point.y === game.player.y) {
-    rows.push({ label: "entity", value: "player submarine" })
-    rows.push({ label: "facing", value: game.facing })
+    rows.push({ label: t`entity`, value: t`player submarine` })
+    rows.push({ label: t`facing`, value: game.facing })
     rows.push({
-      label: "objective load",
-      value: game.capsuleCollected ? "capsule secured" : "empty",
+      label: t`objective load`,
+      value: game.capsuleCollected ? t`capsule secured` : t`empty`,
     })
   }
 
   if (point.x === game.map.spawn.x && point.y === game.map.spawn.y) {
-    rows.push({ label: "objective", value: "dock" })
+    rows.push({ label: t`objective`, value: t`dock` })
   }
 
   if (point.x === game.map.capsule.x && point.y === game.map.capsule.y) {
     rows.push({
-      label: "objective",
-      value: game.capsuleCollected ? "capsule origin" : "capsule",
+      label: t`objective`,
+      value: game.capsuleCollected ? t`capsule origin` : t`capsule`,
     })
   }
 
@@ -63,9 +64,9 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && hostileSubmarine) {
-    rows.push({ label: "entity", value: "enemy submarine" })
-    rows.push({ label: "facing", value: hostileSubmarine.facing })
-    rows.push({ label: "enemy id", value: hostileSubmarine.id, devOnly: true })
+    rows.push({ label: t`entity`, value: t`enemy submarine` })
+    rows.push({ label: t`facing`, value: hostileSubmarine.facing })
+    rows.push({ label: t`enemy id`, value: hostileSubmarine.id, devOnly: true })
     rows.push({
       label: "ai",
       value: hostileSubmarine.archetype ?? "hunter",
@@ -154,8 +155,8 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && pickup) {
-    rows.push({ label: "entity", value: "item" })
-    rows.push({ label: "item kind", value: pickup.kind })
+    rows.push({ label: t`entity`, value: t`item` })
+    rows.push({ label: t`item kind`, value: pickup.kind })
   }
 
   const fish = (game.fish ?? []).find((candidate) =>
@@ -163,8 +164,8 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && fish) {
-    rows.push({ label: "entity", value: "fish" })
-    rows.push({ label: "facing", value: fish.facing })
+    rows.push({ label: t`entity`, value: t`fish` })
+    rows.push({ label: t`facing`, value: fish.facing })
     rows.push({ label: "mode", value: fish.mode, devOnly: true })
     rows.push({
       label: "target",
@@ -178,8 +179,8 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && torpedo) {
-    rows.push({ label: "entity", value: "torpedo" })
-    rows.push({ label: "direction", value: torpedo.direction })
+    rows.push({ label: t`entity`, value: t`torpedo` })
+    rows.push({ label: t`direction`, value: torpedo.direction })
     rows.push({ label: "sender", value: torpedo.senderId, devOnly: true })
     rows.push({
       label: "range",
@@ -193,7 +194,7 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && depthCharge) {
-    rows.push({ label: "entity", value: "depth charge" })
+    rows.push({ label: t`entity`, value: t`depth charge` })
     rows.push({ label: "sender", value: depthCharge.senderId, devOnly: true })
     rows.push({
       label: "range",
@@ -208,23 +209,23 @@ export function describeHoveredInspectorRows(
       candidate.position.x === point.x && candidate.position.y === point.y
     )
   ) {
-    rows.push({ label: "entity", value: "falling boulder" })
+    rows.push({ label: t`entity`, value: t`falling boulder` })
   }
 
   if (game.shockwaveFront.some((cell) => cell.index === index)) {
-    rows.push({ label: "effect", value: "shockwave front" })
+    rows.push({ label: t`effect`, value: t`shockwave front` })
   }
 
   if (game.trails.some((cell) => cell.index === index)) {
-    rows.push({ label: "effect", value: "bubble trail" })
+    rows.push({ label: t`effect`, value: t`bubble trail` })
   }
 
   if (game.dust.some((cell) => cell.index === index)) {
-    rows.push({ label: "effect", value: "dust" })
+    rows.push({ label: t`effect`, value: t`dust` })
   }
 
   if (game.cracks.some((cell) => cell.index === index)) {
-    rows.push({ label: "effect", value: "crack" })
+    rows.push({ label: t`effect`, value: t`crack` })
   }
 
   return rows
