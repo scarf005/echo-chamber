@@ -7,14 +7,14 @@ export function drawTileMemoryLayer(
   context: CanvasRenderingContext2D,
   game: GameState,
   index: number,
+  screenX: number,
+  screenY: number,
   x: number,
   y: number,
   tileSize: number,
 ): void {
   const visibility = game.visibility[index]
   const memory = game.memory[index]
-  const screenX = x * tileSize
-  const screenY = y * tileSize
 
   if (memory === "wall") {
     drawTileBackground(

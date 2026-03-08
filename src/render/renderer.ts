@@ -2,7 +2,11 @@ import type { CrackCell, FadeCell, GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
 import { COLORS } from "./colors.ts"
 import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
-import { calculateTileSize, screenShakeOffset } from "./helpers/draw.ts"
+import { screenShakeOffset } from "./helpers/draw.ts"
+import {
+  pointToViewport,
+  resolveViewportMetrics,
+} from "./helpers/viewport.ts"
 import type { RenderOptions } from "./options.ts"
 import {
   buildEntityMaps,
@@ -28,9 +32,17 @@ export function drawGame(
     throw new Error("2D canvas not supported")
   }
 
-  const tileSize = calculateTileSize(container, game)
-  const cssWidth = tileSize * game.map.width
-  const cssHeight = tileSize * game.map.height
+  const viewport = resolveViewportMetrics(
+    game,
+    {
+      width: container.clientWidth || window.innerWidth,
+      height: container.clientHeight || window.innerHeight,
+    },
+    renderOptions,
+  )
+  const tileSize = viewport.tileSize
+  const cssWidth = viewport.cssWidth
+  const cssHeight = viewport.cssHeight
   const devicePixelRatio = window.devicePixelRatio || 1
 
   canvas.style.width = `${cssWidth}px`
@@ -77,13 +89,13 @@ export function drawGame(
   }
   const entityMaps = buildEntityMaps(game)
 
-  for (let y = 0; y < game.map.height; y += 1) {
-    for (let x = 0; x < game.map.width; x += 1) {
+  for (let y = viewport.top; y < viewport.top + viewport.height; y += 1) {
+    for (let x = viewport.left; x < viewport.left + viewport.width; x += 1) {
       const index = y * game.map.width + x
-      const screenX = x * tileSize
-      const screenY = y * tileSize
+      const screenX = (x - viewport.left) * tileSize
+      const screenY = (y - viewport.top) * tileSize
 
-      drawTileMemoryLayer(context, game, index, x, y, tileSize)
+      drawTileMemoryLayer(context, game, index, screenX, screenY, x, y, tileSize)
       drawEffectsLayer(
         context,
         game,
@@ -118,33 +130,37 @@ export function drawGame(
   }
 
   if (previewPath.length > 1) {
-    drawPathPreview(context, previewPath, tileSize)
+    drawPathPreview(context, previewPath, viewport)
   }
 
   if (renderOptions.debugPlannedPaths) {
-    drawHostilePlannedPaths(context, game, tileSize)
+    drawHostilePlannedPaths(context, game, viewport)
   }
 
   if (selectedTarget) {
-    drawTargetHighlight(context, selectedTarget, tileSize)
+    drawTargetHighlight(context, selectedTarget, viewport)
   }
 }
 
 function drawPathPreview(
   context: CanvasRenderingContext2D,
   previewPath: Point[],
-  tileSize: number,
+  viewport: {
+    left: number
+    top: number
+    tileSize: number
+  },
 ): void {
   context.save()
   context.strokeStyle = COLORS.sonar
   context.globalAlpha = 0.75
-  context.lineWidth = Math.max(1, tileSize * 0.16)
+  context.lineWidth = Math.max(1, viewport.tileSize * 0.16)
   context.beginPath()
 
   for (let index = 0; index < previewPath.length; index += 1) {
-    const point = previewPath[index]
-    const centerX = point.x * tileSize + tileSize / 2
-    const centerY = point.y * tileSize + tileSize / 2
+    const point = pointToViewport(previewPath[index], viewport)
+    const centerX = point.x * viewport.tileSize + viewport.tileSize / 2
+    const centerY = point.y * viewport.tileSize + viewport.tileSize / 2
 
     if (index === 0) {
       context.moveTo(centerX, centerY)
@@ -161,19 +177,24 @@ function drawPathPreview(
 function drawTargetHighlight(
   context: CanvasRenderingContext2D,
   target: Point,
-  tileSize: number,
+  viewport: {
+    left: number
+    top: number
+    tileSize: number
+  },
 ): void {
-  const inset = Math.max(1, tileSize * 0.12)
-  const lineWidth = Math.max(1, tileSize * 0.08)
-  const x = target.x * tileSize + inset
-  const y = target.y * tileSize + inset
-  const size = Math.max(1, tileSize - inset * 2)
+  const point = pointToViewport(target, viewport)
+  const inset = Math.max(1, viewport.tileSize * 0.12)
+  const lineWidth = Math.max(1, viewport.tileSize * 0.08)
+  const x = point.x * viewport.tileSize + inset
+  const y = point.y * viewport.tileSize + inset
+  const size = Math.max(1, viewport.tileSize - inset * 2)
 
   context.save()
   context.strokeStyle = COLORS.player
   context.lineWidth = lineWidth
   context.shadowColor = COLORS.sonarGlow
-  context.shadowBlur = tileSize * 0.4
+  context.shadowBlur = viewport.tileSize * 0.4
   context.strokeRect(x, y, size, size)
   context.beginPath()
   context.moveTo(x + size / 2, y + lineWidth)
@@ -187,12 +208,16 @@ function drawTargetHighlight(
 function drawHostilePlannedPaths(
   context: CanvasRenderingContext2D,
   game: GameState,
-  tileSize: number,
+  viewport: {
+    left: number
+    top: number
+    tileSize: number
+  },
 ): void {
   context.save()
   context.strokeStyle = COLORS.hostileSubmarine
   context.globalAlpha = 0.35
-  context.lineWidth = Math.max(1, tileSize * 0.12)
+  context.lineWidth = Math.max(1, viewport.tileSize * 0.12)
 
   for (const hostileSubmarine of game.hostileSubmarines) {
     const path = hostileSubmarine.plannedPath ?? []
@@ -204,9 +229,9 @@ function drawHostilePlannedPaths(
     context.beginPath()
 
     for (let index = 0; index < path.length; index += 1) {
-      const point = path[index]
-      const centerX = point.x * tileSize + tileSize / 2
-      const centerY = point.y * tileSize + tileSize / 2
+      const point = pointToViewport(path[index], viewport)
+      const centerX = point.x * viewport.tileSize + viewport.tileSize / 2
+      const centerY = point.y * viewport.tileSize + viewport.tileSize / 2
 
       if (index === 0) {
         context.moveTo(centerX, centerY)
