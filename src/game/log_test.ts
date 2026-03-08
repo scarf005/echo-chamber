@@ -7,6 +7,7 @@ import {
   createInitialLogs,
   formatGroupedLogMessage,
   groupLogMessages,
+  groupVisibleLogMessages,
   withGameMessage,
 } from "./log.ts"
 import type { GameState } from "./model.ts"
@@ -44,7 +45,7 @@ Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
     createLogMessage("Launch torpedo with Z."),
     createLogMessage("Drop depth charge with X."),
     createLogMessage("Toggle display with M."),
-    createLogMessage("Press R for random run."),
+    createLogMessage("Use Options to restart or roll a random run."),
   ])
 })
 
@@ -58,6 +59,28 @@ Deno.test("groupLogMessages keeps differently typed messages separate", () => {
     { message: "Status changed.", type: "neutral", count: 1 },
     { message: "Status changed.", type: "warning", count: 1 },
   ])
+})
+
+Deno.test("groupVisibleLogMessages ignores hidden AI entries before grouping", () => {
+  const grouped = groupVisibleLogMessages([
+    createLogMessage("Advance."),
+    createLogMessage("Scout slips north.", "ai"),
+    createLogMessage("Advance."),
+    createLogMessage("Scout slips north.", "ai"),
+    createLogMessage("Advance."),
+  ]).map(formatGroupedLogMessage)
+
+  assertEquals(grouped, ["Advance. (x3)"])
+})
+
+Deno.test("groupVisibleLogMessages keeps AI entries visible in god mode", () => {
+  const grouped = groupVisibleLogMessages([
+    createLogMessage("Advance."),
+    createLogMessage("Scout slips north.", "ai"),
+    createLogMessage("Advance."),
+  ], true).map(formatGroupedLogMessage)
+
+  assertEquals(grouped, ["Advance.", "Scout slips north.", "Advance."])
 })
 
 function createGameStateForLogs(): GameState {

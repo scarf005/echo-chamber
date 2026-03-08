@@ -15,7 +15,7 @@ import {
   findAutoMovePath,
   fireTorpedo,
   formatGroupedLogMessage,
-  groupLogMessages,
+  groupVisibleLogMessages,
   holdPosition,
   isAutoMoveNavigable,
   isPlayerSonarEnabled,
@@ -720,12 +720,10 @@ export function App() {
       return message ? [createLogMessage(message, "ai")] : []
     })
     : []
-  const visibleLogMessages = groupLogMessages([
+  const visibleLogMessages = groupVisibleLogMessages([
     ...game.logs,
     ...godModeAiLogMessages,
-  ]).filter((entry) =>
-    isGodMode || entry.type !== "ai"
-  ).slice(-LOG_PANEL_LINES)
+  ], isGodMode).slice(-LOG_PANEL_LINES)
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,

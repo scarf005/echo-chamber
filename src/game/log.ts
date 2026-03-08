@@ -11,7 +11,7 @@ const HELP_LOG_MESSAGES = [
   createLogMessage("Launch torpedo with Z."),
   createLogMessage("Drop depth charge with X."),
   createLogMessage("Toggle display with M."),
-  createLogMessage("Press R for random run."),
+  createLogMessage("Use Options to restart or roll a random run."),
 ]
 export const MAX_LOG_MESSAGES = 200
 
@@ -82,6 +82,15 @@ export function groupLogMessages(
 
     return [...entries, { ...message, count: 1 }]
   }, [])
+}
+
+export function groupVisibleLogMessages(
+  messages: readonly LogMessage[],
+  includeAiMessages = false,
+): GroupedLogMessage[] {
+  return groupLogMessages(
+    includeAiMessages ? messages : messages.filter((message) => message.type !== "ai"),
+  )
 }
 
 export function formatGroupedLogMessage(entry: GroupedLogMessage): string {
