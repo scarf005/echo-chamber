@@ -11,7 +11,7 @@ export function drawEffectsLayer(
   screenY: number,
   index: number,
   effectMaps: {
-    trails: Map<number, number>
+    trails: Map<number, FadeCell>
     dust: Map<number, number>
     shockwaveFront: Map<number, FadeCell>
     cracks: Map<number, CrackCell>
@@ -31,11 +31,13 @@ export function drawEffectsLayer(
     )
   }
 
-  if (game.visibility[index] === 0) {
+  const trail = effectMaps.trails.get(index)
+
+  if (!shouldDrawTrail(game, index, trail)) {
     return
   }
 
-  const trailAlpha = effectMaps.trails.get(index) ?? 0
+  const trailAlpha = trail?.alpha ?? 0
   const dustAlpha = effectMaps.dust.get(index) ?? 0
   const crack = effectMaps.cracks.get(index)
 
@@ -86,6 +88,14 @@ export function drawEffectsLayer(
 
 export function shouldDrawVentLight(game: GameState, index: number): boolean {
   return game.visibility[index] > 0
+}
+
+export function shouldDrawTrail(
+  game: GameState,
+  index: number,
+  trail?: FadeCell,
+): boolean {
+  return game.visibility[index] > 0 || trail?.visibleToPlayer === true
 }
 
 export function drawShockwaveLayer(

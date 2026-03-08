@@ -26,7 +26,7 @@ import { drawEffectsLayer, drawShockwaveLayer } from "./layers/effects.ts"
 import { drawTileMemoryLayer } from "./layers/tileMemory.ts"
 
 type EffectMaps = {
-  trails: Map<number, number>
+  trails: Map<number, FadeCell>
   dust: Map<number, number>
   shockwaveFront: Map<number, FadeCell>
   cracks: Map<number, CrackCell>
@@ -261,7 +261,7 @@ function resolveEffectMaps(game: GameState): EffectMaps {
 
   const nextMaps = {
     shockwaveFront: indexFadeMap(game.shockwaveFront),
-    trails: indexAlphaMap(game.trails),
+    trails: indexFadeMap(game.trails),
     dust: indexAlphaMap(game.dust),
     cracks: indexCrackMap(game.cracks),
     ventLight: buildVentLightMap(game),

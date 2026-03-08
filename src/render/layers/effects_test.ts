@@ -3,13 +3,24 @@
 import { assertEquals } from "jsr:@std/assert"
 
 import type { GameState } from "../../game/game.ts"
-import { shouldDrawVentLight } from "./effects.ts"
+import { shouldDrawTrail, shouldDrawVentLight } from "./effects.ts"
 
 Deno.test("shouldDrawVentLight hides dynamic vent lighting outside visibility", () => {
   const game = createEffectsGame([0, 1])
 
   assertEquals(shouldDrawVentLight(game, 0), false)
   assertEquals(shouldDrawVentLight(game, 1), true)
+})
+
+Deno.test("shouldDrawTrail keeps player projectile trails visible in darkness", () => {
+  const game = createEffectsGame([0, 1])
+
+  assertEquals(shouldDrawTrail(game, 0, { index: 0, alpha: 1 }), false)
+  assertEquals(
+    shouldDrawTrail(game, 0, { index: 0, alpha: 1, visibleToPlayer: true }),
+    true,
+  )
+  assertEquals(shouldDrawTrail(game, 1, { index: 1, alpha: 1 }), true)
 })
 
 function createEffectsGame(visibility: GameState["visibility"]): GameState {
