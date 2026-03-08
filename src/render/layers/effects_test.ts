@@ -3,7 +3,11 @@
 import { assertEquals } from "jsr:@std/assert"
 
 import type { GameState } from "../../game/game.ts"
-import { shouldDrawTrail, shouldDrawVentLight } from "./effects.ts"
+import {
+  shouldDrawTrail,
+  shouldDrawVentLight,
+  shouldRevealEffectsOnDeath,
+} from "./effects.ts"
 
 Deno.test("shouldDrawVentLight hides dynamic vent lighting outside visibility", () => {
   const game = createEffectsGame([0, 1])
@@ -21,6 +25,14 @@ Deno.test("shouldDrawTrail keeps player projectile trails visible in darkness", 
     true,
   )
   assertEquals(shouldDrawTrail(game, 1, { index: 1, alpha: 1 }), true)
+})
+
+Deno.test("death reveals hidden effects regardless of visibility", () => {
+  const game = { ...createEffectsGame([0, 0]), status: "lost" as const }
+
+  assertEquals(shouldRevealEffectsOnDeath(game), true)
+  assertEquals(shouldDrawVentLight(game, 0), true)
+  assertEquals(shouldDrawTrail(game, 0, { index: 0, alpha: 1 }), true)
 })
 
 function createEffectsGame(visibility: GameState["visibility"]): GameState {

@@ -87,7 +87,7 @@ export function drawEffectsLayer(
 }
 
 export function shouldDrawVentLight(game: GameState, index: number): boolean {
-  return game.visibility[index] > 0
+  return shouldRevealEffectsOnDeath(game) || game.visibility[index] > 0
 }
 
 export function shouldDrawTrail(
@@ -95,7 +95,12 @@ export function shouldDrawTrail(
   index: number,
   trail?: FadeCell,
 ): boolean {
-  return game.visibility[index] > 0 || trail?.visibleToPlayer === true
+  return shouldRevealEffectsOnDeath(game) || game.visibility[index] > 0 ||
+    trail?.visibleToPlayer === true
+}
+
+export function shouldRevealEffectsOnDeath(game: GameState): boolean {
+  return game.status === "lost"
 }
 
 export function drawShockwaveLayer(
@@ -120,7 +125,7 @@ export function drawShockwaveLayer(
 
   const hiddenEnemySonar = front.requiresVisibility && game.visibility[index] === 0
 
-  if (hiddenEnemySonar && !showHiddenEnemySonar) {
+  if (hiddenEnemySonar && !showHiddenEnemySonar && !shouldRevealEffectsOnDeath(game)) {
     return
   }
 
