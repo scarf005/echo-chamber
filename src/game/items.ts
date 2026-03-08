@@ -85,7 +85,11 @@ export function collectPickups(
       const nextAmmo = Math.min(MAX_TORPEDOES, torpedoAmmo + ITEM_AMMO_BUNDLE)
       const recovered = nextAmmo - torpedoAmmo
       torpedoAmmo = nextAmmo
-      messages.push(recovered > 0 ? i18n._("Recovered {recovered} torpedoes.", { recovered }) : "Torpedo tubes already full.")
+      messages.push(
+        recovered > 0
+          ? i18n._("Recovered {recovered} torpedoes.", { recovered })
+          : i18n._("Torpedo tubes already full."),
+      )
       continue
     }
 
@@ -96,13 +100,13 @@ export function collectPickups(
       messages.push(
         recovered > 0
           ? i18n._("Recovered {recovered} depth charges.", { recovered })
-          : "Depth charge racks already full.",
+          : i18n._("Depth charge racks already full."),
       )
       continue
     }
 
     tileReveals = mergeTileReveals(tileReveals, createMapReveal(game, pickup.position))
-    messages.push("Recovered a survey map.")
+    messages.push(i18n._("Recovered a survey map."))
   }
 
   return {
