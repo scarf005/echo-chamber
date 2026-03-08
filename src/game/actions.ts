@@ -1,4 +1,4 @@
-import { t } from "@lingui/core/macro"
+import { i18n } from "../i18n.ts"
 import { Path } from "npm:rot-js@2.2.1"
 
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
@@ -294,8 +294,8 @@ export function togglePlayerSonar(game: GameState): GameState {
       playerSonarEnabled: enabled,
     },
     enabled
-      ? createLogMessage(t`Player sonar enabled.`, "positive")
-      : createLogMessage(t`Player sonar disabled.`, "negative"),
+      ? createLogMessage(i18n._("Player sonar enabled."), "positive")
+      : createLogMessage(i18n._("Player sonar disabled."), "negative"),
   )
 }
 
@@ -314,7 +314,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     return withGameMessage({
       ...game,
       facing: horizontalFacingForMove(game.facing, direction),
-    }, createLogMessage(t`Hull blocked.`, "warning"))
+    }, createLogMessage(i18n._("Hull blocked."), "warning"))
   }
 
   return advanceTurn(
@@ -322,7 +322,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     target,
     horizontalFacingForMove(game.facing, direction),
     null,
-    createLogMessage(t`Advance.`),
+    createLogMessage(i18n._("Advance.")),
   )
 }
 
@@ -336,7 +336,7 @@ export function holdPosition(game: GameState): GameState {
     game.player,
     game.facing,
     null,
-    createLogMessage(t`Holding position.`),
+    createLogMessage(i18n._("Holding position.")),
   )
 }
 
@@ -355,7 +355,7 @@ export function fireTorpedo(
     return withGameMessage({
       ...game,
       facing: nextFacing,
-    }, createLogMessage(t`No torpedoes remaining.`, "negative"))
+    }, createLogMessage(i18n._("No torpedoes remaining."), "negative"))
   }
 
   return advanceTurn(
@@ -365,10 +365,10 @@ export function fireTorpedo(
     { kind: "torpedo", direction },
     createLogMessage(
       direction === "left"
-        ? t`Tube away to port.`
+        ? i18n._("Tube away to port.")
         : direction === "right"
-        ? t`Tube away to starboard.`
-        : t`VLS launch upward.`,
+        ? i18n._("Tube away to starboard.")
+        : i18n._("VLS launch upward."),
     ),
   )
 }
@@ -381,7 +381,7 @@ export function dropDepthCharge(game: GameState): GameState {
   if (game.depthChargeAmmo <= 0) {
     return withGameMessage({
       ...game,
-    }, createLogMessage(t`No depth charges remaining.`, "negative"))
+    }, createLogMessage(i18n._("No depth charges remaining."), "negative"))
   }
 
   return advanceTurn(
@@ -389,6 +389,6 @@ export function dropDepthCharge(game: GameState): GameState {
     game.player,
     game.facing,
     { kind: "depth-charge" },
-    createLogMessage(t`Depth charge away.`),
+    createLogMessage(i18n._("Depth charge away.")),
   )
 }
