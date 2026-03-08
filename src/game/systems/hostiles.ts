@@ -338,16 +338,6 @@ export function stepHostileSubmarines(
       target = choosePatrolStep(map, position, occupied, random)
     }
 
-    if (
-      archetype === "hunter" &&
-      salvoShotsRemaining > 0 &&
-      salvoMoveTarget &&
-      !pointsEqual(position, salvoMoveTarget)
-    ) {
-      mode = "attack"
-      target = { ...salvoMoveTarget }
-    }
-
     plannedPath = describePlannedPath(
       map,
       hostileSubmarine,
@@ -356,6 +346,8 @@ export function stepHostileSubmarines(
       target,
       occupied,
       context.player,
+      reload,
+      knowledge.directDetection,
     )
 
     const nextStep = chooseNextStep(
@@ -366,6 +358,8 @@ export function stepHostileSubmarines(
       target,
       occupied,
       context.player,
+      reload,
+      knowledge.directDetection,
     )
 
     if (nextStep) {
@@ -393,6 +387,7 @@ export function stepHostileSubmarines(
       depthChargeAmmo,
       lastKnownPlayerPosition,
       lastKnownPlayerTurn,
+      knowledge.directDetection,
       random,
       turn,
       salvoShotsRemaining,
@@ -469,6 +464,8 @@ export function stepHostileSubmarines(
         salvoMoveTarget ?? target,
         occupied,
         context.player,
+        reload,
+        knowledge.directDetection,
       ),
       salvoShotsRemaining,
       salvoStepDirection,
@@ -865,16 +862,22 @@ function chooseNextStep(
   target: Point | null,
   occupied: Set<string>,
   player: Point,
+  reload: number,
+  directDetection: boolean,
 ): Point | null {
   if (archetype === "turtle") {
     return null
   }
 
-  if (
-    target && target.y === position.y &&
-    hasClearCardinalPath(map, position, target) &&
-    archetype !== "scout"
-  ) {
+  if (shouldHoldAttackPosition(
+    map,
+    hostileSubmarine,
+    archetype,
+    position,
+    target,
+    reload,
+    directDetection,
+  )) {
     return null
   }
 
@@ -903,16 +906,22 @@ function describePlannedPath(
   target: Point | null,
   occupied: Set<string>,
   player: Point,
+  reload: number,
+  directDetection: boolean,
 ): Point[] {
   if (archetype === "turtle") {
     return [{ ...position }]
   }
 
-  if (
-    target && target.y === position.y &&
-    hasClearCardinalPath(map, position, target) &&
-    archetype !== "scout"
-  ) {
+  if (shouldHoldAttackPosition(
+    map,
+    hostileSubmarine,
+    archetype,
+    position,
+    target,
+    reload,
+    directDetection,
+  )) {
     return [{ ...position }]
   }
 
@@ -960,6 +969,38 @@ function chooseRetreatStep(
   })[0]
 }
 
+function shouldHoldAttackPosition(
+  map: GeneratedMap,
+  hostileSubmarine: ResolvedHostileSubmarine,
+  archetype: HostileSubmarineArchetype,
+  position: Point,
+  target: Point | null,
+  reload: number,
+  directDetection: boolean,
+): boolean {
+  if (
+    !target ||
+    archetype === "scout" ||
+    target.y !== position.y ||
+    !hasClearCardinalPath(map, position, target)
+  ) {
+    return false
+  }
+
+  if (archetype !== "hunter") {
+    return true
+  }
+
+  return directDetection && reload === 0 &&
+    chebyshevDistance(position, target) <= HOSTILE_PLAYER_DETECTION_RADIUS &&
+    hasRangedAmmo(hostileSubmarine)
+}
+
+function hasRangedAmmo(hostileSubmarine: ResolvedHostileSubmarine): boolean {
+  return hostileSubmarine.torpedoAmmo > 0 || hostileSubmarine.vlsAmmo > 0 ||
+    hostileSubmarine.depthChargeAmmo > 0
+}
+
 function resolveAttack(
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
@@ -973,6 +1014,7 @@ function resolveAttack(
   depthChargeAmmo: number,
   lastKnownPlayerPosition: Point | null,
   lastKnownPlayerTurn: number | null,
+  directDetection: boolean,
   random: () => number,
   turn: number,
   salvoShotsRemaining: number,
@@ -986,20 +1028,23 @@ function resolveAttack(
     torpedoAmmo,
     vlsAmmo,
     depthChargeAmmo,
-    salvoShotsRemaining,
-    salvoStepDirection,
-    salvoMoveTarget,
+    salvoShotsRemaining: archetype === "hunter" ? 0 : salvoShotsRemaining,
+    salvoStepDirection: archetype === "hunter" ? null : salvoStepDirection,
+    salvoMoveTarget: archetype === "hunter" ? null : salvoMoveTarget,
   })
 
   if (!lastKnownPlayerPosition || reload > 0) {
     return noAttack()
   }
 
+  if (archetype === "hunter" && !directDetection) {
+    return noAttack()
+  }
+
   if (
     archetype === "hunter" &&
-    salvoShotsRemaining > 0 &&
-    salvoMoveTarget &&
-    !pointsEqual(position, salvoMoveTarget)
+    chebyshevDistance(position, lastKnownPlayerPosition) >
+      HOSTILE_PLAYER_DETECTION_RADIUS
   ) {
     return noAttack()
   }
@@ -1035,7 +1080,7 @@ function resolveAttack(
     return noAttack()
   }
 
-  if (!directLane && random() > confidence) {
+  if (archetype !== "hunter" && !directLane && random() > confidence) {
     return noAttack()
   }
 
@@ -1054,9 +1099,13 @@ function resolveAttack(
   let nextTorpedoAmmo = torpedoAmmo
   let nextVlsAmmo = vlsAmmo
   let nextDepthChargeAmmo = depthChargeAmmo
-  let nextSalvoShotsRemaining = salvoShotsRemaining
-  let nextSalvoStepDirection = salvoStepDirection
-  let nextSalvoMoveTarget = salvoMoveTarget ? { ...salvoMoveTarget } : null
+  let nextSalvoShotsRemaining = archetype === "hunter" ? 0 : salvoShotsRemaining
+  let nextSalvoStepDirection = archetype === "hunter" ? null : salvoStepDirection
+  let nextSalvoMoveTarget = archetype === "hunter"
+    ? null
+    : salvoMoveTarget
+    ? { ...salvoMoveTarget }
+    : null
 
   if (guessedTarget.x !== position.x && nextTorpedoAmmo > 0) {
     const direction: Direction = guessedTarget.x < position.x ? "left" : "right"
@@ -1094,30 +1143,7 @@ function resolveAttack(
     return noAttack(Math.max(0, reload))
   }
 
-  if (archetype === "hunter") {
-    const continuingSalvo = salvoShotsRemaining > 0
-    const startingSalvo = !continuingSalvo && !directLane && random() < 0.45
-
-    if (continuingSalvo || startingSalvo) {
-      nextSalvoShotsRemaining = continuingSalvo ? salvoShotsRemaining - 1 : 2
-      nextSalvoStepDirection = continuingSalvo
-        ? salvoStepDirection
-        : chooseSalvoStepDirection(map, position, random)
-      nextSalvoMoveTarget =
-        nextSalvoShotsRemaining > 0 && nextSalvoStepDirection
-          ? createNextSalvoMoveTarget(map, position, nextSalvoStepDirection)
-          : null
-
-      if (!nextSalvoMoveTarget) {
-        nextSalvoShotsRemaining = 0
-        nextSalvoStepDirection = null
-      }
-    } else {
-      nextSalvoShotsRemaining = 0
-      nextSalvoStepDirection = null
-      nextSalvoMoveTarget = null
-    }
-  } else {
+  if (archetype !== "hunter") {
     nextSalvoShotsRemaining = 0
     nextSalvoStepDirection = null
     nextSalvoMoveTarget = null
