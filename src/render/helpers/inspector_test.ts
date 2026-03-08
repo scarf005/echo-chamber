@@ -5,6 +5,8 @@ import { assertEquals } from "jsr:@std/assert"
 import type { GameState } from "../../game/game.ts"
 import type { GeneratedMap, Point } from "../../game/mapgen.ts"
 import {
+  describeHostileAiDecision,
+  describeNotableHostileAiDecision,
   describeHoveredInspectorRows,
   describeInspectorContact,
   filterInspectorRows,
@@ -110,6 +112,19 @@ Deno.test("inspector includes hostile ai log in god mode rows", () => {
     godModeRows?.find((row) => row.label === "ai log")?.value,
     "hostile-1: will attack 2,2",
   )
+})
+
+Deno.test("hostile ai helpers only expose notable targeted decisions to orders", () => {
+  const targetedHostile = createInspectorHostileGame().hostileSubmarines[0]
+  const patrollingHostile = {
+    ...targetedHostile,
+    mode: "patrol" as const,
+    target: null,
+  }
+
+  assertEquals(describeHostileAiDecision(targetedHostile), "hostile-1: will attack 2,2")
+  assertEquals(describeNotableHostileAiDecision(targetedHostile), "hostile-1: will attack 2,2")
+  assertEquals(describeNotableHostileAiDecision(patrollingHostile), null)
 })
 
 function createInspectorFishGame(): GameState {

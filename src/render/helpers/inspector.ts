@@ -70,6 +70,11 @@ export function describeHoveredInspectorRows(
       devOnly: true,
     })
     rows.push({
+      label: "ai log",
+      value: describeHostileAiDecision(hostileSubmarine),
+      devOnly: true,
+    })
+    rows.push({
       label: "initial",
       value: hostileSubmarine.initialPosition
         ? formatPoint(hostileSubmarine.initialPosition)
@@ -131,11 +136,6 @@ export function describeHoveredInspectorRows(
         hostileSubmarine.plannedPath && hostileSubmarine.plannedPath.length > 1
           ? hostileSubmarine.plannedPath.map(formatPoint).join(" -> ")
           : "--",
-      devOnly: true,
-    })
-    rows.push({
-      label: "ai log",
-      value: hostileSubmarine.lastAiLog ?? "--",
       devOnly: true,
     })
   }
@@ -280,6 +280,26 @@ function describeHostileIntent(hostileSubmarine: HostileSubmarine): string {
         ? `holding near ${formatPoint(hostileSubmarine.target)}`
         : "patrolling"
   }
+}
+
+export function describeHostileAiDecision(
+  hostileSubmarine: HostileSubmarine,
+): string {
+  const targetSuffix = hostileSubmarine.target
+    ? ` ${formatPoint(hostileSubmarine.target)}`
+    : ""
+
+  return `${hostileSubmarine.id}: will ${hostileSubmarine.mode}${targetSuffix}`
+}
+
+export function describeNotableHostileAiDecision(
+  hostileSubmarine: HostileSubmarine,
+): string | null {
+  if (!hostileSubmarine.target) {
+    return null
+  }
+
+  return describeHostileAiDecision(hostileSubmarine)
 }
 
 function normalizeInspectorContact(contact: string | null): string | null {
