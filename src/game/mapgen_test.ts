@@ -107,11 +107,30 @@ Deno.test("solid border stays intact", () => {
 
 Deno.test("cellular generator keeps both walls and open water in the interior", () => {
   const map = generateMap({ width: 72, height: 30, seed: "side-view-bias" })
-  const topBand = countWaterTilesInRow(map, 3)
-  const middleBand = countWaterTilesInRow(map, Math.floor(map.height / 2))
+  const topBand = countPassableTilesInRow(map, 3)
+  const middleBand = countPassableTilesInRow(map, Math.floor(map.height / 2))
 
   assert(topBand > 0 || middleBand > 0)
   assert(topBand < map.width - 2 || middleBand < map.width - 2)
+})
+
+Deno.test("generateMap grows passable kelp strands from rock shelves", () => {
+  const map = generateMap({ width: 72, height: 30, seed: "kelp-growth" })
+  let kelpCount = 0
+
+  for (let y = 1; y < map.height - 2; y += 1) {
+    for (let x = 1; x < map.width - 1; x += 1) {
+      if (tileAt(map, x, y) !== "kelp") {
+        continue
+      }
+
+      kelpCount += 1
+      assertEquals(isPassableTile(tileAt(map, x, y)), true)
+      assertEquals(tileAt(map, x, y + 1), y === map.height - 2 ? "wall" : tileAt(map, x, y + 1))
+    }
+  }
+
+  assert(kelpCount > 0)
 })
 
 function pathExists(map: GeneratedMap): boolean {
@@ -165,11 +184,11 @@ function pathExists(map: GeneratedMap): boolean {
   return false
 }
 
-function countWaterTilesInRow(map: GeneratedMap, y: number): number {
+function countPassableTilesInRow(map: GeneratedMap, y: number): number {
   let count = 0
 
   for (let x = 1; x < map.width - 1; x += 1) {
-    if (tileAt(map, x, y) === "water") {
+    if (isPassableTile(tileAt(map, x, y))) {
       count += 1
     }
   }

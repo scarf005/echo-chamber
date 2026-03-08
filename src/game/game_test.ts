@@ -25,6 +25,7 @@ import {
   type GeneratedMap,
   isPassableTile,
   type Point,
+  type TileKind,
   tileAt,
 } from "./mapgen.ts"
 
@@ -1719,7 +1720,7 @@ function createScoutExplorationPersistenceGame(): GameState {
     { x: 1, y: 2 },
     { x: 16, y: 2 },
   )
-  const memory: Array<"wall" | "water" | null> = Array.from(
+  const memory: Array<TileKind | null> = Array.from(
     { length: map.tiles.length },
     () => null,
   )
@@ -1782,7 +1783,7 @@ function createScoutExplorationFrontierGame(): GameState {
     { x: 1, y: 2 },
     { x: 16, y: 2 },
   )
-  const memory: Array<"wall" | "water" | null> = Array.from(
+  const memory: Array<TileKind | null> = Array.from(
     { length: map.tiles.length },
     () => null,
   )
