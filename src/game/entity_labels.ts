@@ -7,47 +7,47 @@ export function exactEntityNameAtPoint(
   point: Point,
 ): string | null {
   if (point.x === game.player.x && point.y === game.player.y) {
-    return "player submarine"
+    return i18n._("player submarine")
   }
 
   if (point.x === game.map.capsule.x && point.y === game.map.capsule.y) {
-    return "capsule"
+    return i18n._("capsule")
   }
 
   if (game.hostileSubmarines.some((candidate) =>
     candidate.position.x === point.x && candidate.position.y === point.y
   )) {
-    return "enemy submarine"
+    return i18n._("enemy submarine")
   }
 
   if ((game.fish ?? []).some((candidate) =>
     candidate.position.x === point.x && candidate.position.y === point.y
   )) {
-    return "fish"
+    return i18n._("fish")
   }
 
   if (game.pickups.some((candidate) =>
     candidate.position.x === point.x && candidate.position.y === point.y
   )) {
-    return "item"
+    return i18n._("item")
   }
 
   if (game.torpedoes.some((candidate) =>
     candidate.position.x === point.x && candidate.position.y === point.y
   )) {
-    return "torpedo"
+    return i18n._("torpedo")
   }
 
   if (game.depthCharges.some((candidate) =>
     candidate.position.x === point.x && candidate.position.y === point.y
   )) {
-    return "depth charge"
+    return i18n._("depth charge")
   }
 
   if (game.fallingBoulders.some((candidate) =>
     candidate.position.x === point.x && candidate.position.y === point.y
   )) {
-    return "falling boulder"
+    return i18n._("falling boulder")
   }
 
   return null
