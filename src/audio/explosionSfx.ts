@@ -87,7 +87,7 @@ export function createExplosionSfx(): ExplosionSfxController {
       return
     }
 
-    const volume = clampAudioLevel(getExplosionVolume(distance) * state.volume)
+    const volume = getExplosionVolume(distance) * state.volume
 
     if (volume <= 0) {
       return
