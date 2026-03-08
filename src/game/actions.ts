@@ -294,8 +294,8 @@ export function togglePlayerSonar(game: GameState): GameState {
       playerSonarEnabled: enabled,
     },
     enabled
-      ? createLogMessage("Player sonar enabled.", "positive")
-      : createLogMessage("Player sonar disabled.", "negative"),
+      ? createLogMessage(t`Player sonar enabled.`, "positive")
+      : createLogMessage(t`Player sonar disabled.`, "negative"),
   )
 }
 
@@ -314,7 +314,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     return withGameMessage({
       ...game,
       facing: horizontalFacingForMove(game.facing, direction),
-    }, createLogMessage("Hull blocked.", "warning"))
+    }, createLogMessage(t`Hull blocked.`, "warning"))
   }
 
   return advanceTurn(
@@ -322,7 +322,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     target,
     horizontalFacingForMove(game.facing, direction),
     null,
-    createLogMessage("Advance."),
+    createLogMessage(t`Advance.`),
   )
 }
 
@@ -336,7 +336,7 @@ export function holdPosition(game: GameState): GameState {
     game.player,
     game.facing,
     null,
-    createLogMessage("Holding position."),
+    createLogMessage(t`Holding position.`),
   )
 }
 
