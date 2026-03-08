@@ -12,11 +12,15 @@ $ deno task dev
 
 ## Deploy
 
-Build production assets:
+Build production assets locally:
 
 ```
 $ deno task build
 ```
+
+Every push to `main` also triggers GitHub Actions deployment to itch.io via `KikimoraGames/itch-publish@v0.0.3`.
+The workflow uses the `deploy` environment and expects `BUTLER_API_KEY` and `ITCH_USERNAME` to be defined there.
+The itch.io game id defaults to the repository name, so this repository publishes to `echo-chamber` on the configured account.
 
 ## Asset Credits
 
