@@ -99,6 +99,21 @@ Deno.test("inspector hides dev-only rows outside dev builds", () => {
   assertEquals(productionRows?.find((row) => row.label === "contact")?.value, "fish")
 })
 
+Deno.test("inspector does not leak unseen terrain outside exact visibility", () => {
+  const game = createInspectorFishGame()
+  const hiddenWallPoint = { x: 0, y: 0 }
+
+  const hiddenRows = describeHoveredInspectorRows(game, hiddenWallPoint)
+
+  assertEquals(hiddenRows?.find((row) => row.label === "terrain")?.value, "unknown")
+
+  game.memory[hiddenWallPoint.y * game.map.width + hiddenWallPoint.x] = "wall"
+
+  const rememberedRows = describeHoveredInspectorRows(game, hiddenWallPoint)
+
+  assertEquals(rememberedRows?.find((row) => row.label === "terrain")?.value, "wall")
+})
+
 Deno.test("inspector keeps dev-only rows in dev builds", () => {
   const game = createInspectorFishGame()
   const fishPoint = { x: 4, y: 2 }

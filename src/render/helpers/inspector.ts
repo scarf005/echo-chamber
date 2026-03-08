@@ -24,8 +24,11 @@ export function describeHoveredInspectorRows(
 
   const index = point.y * game.map.width + point.x
   const canRevealEntities = canRevealExactInspectorDetails(game, point, options)
+  const terrain = canRevealEntities
+    ? tileAt(game.map, point.x, point.y) ?? "void"
+    : game.memory[index] ?? "unknown"
   const rows: InspectorRow[] = [
-    { label: "terrain", value: tileAt(game.map, point.x, point.y) ?? "void" },
+    { label: "terrain", value: terrain },
     { label: "contact", value: describeInspectorContact(game, point, options) ?? "--" },
     {
       label: "visibility",
