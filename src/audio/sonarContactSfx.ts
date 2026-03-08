@@ -1,25 +1,38 @@
-import { sample } from "jsr:@std/random@0.1.5/sample"
+import type { SonarContactAudioVariant } from "../game/model.ts"
 
 import { clampAudioLevel } from "./settings.ts"
 
-const SONAR_CONTACT_SAMPLE_URLS = [
-  new URL("../assets/audio/sonar-contact-kizilsungur.mp3", import.meta.url).href,
-  new URL("../assets/audio/sonar-contact-digital.mp3", import.meta.url).href,
-] as const
+const SONAR_CONTACT_SAMPLE_URLS = {
+  kizilsungur: new URL(
+    "../assets/audio/sonar-contact-kizilsungur.mp3",
+    import.meta.url,
+  ).href,
+  digital: new URL("../assets/audio/sonar-contact-digital.mp3", import.meta.url)
+    .href,
+} as const
+const SONAR_CONTACT_SAMPLE_ORDER = ["kizilsungur", "digital"] as const
 const SONAR_CONTACT_VOLUME = 0.5
 export const SONAR_CONTACT_COOLDOWN_MS = 2_000
 const CHANNELS_PER_SAMPLE = 2
 
 export type SonarContactSfxController = {
   ensureStarted: () => Promise<void>
-  playContactPing: () => Promise<void>
+  playContactPing: (variant?: SonarContactAudioVariant) => Promise<void>
   setEnabled: (enabled: boolean) => void
   setVolume: (volume: number) => void
   dispose: () => void
 }
 
 export function getSonarContactSampleChoices(): readonly string[] {
-  return SONAR_CONTACT_SAMPLE_URLS
+  return SONAR_CONTACT_SAMPLE_ORDER.map((variant) =>
+    SONAR_CONTACT_SAMPLE_URLS[variant]
+  )
+}
+
+export function getSonarContactSampleUrl(
+  variant: SonarContactAudioVariant,
+): string {
+  return SONAR_CONTACT_SAMPLE_URLS[variant]
 }
 
 export function getSonarContactVolume(volume: number): number {
@@ -35,7 +48,7 @@ export function canPlaySonarContactPing(
 }
 
 export function createSonarContactSfx(): SonarContactSfxController {
-  const sampleUrls = Array.from(SONAR_CONTACT_SAMPLE_URLS)
+  const sampleUrls = Array.from(getSonarContactSampleChoices())
   const playersByUrl = new Map(sampleUrls.map((url) => [
     url,
     Array.from({ length: CHANNELS_PER_SAMPLE }, () => createPlayer(url)),
@@ -60,7 +73,9 @@ export function createSonarContactSfx(): SonarContactSfxController {
     unlocked = true
   }
 
-  const playContactPing = async () => {
+  const playContactPing = async (
+    variant: SonarContactAudioVariant = "kizilsungur",
+  ) => {
     if (!unlocked || !state.enabled) {
       return
     }
@@ -77,7 +92,7 @@ export function createSonarContactSfx(): SonarContactSfxController {
       return
     }
 
-    const sampleUrl = sample(sampleUrls) ?? sampleUrls[0]
+    const sampleUrl = getSonarContactSampleUrl(variant)
     const players = playersByUrl.get(sampleUrl) ?? []
     const preferredIndex = nextPlayerIndexByUrl.get(sampleUrl) ?? 0
     const audio = takePlayer(players, preferredIndex)

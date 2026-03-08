@@ -31,6 +31,7 @@ import type { GameState, HostileSubmarine } from "./game/game.ts"
 import { pointsEqual } from "./game/helpers.ts"
 import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
+import { createDeathSfx } from "./audio/deathSfx.ts"
 import { createEntityHitSfx } from "./audio/entityHitSfx.ts"
 import { createExplosionSfx } from "./audio/explosionSfx.ts"
 import { createMovementLoop } from "./audio/movementLoop.ts"
@@ -83,6 +84,7 @@ export function App() {
   const backgroundMusicRef = useRef<
     ReturnType<typeof createBackgroundMusic> | null
   >(null)
+  const deathSfxRef = useRef<ReturnType<typeof createDeathSfx> | null>(null)
   const entityHitSfxRef = useRef<ReturnType<typeof createEntityHitSfx> | null>(
     null,
   )
@@ -99,6 +101,7 @@ export function App() {
   const sonarLoopRef = useRef<ReturnType<typeof createSonarLoop> | null>(null)
   const playedExplosionCountsRef = useRef<Map<string, number>>(new Map())
   const playedEntityHitCueCountRef = useRef(0)
+  const playedDeathCueCountRef = useRef(0)
   const playedPickupCueCountRef = useRef(0)
   const playedSonarContactCueCountRef = useRef(0)
   const autoMoveSeenAnomaliesRef = useRef<Set<string>>(new Set())
@@ -140,6 +143,10 @@ export function App() {
     backgroundMusicRef.current?.setEnabled(
       pageAudioEnabled && currentAudioSettings.musicEnabled,
     )
+    deathSfxRef.current?.setVolume(currentAudioSettings.sfxVolume)
+    deathSfxRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.sfxEnabled,
+    )
     entityHitSfxRef.current?.setVolume(currentAudioSettings.sfxVolume)
     entityHitSfxRef.current?.setEnabled(
       pageAudioEnabled && currentAudioSettings.sfxEnabled,
@@ -173,6 +180,7 @@ export function App() {
 
   useEffect(() => {
     const backgroundMusic = createBackgroundMusic()
+    const deathSfx = createDeathSfx()
     const entityHitSfx = createEntityHitSfx()
     const explosionSfx = createExplosionSfx()
     const movementLoop = createMovementLoop()
@@ -180,6 +188,7 @@ export function App() {
     const sonarContactSfx = createSonarContactSfx()
     const sonarLoop = createSonarLoop()
     backgroundMusicRef.current = backgroundMusic
+    deathSfxRef.current = deathSfx
     entityHitSfxRef.current = entityHitSfx
     explosionSfxRef.current = explosionSfx
     movementLoopRef.current = movementLoop
@@ -189,6 +198,7 @@ export function App() {
 
     const startAudio = () => {
       void backgroundMusic.ensureStarted()
+      void deathSfx.ensureStarted()
       void entityHitSfx.ensureStarted()
       void explosionSfx.ensureStarted()
       void movementLoop.ensureStarted()
@@ -216,6 +226,7 @@ export function App() {
       window.removeEventListener("blur", syncPageAudioEnabled)
       document.removeEventListener("visibilitychange", syncPageAudioEnabled)
       backgroundMusicRef.current = null
+      deathSfxRef.current = null
       entityHitSfxRef.current = null
       explosionSfxRef.current = null
       movementLoopRef.current = null
@@ -223,6 +234,7 @@ export function App() {
       sonarContactSfxRef.current = null
       sonarLoopRef.current = null
       backgroundMusic.dispose()
+      deathSfx.dispose()
       entityHitSfx.dispose()
       explosionSfx.dispose()
       movementLoop.dispose()
@@ -278,6 +290,17 @@ export function App() {
   }, [game])
 
   useEffect(() => {
+    const cueCount = game.playerDeathCueCount ?? 0
+
+    if (cueCount <= playedDeathCueCountRef.current) {
+      return
+    }
+
+    playedDeathCueCountRef.current = cueCount
+    void deathSfxRef.current?.playDeath()
+  }, [game.playerDeathCueCount])
+
+  useEffect(() => {
     const cueCount = game.playerEntityHitCueCount ?? 0
 
     if (cueCount <= playedEntityHitCueCountRef.current) {
@@ -307,8 +330,10 @@ export function App() {
     }
 
     playedSonarContactCueCountRef.current = cueCount
-    void sonarContactSfxRef.current?.playContactPing()
-  }, [game.playerSonarContactCueCount])
+    void sonarContactSfxRef.current?.playContactPing(
+      game.playerSonarContactAudioVariant ?? "kizilsungur",
+    )
+  }, [game.playerSonarContactAudioVariant, game.playerSonarContactCueCount])
 
   useEffect(() => {
     syncAudioControllers()
@@ -316,6 +341,7 @@ export function App() {
 
   const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
+    void deathSfxRef.current?.ensureStarted()
     void entityHitSfxRef.current?.ensureStarted()
     void explosionSfxRef.current?.ensureStarted()
     void movementLoopRef.current?.ensureStarted()
@@ -323,6 +349,7 @@ export function App() {
     void sonarContactSfxRef.current?.ensureStarted()
     void sonarLoopRef.current?.ensureStarted()
     playedEntityHitCueCountRef.current = 0
+    playedDeathCueCountRef.current = 0
     playedPickupCueCountRef.current = 0
     playedSonarContactCueCountRef.current = 0
     viewportModeSignal.value = "camera"
@@ -1022,6 +1049,14 @@ export function App() {
                   rel="noreferrer"
                 >
                   SCP-x2x (Unseen Presence) by Kevin MacLeod (CC-BY-4.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/Werra/sounds/244394/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Bang/Explosion Metallic by Werra (CC0-1.0)
                 </a>
                 <a
                   class="credit-link"

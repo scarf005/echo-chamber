@@ -4,14 +4,26 @@ import {
   canPlaySonarContactPing,
   SONAR_CONTACT_COOLDOWN_MS,
   getSonarContactSampleChoices,
+  getSonarContactSampleUrl,
   getSonarContactVolume,
 } from "./sonarContactSfx.ts"
 
-Deno.test("sonar contact sfx rotates between both normalized samples", () => {
+Deno.test("sonar contact sfx exposes both normalized samples", () => {
   assertEquals(getSonarContactSampleChoices().map(fileNameFromUrl), [
     "sonar-contact-kizilsungur.mp3",
     "sonar-contact-digital.mp3",
   ])
+})
+
+Deno.test("sonar contact sfx resolves deterministic sample urls", () => {
+  assertEquals(
+    fileNameFromUrl(getSonarContactSampleUrl("kizilsungur")),
+    "sonar-contact-kizilsungur.mp3",
+  )
+  assertEquals(
+    fileNameFromUrl(getSonarContactSampleUrl("digital")),
+    "sonar-contact-digital.mp3",
+  )
 })
 
 Deno.test("sonar contact sfx plays at half of the active sfx volume", () => {
