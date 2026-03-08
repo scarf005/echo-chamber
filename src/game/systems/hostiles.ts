@@ -1,4 +1,5 @@
 import {
+  BOULDER_FALL_SPEED,
   DEPTH_CHARGE_RANGE,
   DEPTH_CHARGE_SPEED,
   HOSTILE_COMMUNICATION_RADIUS,
@@ -1261,6 +1262,7 @@ function chooseNextStep(
     archetype,
     position,
     target,
+    occupied,
     reload,
     directDetection,
   )) {
@@ -1307,6 +1309,7 @@ function describePlannedPath(
     archetype,
     position,
     target,
+    occupied,
     reload,
     directDetection,
   )) {
@@ -1371,6 +1374,7 @@ function shouldHoldAttackPosition(
   archetype: HostileSubmarineArchetype,
   position: Point,
   target: Point | null,
+  occupied: ReadonlySet<string>,
   reload: number,
   directDetection: boolean,
 ): boolean {
@@ -1390,9 +1394,13 @@ function shouldHoldAttackPosition(
     return false
   }
 
+  const ceilingTrapShot = findCeilingTrapShot(map, position, target)
+
   return hasHorizontalShotOpportunity(map, position, target) ||
     hasVerticalShotOpportunity(map, position, target) ||
-    findCeilingTrapShot(map, position, target) !== null
+    (ceilingTrapShot !== null &&
+      (ceilingTrapShot.direction !== "up" ||
+        canEscapeVerticalCaveIn(map, position, ceilingTrapShot.impactPoint, occupied)))
 }
 
 function hasRangedAmmo(hostileSubmarine: ResolvedHostileSubmarine): boolean {
@@ -1523,7 +1531,17 @@ function resolveAttack(
     position,
     lastKnownPlayerPosition,
   )
-  const attackTarget = ceilingTrapShot?.impactPoint ??
+  const occupied = new Set(
+    hostileSubmarines
+      .filter((candidate) => candidate.id !== hostileSubmarine.id)
+      .map((candidate) => keyOfPoint(candidate.position)),
+  )
+  const usableCeilingTrapShot = ceilingTrapShot !== null &&
+      (ceilingTrapShot.direction !== "up" ||
+        canEscapeVerticalCaveIn(map, position, ceilingTrapShot.impactPoint, occupied))
+    ? ceilingTrapShot
+    : null
+  const attackTarget = usableCeilingTrapShot?.impactPoint ??
     (horizontalShotOpportunity
       ? createHorizontalShotTarget(position, lastKnownPlayerPosition)
       : verticalShotOpportunity
@@ -1545,7 +1563,7 @@ function resolveAttack(
     directLane,
     horizontalShotOpportunity,
     verticalShotOpportunity,
-    ceilingTrapDirection: ceilingTrapShot?.direction ?? null,
+    ceilingTrapDirection: usableCeilingTrapShot?.direction ?? null,
     turnAge,
     maxEvidenceAge,
     confidence,
@@ -1564,7 +1582,7 @@ function resolveAttack(
     !directLane &&
     !horizontalShotOpportunity &&
     !verticalShotOpportunity &&
-    !ceilingTrapShot &&
+    !usableCeilingTrapShot &&
     random() > confidence
   ) {
     return noAttack(reload, false, {
@@ -1629,19 +1647,19 @@ function resolveAttack(
     firedOrientation = "vertical"
     firedWeapon = "vls"
     firedDirection = "up"
-  } else if (ceilingTrapShot && nextTorpedoAmmo > 0 && ceilingTrapShot.direction !== "up") {
+  } else if (usableCeilingTrapShot && nextTorpedoAmmo > 0 && usableCeilingTrapShot.direction !== "up") {
     torpedoes.push({
       position: { ...position },
       senderId: hostileSubmarine.id,
-      direction: ceilingTrapShot.direction,
+      direction: usableCeilingTrapShot.direction,
       speed: TORPEDO_SPEED,
       rangeRemaining: HOSTILE_TORPEDO_RANGE,
       avoidFriendlyFire,
     })
     nextTorpedoAmmo -= 1
     firedWeapon = "torpedo"
-    firedDirection = ceilingTrapShot.direction
-  } else if (ceilingTrapShot && nextVlsAmmo > 0 && ceilingTrapShot.direction === "up") {
+    firedDirection = usableCeilingTrapShot.direction
+  } else if (usableCeilingTrapShot && nextVlsAmmo > 0 && usableCeilingTrapShot.direction === "up") {
     torpedoes.push({
       position: { ...position },
       senderId: hostileSubmarine.id,
@@ -1829,6 +1847,29 @@ function rememberRecentPosition(
   ]
 
   return nextRecentPositions.slice(0, HOSTILE_POSITION_MEMORY_LIMIT)
+}
+
+function canEscapeVerticalCaveIn(
+  map: GeneratedMap,
+  position: Point,
+  impactPoint: Point,
+  occupied: ReadonlySet<string>,
+): boolean {
+  if (impactPoint.x !== position.x || impactPoint.y >= position.y) {
+    return true
+  }
+
+  if (position.y - impactPoint.y <= BOULDER_FALL_SPEED) {
+    return false
+  }
+
+  return [
+    { x: position.x - 1, y: position.y },
+    { x: position.x + 1, y: position.y },
+  ].some((candidate) =>
+    isPassableTile(tileAt(map, candidate.x, candidate.y)) &&
+    !occupied.has(keyOfPoint(candidate))
+  )
 }
 
 function shouldBroadcastPlayerPosition(
@@ -2025,6 +2066,7 @@ function canReuseCurrentPlannedPath(
     archetype,
     position,
     movementTarget,
+    occupied,
     reload,
     directDetection,
   )) {
@@ -2076,6 +2118,7 @@ function canUsePlannedPathForMovement(
     archetype,
     position,
     movementTarget,
+    occupied,
     reload,
     directDetection,
   )) {

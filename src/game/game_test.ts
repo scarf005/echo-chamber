@@ -833,6 +833,25 @@ Deno.test("hostile submarines use VLS when the player is directly above them", (
   assertEquals(launched.hostileSubmarines[0].depthChargeAmmo, 6)
 })
 
+Deno.test("hostile submarines avoid suicidal VLS cave-ins", () => {
+  const game = createHostileUnsafeVlsCaveInGame()
+  const launched = holdPosition(game)
+
+  assertEquals(launched.torpedoes.length, 1)
+  assertEquals(launched.hostileSubmarines[0].debugState?.attack.attackTarget, { x: 5, y: 3 })
+  assertEquals(launched.hostileSubmarines[0].debugState?.attack.ceilingTrapDirection, null)
+})
+
+Deno.test("hostile submarines use VLS cave-ins when they have an escape lane", () => {
+  const game = createHostileSafeVlsCaveInGame()
+  const launched = holdPosition(game)
+
+  assertEquals(launched.torpedoes.length, 1)
+  assertEquals(launched.torpedoes[0].direction, "up")
+  assertEquals(launched.hostileSubmarines[0].debugState?.attack.attackTarget, { x: 5, y: 2 })
+  assertEquals(launched.hostileSubmarines[0].debugState?.attack.ceilingTrapDirection, "up")
+})
+
 Deno.test("hostile submarines do not waste depth charges on targets directly above", () => {
   const game = createHostileAboveWithoutVlsGame()
   const launched = holdPosition(game)
@@ -1967,6 +1986,70 @@ function createHostileAboveWithoutVlsGame(): GameState {
         : { ...game.hostileSubmarines[0].position },
       vlsAmmo: 0,
     }],
+  }
+}
+
+function createHostileUnsafeVlsCaveInGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "###########",
+      "#.........#",
+      "#....#....#",
+      "#.........#",
+      "#.........#",
+      "#.........#",
+      "###########",
+    ],
+    { x: 1, y: 5 },
+    { x: 9, y: 1 },
+  )
+
+  return {
+    map,
+    player: { x: 5, y: 3 },
+    seed: "hostile-unsafe-vls-cave-in-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 5, y: 4 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createHostileSafeVlsCaveInGame(): GameState {
+  const game = createHostileUnsafeVlsCaveInGame()
+
+  return {
+    ...game,
+    seed: "hostile-safe-vls-cave-in-test",
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 5, y: 5 },
+      archetype: "hunter",
+    })],
   }
 }
 
