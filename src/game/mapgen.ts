@@ -178,6 +178,25 @@ export function isSonarBlockingTile(tile: TileKind | null): boolean {
   return tile === "wall" || tile === "kelp"
 }
 
+export function clearKelpStrandAt(map: GeneratedMap, point: Point): boolean {
+  if (tileAt(map, point.x, point.y) !== "kelp") {
+    return false
+  }
+
+  let cleared = false
+
+  for (let y = point.y; y >= 0; y -= 1) {
+    if (tileAt(map, point.x, y) !== "kelp") {
+      break
+    }
+
+    map.tiles[indexForTile(map.width, point.x, y)] = "water"
+    cleared = true
+  }
+
+  return cleared
+}
+
 export function mapToAscii(map: GeneratedMap): string {
   const rows: string[] = []
 

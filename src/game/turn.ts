@@ -47,7 +47,7 @@ import type {
 } from "./model.ts"
 import { refreshPerception } from "./perception.ts"
 import type { Point } from "./mapgen.ts"
-import { isPassableTile, tileAt } from "./mapgen.ts"
+import { clearKelpStrandAt, isPassableTile, tileAt } from "./mapgen.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
 import { stepFish } from "./systems/fish.ts"
 import { stepHostileSubmarines } from "./systems/hostiles.ts"
@@ -104,6 +104,8 @@ export function advanceTurn(
   if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
     trails = mergeTrailCell(trails, indexForPoint(map.width, game.player), 1)
   }
+
+  clearKelpStrandAt(map, nextPlayer)
 
   if (action?.kind === "torpedo") {
     torpedoes.push({

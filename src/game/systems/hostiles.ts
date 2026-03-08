@@ -53,6 +53,7 @@ import type {
   Torpedo,
 } from "../model.ts"
 import {
+  clearKelpStrandAt,
   type GeneratedMap,
   isPassableTile,
   type TileKind,
@@ -565,6 +566,7 @@ export function stepHostileSubmarines(
       }
 
       position = nextStep
+      clearKelpStrandAt(map, position)
 
       if (pointsEqual(position, context.player)) {
         playerDestroyed = true

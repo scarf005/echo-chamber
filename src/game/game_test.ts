@@ -99,6 +99,33 @@ Deno.test("movePlayer advances into an adjacent passable cell", () => {
   assert(next.player.x !== game.player.x || next.player.y !== game.player.y)
 })
 
+Deno.test("moving into kelp clears that strand upward", () => {
+  const map = createMapFromRows(
+    [
+      "#######",
+      "#..k..#",
+      "#..k..#",
+      "#..k..#",
+      "#.....#",
+      "#######",
+    ],
+    { x: 1, y: 4 },
+    { x: 5, y: 4 },
+  )
+  const game = createFlatGame({ map, player: { x: 2, y: 4 } })
+  const adjusted = {
+    ...game,
+    player: { x: 2, y: 3 },
+  }
+
+  const next = movePlayer(adjusted, "right")
+
+  assertEquals(next.player, { x: 3, y: 3 })
+  assertEquals(tileAt(next.map, 3, 1), "water")
+  assertEquals(tileAt(next.map, 3, 2), "water")
+  assertEquals(tileAt(next.map, 3, 3), "water")
+})
+
 Deno.test("findPath returns an empty route for an impassable destination", () => {
   const game = createFlatGame()
 
@@ -1314,8 +1341,8 @@ function directionBetween(from: Point, to: Point): Direction {
   return direction
 }
 
-function createFlatGame(): GameState {
-  const map = createMapFromRows(
+function createFlatGame(overrides: Partial<GameState> = {}): GameState {
+  const map = overrides.map ?? createMapFromRows(
     [
       "#######",
       "#.....#",
@@ -1334,10 +1361,15 @@ function createFlatGame(): GameState {
     turn: 0,
     status: "playing",
     capsuleKnown: false,
+    capsuleCollected: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
     entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
+    playerSonarContactCueCount: 0,
+    playerSonarContactAudioVariant: null,
+    hostileSonarContactCueCount: 0,
+    playerEntityHitCueCount: 0,
     playerDeathCueCount: 0,
     playerPickupCueCount: 0,
     shockwaves: [],
@@ -1345,10 +1377,12 @@ function createFlatGame(): GameState {
     torpedoes: [],
     depthCharges: [],
     pickups: [],
+    fish: [],
     hostileSubmarines: [],
     trails: [],
     dust: [],
     cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
     fallingBoulders: [],
     facing: "right",
     torpedoAmmo: 6,
@@ -1356,6 +1390,7 @@ function createFlatGame(): GameState {
     screenShake: 0,
     message: "",
     logs: [],
+    ...overrides,
   }
 }
 
@@ -3603,7 +3638,9 @@ function createMapFromRows(
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>
-    Array.from(row, (cell) => (cell === "#" ? "wall" : "water" as const))
+    Array.from(row, (cell) =>
+      cell === "#" ? "wall" : cell === "k" ? "kelp" : "water" as const
+    )
   )
 
   return {
