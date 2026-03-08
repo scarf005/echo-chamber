@@ -981,20 +981,11 @@ export function App() {
                 <button
                   type="button"
                   onClick={() => {
-                    startRun()
-                    setIsOptionsOpen(false)
-                  }}
-                >
-                  restart mission
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
                     startRun(createRandomSeed())
                     setIsOptionsOpen(false)
                   }}
                 >
-                  random run
+                  restart mission
                 </button>
               </div>
               <div class="sidebar-heading">audio</div>
