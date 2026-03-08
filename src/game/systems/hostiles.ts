@@ -88,6 +88,7 @@ interface ResolvedHostileSubmarine extends HostileSubmarine {
   lastKnownPlayerPosition: Point | null
   lastKnownPlayerVector: Point | null
   lastKnownPlayerTurn: number | null
+  lastKnownPlayerFromDirectDetection: boolean
   previousPosition: Point | null
   recentPositions: Point[]
   plannedPath: Point[]
@@ -328,6 +329,8 @@ export function stepHostileSubmarines(
       ? { ...hostileSubmarine.lastKnownPlayerVector }
       : null
     let lastKnownPlayerTurn = hostileSubmarine.lastKnownPlayerTurn
+    let lastKnownPlayerFromDirectDetection =
+      hostileSubmarine.lastKnownPlayerFromDirectDetection ?? false
     let previousPosition = hostileSubmarine.previousPosition
       ? { ...hostileSubmarine.previousPosition }
       : null
@@ -349,12 +352,14 @@ export function stepHostileSubmarines(
       lastKnownPlayerVector = knowledge.playerVector ?? lastKnownPlayerVector
       lastKnownPlayerPosition = { ...knowledge.confirmedPlayerPosition }
       lastKnownPlayerTurn = turn
+      lastKnownPlayerFromDirectDetection = knowledge.directDetection
     }
 
     if (!lastKnownPlayerPosition) {
       salvoShotsRemaining = 0
       salvoStepDirection = null
       salvoMoveTarget = null
+      lastKnownPlayerFromDirectDetection = false
     }
 
     if (
@@ -520,9 +525,14 @@ export function stepHostileSubmarines(
       movementTarget,
       occupied,
       context.player,
+      lastKnownPlayerPosition,
+      lastKnownPlayerVector,
+      lastKnownPlayerTurn,
+      lastKnownPlayerFromDirectDetection,
       reload,
       knowledge.directDetection,
       repositioningForSalvo,
+      turn,
       retainedPlannedPath,
     )
       ? retainedPlannedPath.map((point) => ({ ...point }))
@@ -534,9 +544,14 @@ export function stepHostileSubmarines(
         movementTarget,
         occupied,
         context.player,
+        lastKnownPlayerPosition,
+        lastKnownPlayerVector,
+        lastKnownPlayerTurn,
+        lastKnownPlayerFromDirectDetection,
         reload,
         knowledge.directDetection,
         repositioningForSalvo,
+        turn,
       )
       ? hostileSubmarine.plannedPath.map((point) => ({ ...point }))
       : describePlannedPath(
@@ -549,7 +564,9 @@ export function stepHostileSubmarines(
         occupied,
         context.player,
         lastKnownPlayerPosition,
+        lastKnownPlayerVector,
         lastKnownPlayerTurn,
+        lastKnownPlayerFromDirectDetection,
         reload,
         knowledge.directDetection,
         repositioningForSalvo,
@@ -590,7 +607,9 @@ export function stepHostileSubmarines(
       vlsAmmo,
       depthChargeAmmo,
       lastKnownPlayerPosition,
+      lastKnownPlayerVector,
       lastKnownPlayerTurn,
+      lastKnownPlayerFromDirectDetection,
       knowledge.directDetection,
       random,
       turn,
@@ -621,10 +640,12 @@ export function stepHostileSubmarines(
         archetype,
         position,
         finalMovementTarget,
-        occupied,
+      occupied,
         context.player,
         lastKnownPlayerPosition,
+        lastKnownPlayerVector,
         lastKnownPlayerTurn,
+        lastKnownPlayerFromDirectDetection,
         reload,
         knowledge.directDetection,
         false,
@@ -703,6 +724,7 @@ export function stepHostileSubmarines(
       lastKnownPlayerPosition,
       lastKnownPlayerVector,
       lastKnownPlayerTurn,
+      lastKnownPlayerFromDirectDetection,
       previousPosition,
       recentPositions,
       lastAiLog,
@@ -851,6 +873,8 @@ function hydrateHostileSubmarine(
       ? { ...hostileSubmarine.lastKnownPlayerVector }
       : null,
     lastKnownPlayerTurn: hostileSubmarine.lastKnownPlayerTurn ?? null,
+    lastKnownPlayerFromDirectDetection:
+      hostileSubmarine.lastKnownPlayerFromDirectDetection ?? false,
     previousPosition: hostileSubmarine.previousPosition
       ? { ...hostileSubmarine.previousPosition }
       : null,
@@ -1274,7 +1298,9 @@ function chooseNextStep(
   occupied: Set<string>,
   player: Point,
   lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerVector: Point | null,
   lastKnownPlayerTurn: number | null,
+  lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
   repositioningForSalvo: boolean,
@@ -1291,8 +1317,13 @@ function chooseNextStep(
     position,
     target,
     occupied,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
     reload,
     directDetection,
+    turn,
   )) {
     return null
   }
@@ -1342,7 +1373,9 @@ function describePlannedPath(
   occupied: Set<string>,
   player: Point,
   lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerVector: Point | null,
   lastKnownPlayerTurn: number | null,
+  lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
   repositioningForSalvo: boolean,
@@ -1359,8 +1392,13 @@ function describePlannedPath(
     position,
     target,
     occupied,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
     reload,
     directDetection,
+    turn,
   )) {
     return [{ ...position }]
   }
@@ -1441,8 +1479,13 @@ function shouldHoldAttackPosition(
   position: Point,
   target: Point | null,
   occupied: ReadonlySet<string>,
+  lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerVector: Point | null,
+  lastKnownPlayerTurn: number | null,
+  lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
+  turn: number,
 ): boolean {
   if (
     !target ||
@@ -1452,22 +1495,84 @@ function shouldHoldAttackPosition(
     return false
   }
 
+  const attackTarget = lastKnownPlayerPosition ?? target
+
+  if (!attackTarget) {
+    return false
+  }
+
+  const freshPursuitWeaponOpportunity = hasFreshPursuitWeaponOpportunity(
+      map,
+      position,
+      attackTarget,
+      hostileSubmarine.torpedoAmmo,
+      hostileSubmarine.depthChargeAmmo,
+      lastKnownPlayerVector,
+      lastKnownPlayerTurn,
+      lastKnownPlayerFromDirectDetection,
+      turn,
+    )
+
   const attackReady = (archetype !== "hunter" && archetype !== "guard") ||
-    (directDetection && reload === 0 &&
-      chebyshevDistance(position, target) <= HOSTILE_PLAYER_DETECTION_RADIUS)
+    ((directDetection || freshPursuitWeaponOpportunity) && reload === 0 &&
+      chebyshevDistance(position, attackTarget) <= HOSTILE_PLAYER_DETECTION_RADIUS)
 
   if (!attackReady) {
     return false
   }
 
-  const ceilingTrapShot = findCeilingTrapShot(map, position, target)
-
-  return hasHorizontalShotOpportunity(map, position, target) ||
-    hasVerticalShotOpportunity(map, position, target) ||
-    hasDepthChargeOpportunity(map, position, target) ||
-    (ceilingTrapShot !== null &&
+  const ceilingTrapShot = findCeilingTrapShot(map, position, attackTarget)
+  const horizontalShotOpportunity = hostileSubmarine.torpedoAmmo > 0 &&
+    hasHorizontalShotOpportunity(map, position, attackTarget)
+  const verticalShotOpportunity = hostileSubmarine.vlsAmmo > 0 &&
+    hasVerticalShotOpportunity(map, position, attackTarget)
+  const depthChargeOpportunity = hostileSubmarine.depthChargeAmmo > 0 &&
+    hasDepthChargeOpportunity(map, position, attackTarget)
+  const safeCeilingTrap = ceilingTrapShot !== null &&
       (ceilingTrapShot.direction !== "up" ||
-        canEscapeVerticalCaveIn(map, position, ceilingTrapShot.impactPoint, occupied)))
+        canEscapeVerticalCaveIn(map, position, ceilingTrapShot.impactPoint, occupied)) &&
+      ((ceilingTrapShot.direction === "up" && hostileSubmarine.vlsAmmo > 0) ||
+        (ceilingTrapShot.direction !== "up" && hostileSubmarine.torpedoAmmo > 0))
+    ? ceilingTrapShot
+    : null
+
+  return horizontalShotOpportunity || verticalShotOpportunity ||
+    depthChargeOpportunity || safeCeilingTrap !== null
+}
+
+function hasFreshPursuitWeaponOpportunity(
+  map: GeneratedMap,
+  position: Point,
+  target: Point,
+  torpedoAmmo: number,
+  depthChargeAmmo: number,
+  lastKnownPlayerVector: Point | null,
+  lastKnownPlayerTurn: number | null,
+  lastKnownPlayerFromDirectDetection: boolean,
+  turn: number,
+): boolean {
+  if (
+    lastKnownPlayerVector === null ||
+    lastKnownPlayerTurn === null ||
+    !lastKnownPlayerFromDirectDetection ||
+    turn - lastKnownPlayerTurn > 1 ||
+    chebyshevDistance(position, target) > HOSTILE_PLAYER_DETECTION_RADIUS
+  ) {
+    return false
+  }
+
+  const horizontalEscapeShot = torpedoAmmo > 0 &&
+    lastKnownPlayerVector.x !== 0 &&
+    target.x !== position.x &&
+    Math.sign(lastKnownPlayerVector.x) === Math.sign(target.x - position.x) &&
+    hasHorizontalShotOpportunity(map, position, target)
+
+  const descendingEscapeDrop = depthChargeAmmo > 0 &&
+    lastKnownPlayerVector.y > 0 &&
+    target.y > position.y &&
+    hasDepthChargeOpportunity(map, position, target)
+
+  return horizontalEscapeShot || descendingEscapeDrop
 }
 
 function shouldScoutHoldForEstimatedShot(
@@ -1538,7 +1643,9 @@ function resolveAttack(
   vlsAmmo: number,
   depthChargeAmmo: number,
   lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerVector: Point | null,
   lastKnownPlayerTurn: number | null,
+  lastKnownPlayerFromDirectDetection: boolean,
   directDetection: boolean,
   random: () => number,
   turn: number,
@@ -1601,23 +1708,10 @@ function resolveAttack(
     })
   }
 
-  if ((archetype === "hunter" || archetype === "guard") && !directDetection) {
-    return noAttack(reload, true, {
-      blockedReason: "needs direct detection",
-    })
-  }
-
-  if (
-    (archetype === "hunter" || archetype === "guard") &&
-    chebyshevDistance(position, lastKnownPlayerPosition) >
-      HOSTILE_PLAYER_DETECTION_RADIUS
-  ) {
-    return noAttack(reload, true, {
-      blockedReason: "player outside attack radius",
-    })
-  }
-
   const guessRadius = archetype === "hunter" ? 2 : 1
+  const turnAge = lastKnownPlayerTurn === null
+    ? Number.POSITIVE_INFINITY
+    : turn - lastKnownPlayerTurn
   const directLane = hasClearCardinalPath(
     map,
     position,
@@ -1639,6 +1733,39 @@ function resolveAttack(
     position,
     lastKnownPlayerPosition,
   )
+  const freshPursuitWeaponOpportunity = hasFreshPursuitWeaponOpportunity(
+    map,
+    position,
+    lastKnownPlayerPosition,
+    torpedoAmmo,
+    depthChargeAmmo,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
+    turn,
+  )
+
+  if (
+    (archetype === "hunter" || archetype === "guard") &&
+    !directDetection &&
+    !freshPursuitWeaponOpportunity
+  ) {
+    return noAttack(reload, true, {
+      blockedReason: "needs direct detection",
+    })
+  }
+
+  if (
+    (archetype === "hunter" || archetype === "guard") &&
+    chebyshevDistance(position, lastKnownPlayerPosition) >
+      HOSTILE_PLAYER_DETECTION_RADIUS &&
+    !freshPursuitWeaponOpportunity
+  ) {
+    return noAttack(reload, true, {
+      blockedReason: "player outside attack radius",
+    })
+  }
+
   const verticalShotOpportunity = hasVerticalShotOpportunity(
     map,
     position,
@@ -1673,9 +1800,6 @@ function resolveAttack(
       ? { x: position.x, y: lastKnownPlayerPosition.y }
       : guessedTarget)
 
-  const turnAge = lastKnownPlayerTurn === null
-    ? Number.POSITIVE_INFINITY
-    : turn - lastKnownPlayerTurn
   const maxEvidenceAge = archetype === "hunter" ? 2 : 1
   const confidence = archetype === "hunter"
     ? turnAge === 0 ? 0.32 : 0.16
@@ -2171,9 +2295,14 @@ function canReuseCurrentPlannedPath(
   movementTarget: Point | null,
   occupied: ReadonlySet<string>,
   player: Point,
+  lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerVector: Point | null,
+  lastKnownPlayerTurn: number | null,
+  lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
   repositioningForSalvo: boolean,
+  turn: number,
 ): boolean {
   if (
     movementTarget === null ||
@@ -2191,8 +2320,13 @@ function canReuseCurrentPlannedPath(
     position,
     movementTarget,
     occupied,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
     reload,
     directDetection,
+    turn,
   )) {
     return false
   }
@@ -2215,9 +2349,14 @@ function canUsePlannedPathForMovement(
   movementTarget: Point | null,
   occupied: ReadonlySet<string>,
   player: Point,
+  lastKnownPlayerPosition: Point | null,
+  lastKnownPlayerVector: Point | null,
+  lastKnownPlayerTurn: number | null,
+  lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
   repositioningForSalvo: boolean,
+  turn: number,
   plannedPath: readonly Point[] | null,
 ): plannedPath is Point[] {
   if (plannedPath === null || target === null || movementTarget === null) {
@@ -2243,8 +2382,13 @@ function canUsePlannedPathForMovement(
     position,
     movementTarget,
     occupied,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
     reload,
     directDetection,
+    turn,
   )) {
     return false
   }

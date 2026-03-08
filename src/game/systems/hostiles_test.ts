@@ -323,6 +323,67 @@ Deno.test("hostiles ignore vent plumes when tracking bubble clues", () => {
   assertEquals(withVentTrail.hostileSubmarines[0].target, baseline.hostileSubmarines[0].target)
 })
 
+Deno.test("hunters hold position and drop depth charges on fresh deeper pursuit fixes", () => {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 1, y: 1 },
+    { x: 10, y: 9 },
+  )
+  const hunter: HostileSubmarine = {
+    id: "hostile-1",
+    position: { x: 5, y: 2 },
+    facing: "left",
+    mode: "attack",
+    target: null,
+    reload: 0,
+    archetype: "hunter",
+    initialPosition: { x: 5, y: 2 },
+    torpedoAmmo: 6,
+    vlsAmmo: 6,
+    depthChargeAmmo: 6,
+    lastSonarTurn: 0,
+    lastKnownPlayerPosition: null,
+    lastKnownPlayerVector: null,
+    lastKnownPlayerTurn: null,
+    plannedPath: [],
+    lastAiLog: null,
+  }
+
+  const next = stepHostileSubmarines(
+    map,
+    [hunter],
+    {
+      player: { x: 5, y: 8 },
+      previousPlayer: { x: 5, y: 7 },
+      shockwaves: [],
+      trails: [],
+      memory: Array.from({ length: map.tiles.length }, () => null),
+      playerSonarHitHostiles: new Set(),
+      capsuleRetrievedThisTurn: false,
+    },
+    "hostile-depth-charge-pursuit-test",
+    8,
+  )
+
+  assertEquals(next.hostileSubmarines[0].position, { x: 5, y: 2 })
+  assertEquals(next.launchedDepthCharges.length, 1)
+  assertEquals(next.launchedDepthCharges[0].senderId, "hostile-1")
+  assertEquals(next.launchedTorpedoes.length, 0)
+  assertEquals(next.hostileSubmarines[0].depthChargeAmmo, 5)
+})
+
 function createMapFromRows(
   rows: string[],
   spawn: Point,
