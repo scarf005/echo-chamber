@@ -14,6 +14,8 @@ export interface AutoMoveAnomaly {
   reason: string
 }
 
+const autoMovePathCache = new WeakMap<GameState, Map<string, Point[]>>()
+
 export function keyForAutoMoveAnomaly(anomaly: AutoMoveAnomaly): string {
   return `${keyOfPoint(anomaly.point)}:${anomaly.reason}`
 }
@@ -93,12 +95,25 @@ export function findAutoMovePath(game: GameState, destination: Point): Point[] {
     return []
   }
 
-  return findPath(
+  const destinationKey = keyOfPoint(destination)
+  const cachedPath = autoMovePathCache.get(game)?.get(destinationKey)
+
+  if (cachedPath) {
+    return cachedPath
+  }
+
+  const path = findPath(
     game.map,
     game.player,
     destination,
     (point) => isAutoMoveNavigable(game, point),
   )
+
+  const pathsByDestination = autoMovePathCache.get(game) ?? new Map<string, Point[]>()
+  pathsByDestination.set(destinationKey, path)
+  autoMovePathCache.set(game, pathsByDestination)
+
+  return path
 }
 
 export function shouldHaltAutoMoveForAnomaly(

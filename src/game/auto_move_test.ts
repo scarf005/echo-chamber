@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals, assertStrictEquals } from "jsr:@std/assert"
 
 import {
   createGame,
@@ -21,6 +21,21 @@ Deno.test("auto-move pathfinding stops once the run is over", () => {
   assertEquals(findAutoMovePath(game, destination), [destination])
   assertEquals(findAutoMovePath({ ...game, status: "lost" }, destination), [])
   assertEquals(findAutoMovePath({ ...game, status: "won" }, destination), [])
+})
+
+Deno.test("auto-move pathfinding reuses cached results for the same game state", () => {
+  const game = createGame({
+    seed: "auto-move-cache-test",
+    width: 48,
+    height: 24,
+    hostileSubmarineCount: 0,
+  })
+  const destination = { x: game.player.x + 3, y: game.player.y }
+
+  const firstPath = findAutoMovePath(game, destination)
+  const secondPath = findAutoMovePath(game, destination)
+
+  assertStrictEquals(secondPath, firstPath)
 })
 
 Deno.test("auto-move only halts once for a seen reason", () => {
