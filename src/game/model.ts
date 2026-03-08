@@ -4,13 +4,14 @@ export type Direction = "up" | "down" | "left" | "right"
 export type HorizontalDirection = "left" | "right"
 export type VisibilityLevel = 0 | 1 | 2 | 3
 export type GameStatus = "playing" | "won" | "lost"
+export type FishMode = "idle" | "wander" | "travel"
 export type HostileSubmarineMode =
   | "patrol"
   | "investigate"
   | "attack"
   | "retreat"
 export type HostileSubmarineArchetype = "scout" | "hunter" | "turtle"
-export type EntityMemoryKind = "item" | "enemy"
+export type EntityMemoryKind = "item" | "enemy" | "non-hostile"
 
 export type RevealableEntityKind =
   | "player"
@@ -20,6 +21,7 @@ export type RevealableEntityKind =
   | "boulder"
   | "item"
   | "hostile-submarine"
+  | "fish"
 
 export type EntityRevealKind = "player" | "capsule" | "enemy" | "item"
 export type SonarMessage = { kind: "player-location"; position: Point }
@@ -93,6 +95,16 @@ export interface PickupItem {
   kind: PickupKind
 }
 
+export interface Fish {
+  id: string
+  position: Point
+  facing: HorizontalDirection
+  mode: FishMode
+  target?: Point | null
+  idleTurnsRemaining?: number
+  travelTurnsRemaining?: number
+}
+
 export interface HostileSubmarine {
   id: string
   position: Point
@@ -133,6 +145,7 @@ export interface GameState {
   torpedoes: Torpedo[]
   depthCharges: DepthCharge[]
   pickups: PickupItem[]
+  fish?: Fish[]
   hostileSubmarines: HostileSubmarine[]
   trails: FadeCell[]
   dust: FadeCell[]

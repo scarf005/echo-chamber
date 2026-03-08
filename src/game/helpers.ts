@@ -2,6 +2,7 @@ import { tileAt, type GeneratedMap, type Point } from "./mapgen.ts"
 import type {
   DepthCharge,
   Direction,
+  Fish,
   FallingBoulder,
   HostileSubmarine,
   HorizontalDirection,
@@ -32,6 +33,14 @@ export function cloneDepthCharge(depthCharge: DepthCharge): DepthCharge {
   return {
     ...depthCharge,
     position: { ...depthCharge.position },
+  }
+}
+
+export function cloneFish(fish: Fish): Fish {
+  return {
+    ...fish,
+    position: { ...fish.position },
+    target: fish.target ? { ...fish.target } : null,
   }
 }
 
