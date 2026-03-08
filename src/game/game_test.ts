@@ -138,7 +138,33 @@ Deno.test("auto-move anomalies report exact hostile contact at full visibility",
 
   assertEquals(findAutoMoveAnomaly(current), {
     point: contact,
-    reason: "hostile submarine in sight",
+    reason: "enemy submarine in sight",
+  })
+})
+
+Deno.test("auto-move anomalies report exact fish contact at full visibility", () => {
+  const game = createFlatGame()
+  const contact = { x: 4, y: 2 }
+  const index = contact.y * game.map.width + contact.x
+  const current = {
+    ...game,
+    visibility: game.visibility.slice(),
+    fish: [{
+      id: "fish-1",
+      position: contact,
+      facing: "left" as const,
+      mode: "idle" as const,
+      target: null,
+      idleTurnsRemaining: 1,
+      travelTurnsRemaining: 0,
+    }],
+  }
+
+  current.visibility[index] = 3
+
+  assertEquals(findAutoMoveAnomaly(current), {
+    point: contact,
+    reason: "fish in sight",
   })
 })
 

@@ -1,6 +1,7 @@
 import { Path } from "npm:rot-js@2.2.1"
 
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
+import { exactEntityNameAtPoint, inSightReasonForEntity } from "./entity_labels.ts"
 import { keyOfPoint, pointsEqual } from "./helpers.ts"
 import { withGameMessage } from "./log.ts"
 import type { Direction, GameState, HorizontalDirection } from "./model.ts"
@@ -110,14 +111,29 @@ export function shouldHaltAutoMoveForAnomaly(
 export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
   const visibleHostile = firstVisiblePoint(
     game,
-    game.hostileSubmarines.map((hostileSubmarine) => ({
-      point: hostileSubmarine.position,
-      reason: reasonForVisibility(
-        game,
-        hostileSubmarine.position,
-        "hostile submarine in sight",
-      ),
-    })),
+    [
+      ...game.hostileSubmarines.map((hostileSubmarine) => ({
+        point: hostileSubmarine.position,
+        reason: reasonForVisibility(
+          game,
+          hostileSubmarine.position,
+          inSightReasonForEntity(
+            exactEntityNameAtPoint(game, hostileSubmarine.position) ??
+              "enemy submarine",
+          ),
+        ),
+      })),
+      ...(game.fish ?? []).map((fish) => ({
+        point: fish.position,
+        reason: reasonForVisibility(
+          game,
+          fish.position,
+          inSightReasonForEntity(
+            exactEntityNameAtPoint(game, fish.position) ?? "fish",
+          ),
+        ),
+      })),
+    ],
   )
 
   if (visibleHostile) {
