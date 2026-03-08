@@ -4,5 +4,5 @@ export function shouldRestartFromKey(
   key: string,
   status: GameState["status"],
 ): boolean {
-  return (key === "r" || key === "R") && status === "lost"
+  return (key === "r" || key === "R") && status !== "playing"
 }
