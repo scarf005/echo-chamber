@@ -118,8 +118,18 @@ export function drawEntitiesLayer(
   const entityMemory = game.entityMemory?.[index] ?? null
   const debugOverlayAlpha = renderOptions.debugEntityOverlay ? 0.5 : 0
   const capsuleCollected = game.capsuleCollected ?? false
+  const torpedo = entityMaps.torpedoes.get(index)
+  const depthCharge = entityMaps.depthCharges.get(index)
 
   if (x === game.map.spawn.x && y === game.map.spawn.y) {
+    drawTileBackground(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      COLORS.dockBackground,
+      1,
+    )
     drawGlyph(context, screenX, screenY, tileSize, "D", COLORS.player, 1)
   }
 
@@ -127,6 +137,14 @@ export function drawEntitiesLayer(
     !capsuleCollected &&
     x === game.map.capsule.x && y === game.map.capsule.y && game.capsuleKnown
   ) {
+    drawTileBackground(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      COLORS.capsuleBackground,
+      1,
+    )
     drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, 1)
   }
 
@@ -160,6 +178,14 @@ export function drawEntitiesLayer(
 
     if (entityMemory) {
       drawEntityMemory(context, screenX, screenY, tileSize, entityMemory)
+    }
+
+    if (torpedo && shouldRenderProjectileInDarkness(torpedo.senderId)) {
+      drawTorpedoGlyph(context, screenX, screenY, tileSize, torpedo, 1)
+    }
+
+    if (depthCharge && shouldRenderProjectileInDarkness(depthCharge.senderId)) {
+      drawDepthChargeGlyph(context, screenX, screenY, tileSize, 1)
     }
 
     return
@@ -197,33 +223,17 @@ export function drawEntitiesLayer(
     drawEntityMemory(context, screenX, screenY, tileSize, entityMemory)
   }
 
-  const torpedo = entityMaps.torpedoes.get(index)
   if (torpedo) {
     const exact = visibility >= 3 || torpedo.senderId === "player"
     if (exact) {
-      drawGlyph(
-        context,
-        screenX,
-        screenY,
-        tileSize,
-        torpedo.direction === "left"
-          ? "<"
-          : torpedo.direction === "right"
-          ? ">"
-          : torpedo.direction === "up"
-          ? "^"
-          : "v",
-        COLORS.torpedo,
-        1,
-      )
+      drawTorpedoGlyph(context, screenX, screenY, tileSize, torpedo, 1)
     } else {
       drawEntityMemory(context, screenX, screenY, tileSize, "enemy")
     }
   }
 
-  const depthCharge = entityMaps.depthCharges.get(index)
   if (depthCharge) {
-    drawGlyph(context, screenX, screenY, tileSize, "v", COLORS.depthCharge, 1)
+    drawDepthChargeGlyph(context, screenX, screenY, tileSize, 1)
   }
 
   const boulder = entityMaps.boulders.get(index)
@@ -404,11 +414,27 @@ function drawExactEntityOverlay(
   alpha: number,
 ): void {
   if (x === game.map.spawn.x && y === game.map.spawn.y) {
+    drawTileBackground(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      COLORS.dockBackground,
+      alpha,
+    )
     drawGlyph(context, screenX, screenY, tileSize, "D", COLORS.player, alpha)
   }
 
   if (x === game.map.capsule.x && y === game.map.capsule.y) {
     if (!(game.capsuleCollected ?? false)) {
+      drawTileBackground(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        COLORS.capsuleBackground,
+        alpha,
+      )
       drawGlyph(context, screenX, screenY, tileSize, "C", COLORS.capsule, alpha)
     }
   }
