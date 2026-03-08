@@ -89,6 +89,14 @@
   font-size: 1rem;
 }
 
+.stat-row-dev-only {
+  color: #f4d35e;
+}
+
+.stat-row-dev-only strong {
+  color: #f4d35e;
+}
+
 .button-stack {
   display: grid;
   gap: 0.55rem;
@@ -215,6 +223,10 @@
   color: #ff8c82;
 }
 
+.sidebar-log-message-ai {
+  color: #fa8072;
+}
+
 .dev-inspector-grid {
   display: grid;
   gap: 0;
@@ -222,6 +234,17 @@
 
 .dev-inspector-grid .stat-row {
   gap: 0.25rem;
+}
+
+.dev-only-block {
+  display: grid;
+  gap: 0.8rem;
+  color: #f4d35e;
+}
+
+.dev-only-block .sidebar-heading,
+.dev-only-block strong {
+  color: #f4d35e;
 }
 
 .credit-list {

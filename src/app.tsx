@@ -50,8 +50,8 @@ import {
 } from "./settings.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
-  describeInspectorContact,
-  hasExactInspectorVisibility,
+  describeHoveredInspectorRows,
+  filterInspectorRows,
 } from "./render/helpers/inspector.ts"
 import type { RenderOptions, ViewportMode } from "./render/options.ts"
 
@@ -76,6 +76,7 @@ export function App() {
   const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
+  const isGodMode = IS_DEV_BUILD && showDevEntityOverlay
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
   const backgroundMusicRef = useRef<
@@ -685,18 +686,19 @@ export function App() {
   const targetCoordinates = previewTarget ? formatPoint(previewTarget) : "--"
   const musicVolumePercent = levelToSliderPercent(audioSettings.musicVolume)
   const sfxVolumePercent = levelToSliderPercent(audioSettings.sfxVolume)
-  const visibleLogMessages = groupLogMessages(game.logs).slice(-LOG_PANEL_LINES)
+  const visibleLogMessages = groupLogMessages(game.logs).filter((entry) =>
+    isGodMode || entry.type !== "ai"
+  ).slice(-LOG_PANEL_LINES)
   const renderOptions: RenderOptions = {
-    debugEntityOverlay: IS_DEV_BUILD && showDevEntityOverlay,
-    debugPlannedPaths: IS_DEV_BUILD && showDevEntityOverlay,
+    debugEntityOverlay: isGodMode,
+    debugPlannedPaths: isGodMode,
     viewportMode,
     cameraTileWidth: 30,
     cameraTileHeight: 20,
   }
   const viewportLabel = viewportMode === "full" ? "FULL MAP (M)" : "TRACKING (M)"
-  const hoveredInspectorRows = IS_DEV_BUILD
-    ? describeHoveredTile(game, hoveredTile)
-    : null
+  const hoveredInspectorRows = describeHoveredInspectorRows(game, hoveredTile)
+  const visibleInspectorRows = filterInspectorRows(hoveredInspectorRows, isGodMode)
 
   const handleMusicEnabledChange = (
     event: JSX.TargetedEvent<HTMLInputElement>,
@@ -837,33 +839,32 @@ export function App() {
           </div>
         </section>
 
-        {IS_DEV_BUILD
-          ? (
-            <section class="sidebar-panel">
-              <div class="sidebar-heading">inspector</div>
-              <div class="stat-row">
-                <span>hover tile</span>
-                <strong>{hoveredTile ? formatPoint(hoveredTile) : "--"}</strong>
+        <section class="sidebar-panel">
+          <div class="sidebar-heading">inspector</div>
+          <div class="stat-row">
+            <span>hover tile</span>
+            <strong>{hoveredTile ? formatPoint(hoveredTile) : "--"}</strong>
+          </div>
+          {visibleInspectorRows && visibleInspectorRows.length > 0
+            ? (
+              <div class="dev-inspector-grid">
+                {visibleInspectorRows.map((row, index) => (
+                  <div
+                    class={`stat-row${row.devOnly ? " stat-row-dev-only" : ""}`}
+                    key={`${index}:${row.label}:${row.value}`}
+                  >
+                    <span>{row.label}</span>
+                    <strong>{row.value}</strong>
+                  </div>
+                ))}
               </div>
-              {hoveredInspectorRows
-                ? (
-                  <div class="dev-inspector-grid">
-                    {hoveredInspectorRows.map((row) => (
-                      <div class="stat-row" key={row.label}>
-                        <span>{row.label}</span>
-                        <strong>{row.value}</strong>
-                      </div>
-                    ))}
-                  </div>
-                )
-                : (
-                  <div class="sidebar-text-block">
-                    hover any tile to inspect terrain and entities.
-                  </div>
-                )}
-            </section>
-          )
-          : null}
+            )
+            : (
+              <div class="sidebar-text-block">
+                hover any tile to inspect terrain and contacts.
+              </div>
+            )}
+        </section>
       </aside>
 
       {isOptionsOpen
@@ -957,7 +958,7 @@ export function App() {
               </div>
               {IS_DEV_BUILD
                 ? (
-                  <>
+                  <div class="dev-only-block">
                     <div class="sidebar-heading">dev</div>
                     <div class="button-stack">
                       <button
@@ -981,20 +982,20 @@ export function App() {
                         <span>map overlay</span>
                         <div class="audio-setting-row">
                           <span>
-                            show exact entities and paths at 50% opacity
+                            god mode
                           </span>
                           <input
                             class="audio-toggle"
                             type="checkbox"
                             checked={showDevEntityOverlay}
-                            aria-label="show dev entity overlay"
+                            aria-label="god mode"
                             onChange={handleDevEntityOverlayChange}
                           />
                           <strong>{showDevEntityOverlay ? "ON" : "OFF"}</strong>
                         </div>
                       </div>
                     </div>
-                  </>
+                  </div>
                 )
                 : null}
               <div class="sidebar-heading">credits</div>
