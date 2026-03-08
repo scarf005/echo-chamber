@@ -363,6 +363,9 @@ export function advanceTurn(
     )
     : null
   const playerEntityHitThisTurn = rammedFishCount > 0 ||
+    cutKelp ||
+    torpedoStep.impacts > 0 ||
+    depthChargeStep.impacts > 0 ||
     torpedoStep.playerEntityHits > 0 ||
     depthChargeStep.playerEntityHits > 0
   const playerDiedThisTurn = game.status !== "lost" && playerDestroyed

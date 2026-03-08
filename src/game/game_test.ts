@@ -129,6 +129,7 @@ Deno.test("moving into kelp clears that strand upward", () => {
     message: "You cut kelps.",
     type: "neutral",
   })
+  assertEquals(next.playerEntityHitCueCount, 1)
 })
 
 Deno.test("findPath returns an empty route for an impassable destination", () => {
@@ -388,6 +389,18 @@ Deno.test("player entity hit cue fires when a torpedo catches a fish", () => {
 
   assertEquals(next.playerEntityHitCueCount, 1)
   assertEquals(next.fish, [])
+})
+
+Deno.test("player entity hit cue fires when a torpedo explodes on terrain", () => {
+  const game = {
+    ...createTorpedoTestGame(),
+    playerEntityHitCueCount: 0,
+  }
+
+  const next = fireTorpedo(game, "right")
+
+  assertEquals(next.playerEntityHitCueCount, 1)
+  assertEquals(next.shockwaves.length, 1)
 })
 
 Deno.test("player death cue fires when a hostile torpedo sinks the sub", () => {
