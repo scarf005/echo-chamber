@@ -50,9 +50,10 @@ export function spawnFish(
   }
 
   const random = createDeterministicRandom(`${seed}:fish-spawns`)
-  const targetCount = hostileSubmarines.filter((hostileSubmarine) =>
-    hostileSubmarine.archetype === "scout"
-  ).length
+  const targetCount =
+    hostileSubmarines.filter((hostileSubmarine) =>
+      hostileSubmarine.archetype === "scout"
+    ).length
 
   if (targetCount <= 0) {
     return []
@@ -127,7 +128,13 @@ export function stepFish(
     const random = createDeterministicRandom(
       `${seed}:fish:${candidate.id}:${turn}:${index}`,
     )
-    const nextCandidate = updateFish(map, candidate, context.player, occupied, random)
+    const nextCandidate = updateFish(
+      map,
+      candidate,
+      context.player,
+      occupied,
+      random,
+    )
 
     if (!nextCandidate) {
       rammedFishCount += 1

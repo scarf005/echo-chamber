@@ -1,9 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1"
 
-import {
-  getSonarLoopVolume,
-  stepSonarLoopVolume,
-} from "./sonarLoop.ts"
+import { getSonarLoopVolume, stepSonarLoopVolume } from "./sonarLoop.ts"
 
 Deno.test("sonar loop runs at thirty percent volume when sfx is maxed", () => {
   assertEquals(getSonarLoopVolume(1), 0.3)

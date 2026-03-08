@@ -29,7 +29,12 @@ export default class Palette {
 
   updateClearColor(gl, index) {
     const ctx = this._ctx
-    const imageData = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height)
+    const imageData = ctx.getImageData(
+      0,
+      0,
+      ctx.canvas.width,
+      ctx.canvas.height,
+    )
     const offset = index * 4
     const { data } = imageData
     gl.clearColor(

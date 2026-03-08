@@ -2,7 +2,11 @@ import type { CrackCell, FadeCell, GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
 import { COLORS } from "./colors.ts"
 import { TERMINAL_FONT_STACK } from "./fontFamily.ts"
-import { drawGlyph, drawTileBackground, screenShakeOffset } from "./helpers/draw.ts"
+import {
+  drawGlyph,
+  drawTileBackground,
+  screenShakeOffset,
+} from "./helpers/draw.ts"
 import {
   pointToViewport,
   resolveViewportMetrics,
@@ -37,7 +41,10 @@ type EntityMaps = ReturnType<typeof buildEntityMaps>
 
 const effectMapsCache = new WeakMap<GameState, EffectMaps>()
 const entityMapsCache = new WeakMap<GameState, EntityMaps>()
-const tileMemoryCanvasCache = new WeakMap<GameState, Map<string, HTMLCanvasElement>>()
+const tileMemoryCanvasCache = new WeakMap<
+  GameState,
+  Map<string, HTMLCanvasElement>
+>()
 
 export function drawGame(
   canvas: HTMLCanvasElement,
@@ -312,7 +319,9 @@ function resolveTileMemoryCanvas(
     throw new Error("2D canvas not supported")
   }
 
-  context.font = `${Math.max(8, viewport.tileSize - 2)}px ${TERMINAL_FONT_STACK}`
+  context.font = `${
+    Math.max(8, viewport.tileSize - 2)
+  }px ${TERMINAL_FONT_STACK}`
   context.textAlign = "center"
   context.textBaseline = "middle"
 
@@ -335,7 +344,8 @@ function resolveTileMemoryCanvas(
     }
   }
 
-  const nextCanvasesByViewport = canvasesByViewport ?? new Map<string, HTMLCanvasElement>()
+  const nextCanvasesByViewport = canvasesByViewport ??
+    new Map<string, HTMLCanvasElement>()
   nextCanvasesByViewport.set(cacheKey, canvas)
   tileMemoryCanvasCache.set(game, nextCanvasesByViewport)
 

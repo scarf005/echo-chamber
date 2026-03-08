@@ -1,10 +1,10 @@
 import { i18n } from "../i18n.ts"
 import {
-  PASSIVE_EXACT_RADIUS,
   CRACK_DECAY,
   DEPTH_CHARGE_RANGE,
   DEPTH_CHARGE_SPEED,
   DUST_DECAY,
+  PASSIVE_EXACT_RADIUS,
   SHAKE_DECAY,
   SONAR_INTERVAL,
   TORPEDO_RANGE,
@@ -46,12 +46,12 @@ import type {
   Fish,
   GameState,
   GameStatus,
-  HostileSubmarine,
   HorizontalDirection,
+  HostileSubmarine,
   LogMessage,
   RevealableEntity,
-  SonarContactAudioVariant,
   Shockwave,
+  SonarContactAudioVariant,
   TurnAction,
 } from "./model.ts"
 import { refreshPerception, revealMap } from "./perception.ts"
@@ -107,10 +107,12 @@ export function advanceTurn(
     ? createLogMessage(
       i18n._("A hostile submarine rams your hull. Press R for a new run."),
       "negative",
-      () => i18n._("A hostile submarine rams your hull. Press R for a new run."),
+      () =>
+        i18n._("A hostile submarine rams your hull. Press R for a new run."),
     )
     : null
-  const playerMoved = nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y
+  const playerMoved = nextPlayer.x !== game.player.x ||
+    nextPlayer.y !== game.player.y
 
   if (playerMoved) {
     trails = mergeTrailCell(trails, indexForPoint(map.width, game.player), 1)
@@ -167,9 +169,14 @@ export function advanceTurn(
 
   if (torpedoStep.playerDestroyed) {
     hostileMessage = createLogMessage(
-      i18n._("A hostile torpedo tears through your hull. Press R for a new run."),
+      i18n._(
+        "A hostile torpedo tears through your hull. Press R for a new run.",
+      ),
       "negative",
-      () => i18n._("A hostile torpedo tears through your hull. Press R for a new run."),
+      () =>
+        i18n._(
+          "A hostile torpedo tears through your hull. Press R for a new run.",
+        ),
     )
   }
 
@@ -201,7 +208,8 @@ export function advanceTurn(
     hostileMessage = createLogMessage(
       i18n._("A hostile blast caves in your hull. Press R for a new run."),
       "negative",
-      () => i18n._("A hostile blast caves in your hull. Press R for a new run."),
+      () =>
+        i18n._("A hostile blast caves in your hull. Press R for a new run."),
     )
   }
 
@@ -320,7 +328,8 @@ export function advanceTurn(
       hostileMessage = createLogMessage(
         "A hostile submarine rams your hull. Press R for a new run.",
         "negative",
-        () => i18n._("A hostile submarine rams your hull. Press R for a new run."),
+        () =>
+          i18n._("A hostile submarine rams your hull. Press R for a new run."),
       )
     }
   }
@@ -348,9 +357,14 @@ export function advanceTurn(
   )
   const hostileSonarMessage = hostileSonarContact.direction !== null
     ? createLogMessage(
-      i18n._("hostile sonar from {direction}", { direction: hostileSonarContact.direction }),
+      i18n._("hostile sonar from {direction}", {
+        direction: hostileSonarContact.direction,
+      }),
       "negative",
-      () => i18n._("hostile sonar from {direction}", { direction: hostileSonarContact.direction }),
+      () =>
+        i18n._("hostile sonar from {direction}", {
+          direction: hostileSonarContact.direction,
+        }),
     )
     : null
 
@@ -427,14 +441,26 @@ export function advanceTurn(
   const kelpMessage = cutKelp ? createLogMessage("You cut kelps.") : null
   const latestDetectionMessage = detectionLogs.at(-1) ?? null
   const capsuleMessage = capsuleRetrievedThisTurn
-    ? createLogMessage(i18n._("Capsule retrieved. Return to dock."), "positive", () => i18n._("Capsule retrieved. Return to dock."))
+    ? createLogMessage(
+      i18n._("Capsule retrieved. Return to dock."),
+      "positive",
+      () => i18n._("Capsule retrieved. Return to dock."),
+    )
     : null
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
-      createLogMessage(i18n._("Your submarine is destroyed. Press R for a new run."), "negative", () => i18n._("Your submarine is destroyed. Press R for a new run."))
+      createLogMessage(
+        i18n._("Your submarine is destroyed. Press R for a new run."),
+        "negative",
+        () => i18n._("Your submarine is destroyed. Press R for a new run."),
+      )
     : won
-    ? createLogMessage(i18n._("Capsule delivered to dock. Press R for a new run."), "positive", () => i18n._("Capsule delivered to dock. Press R for a new run."))
+    ? createLogMessage(
+      i18n._("Capsule delivered to dock. Press R for a new run."),
+      "positive",
+      () => i18n._("Capsule delivered to dock. Press R for a new run."),
+    )
     : capsuleMessage !== null
     ? capsuleMessage
     : pickupStep.message !== null
@@ -443,12 +469,16 @@ export function advanceTurn(
     ? createLogMessage(
       rammedFishCount === 1
         ? i18n._("You paste a fish against the bow.")
-        : i18n._("You paste {rammedFishCount} fish against the bow.", { rammedFishCount }),
+        : i18n._("You paste {rammedFishCount} fish against the bow.", {
+          rammedFishCount,
+        }),
       "neutral",
       () =>
         rammedFishCount === 1
           ? i18n._("You paste a fish against the bow.")
-          : i18n._("You paste {rammedFishCount} fish against the bow.", { rammedFishCount }),
+          : i18n._("You paste {rammedFishCount} fish against the bow.", {
+            rammedFishCount,
+          }),
     )
     : kelpMessage !== null
     ? kelpMessage
@@ -468,7 +498,9 @@ export function advanceTurn(
   const nextLogs = [
     ...game.logs,
     ...hostileAiLogs,
-    ...(kelpMessage !== null && nextMessage !== kelpMessage ? [kelpMessage] : []),
+    ...(kelpMessage !== null && nextMessage !== kelpMessage
+      ? [kelpMessage]
+      : []),
     ...detectionHistoryLogs,
     ...(hostileSonarMessage !== null && nextMessage !== hostileSonarMessage
       ? [hostileSonarMessage]
@@ -476,51 +508,55 @@ export function advanceTurn(
     ...(won ? [createLogMessage(WIN_SEED_MODE_HINT)] : []),
   ].slice(-MAX_LOG_MESSAGES)
 
-  const nextStatus: GameStatus = playerDestroyed ? "lost" : won ? "won" : "playing"
+  const nextStatus: GameStatus = playerDestroyed
+    ? "lost"
+    : won
+    ? "won"
+    : "playing"
   const nextGame: GameState = {
-        ...game,
-        map,
-        player: { ...nextPlayer },
-        turn: nextTurn,
-        status: nextStatus,
-        playerSonarEnabled,
-        capsuleCollected,
-        lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
-        playerSonarContactCueCount: playerSonarMadeContact
-          ? (game.playerSonarContactCueCount ?? 0) + 1
-          : (game.playerSonarContactCueCount ?? 0),
-        playerSonarContactAudioVariant,
-        hostileSonarContactCueCount: hostileSonarContact.reveals.length > 0
-          ? (game.hostileSonarContactCueCount ?? 0) + 1
-          : (game.hostileSonarContactCueCount ?? 0),
-        playerEntityHitCueCount: playerEntityHitThisTurn
-          ? (game.playerEntityHitCueCount ?? 0) + 1
-          : (game.playerEntityHitCueCount ?? 0),
-        playerDeathCueCount: playerDiedThisTurn
-          ? (game.playerDeathCueCount ?? 0) + 1
-          : (game.playerDeathCueCount ?? 0),
-        playerPickupCueCount: playerCollectedPickup
-          ? (game.playerPickupCueCount ?? 0) + 1
-          : (game.playerPickupCueCount ?? 0),
-        logs: nextLogs,
-        shockwaves: shockwaveStep.waves,
-        shockwaveFront: shockwaveStep.front,
-        torpedoes,
-        depthCharges,
-        pickups,
-        fish,
-        trails,
-        dust,
-        cracks,
-        structuralDamage,
-        fallingBoulders,
-        hostileSubmarines,
-        facing,
-        torpedoAmmo,
-        depthChargeAmmo,
-        screenShake,
-        message: nextMessageText,
-      }
+    ...game,
+    map,
+    player: { ...nextPlayer },
+    turn: nextTurn,
+    status: nextStatus,
+    playerSonarEnabled,
+    capsuleCollected,
+    lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
+    playerSonarContactCueCount: playerSonarMadeContact
+      ? (game.playerSonarContactCueCount ?? 0) + 1
+      : (game.playerSonarContactCueCount ?? 0),
+    playerSonarContactAudioVariant,
+    hostileSonarContactCueCount: hostileSonarContact.reveals.length > 0
+      ? (game.hostileSonarContactCueCount ?? 0) + 1
+      : (game.hostileSonarContactCueCount ?? 0),
+    playerEntityHitCueCount: playerEntityHitThisTurn
+      ? (game.playerEntityHitCueCount ?? 0) + 1
+      : (game.playerEntityHitCueCount ?? 0),
+    playerDeathCueCount: playerDiedThisTurn
+      ? (game.playerDeathCueCount ?? 0) + 1
+      : (game.playerDeathCueCount ?? 0),
+    playerPickupCueCount: playerCollectedPickup
+      ? (game.playerPickupCueCount ?? 0) + 1
+      : (game.playerPickupCueCount ?? 0),
+    logs: nextLogs,
+    shockwaves: shockwaveStep.waves,
+    shockwaveFront: shockwaveStep.front,
+    torpedoes,
+    depthCharges,
+    pickups,
+    fish,
+    trails,
+    dust,
+    cracks,
+    structuralDamage,
+    fallingBoulders,
+    hostileSubmarines,
+    facing,
+    torpedoAmmo,
+    depthChargeAmmo,
+    screenShake,
+    message: nextMessageText,
+  }
 
   return withGameMessage(
     refreshPerception(
@@ -542,13 +578,19 @@ function collectHostileSonarContacts(
   revealableEntities: RevealableEntity[],
   player: Point,
 ): { reveals: EntityReveal[]; direction: string | null } {
-  const hostileIds = new Set(hostileSubmarines.map((hostileSubmarine) => hostileSubmarine.id))
+  const hostileIds = new Set(
+    hostileSubmarines.map((hostileSubmarine) => hostileSubmarine.id),
+  )
   const hostileWaves = [
     ...activeShockwaves
-      .filter((wave) => hostileIds.has(wave.senderId) && wave.damaging === false)
+      .filter((wave) =>
+        hostileIds.has(wave.senderId) && wave.damaging === false
+      )
       .map((wave) => ({ wave, spawnedThisTurn: false })),
     ...spawnedShockwaves
-      .filter((wave) => hostileIds.has(wave.senderId) && wave.damaging === false)
+      .filter((wave) =>
+        hostileIds.has(wave.senderId) && wave.damaging === false
+      )
       .map((wave) => ({ wave, spawnedThisTurn: true })),
   ]
 
@@ -556,15 +598,17 @@ function collectHostileSonarContacts(
   let direction: string | null = null
 
   for (const { wave, spawnedThisTurn } of hostileWaves) {
-    if (!didShockwaveReachPointThisTurn(
-      map,
-      wave,
-      dust,
-      trails,
-      revealableEntities,
-      player,
-      spawnedThisTurn,
-    )) {
+    if (
+      !didShockwaveReachPointThisTurn(
+        map,
+        wave,
+        dust,
+        trails,
+        revealableEntities,
+        player,
+        spawnedThisTurn,
+      )
+    ) {
       continue
     }
 
@@ -575,7 +619,10 @@ function collectHostileSonarContacts(
       continue
     }
 
-    const approximatePoint = createApproximateHostileSonarPoint(map, wave.origin)
+    const approximatePoint = createApproximateHostileSonarPoint(
+      map,
+      wave.origin,
+    )
     const index = indexForPoint(map.width, approximatePoint)
     reveals.set(index, {
       index,
@@ -725,12 +772,22 @@ function resolvePlayerSonarContactAudioVariant(
     width,
     preHostileReveals,
     preHostileFish,
-    stationaryHostileIndexesById(preHostileHostiles, postHostileHostiles, width, false),
+    stationaryHostileIndexesById(
+      preHostileHostiles,
+      postHostileHostiles,
+      width,
+      false,
+    ),
   ) ?? resolvePlayerSonarContactAudioVariantForPhase(
     width,
     postHostileReveals,
     postHostileFish,
-    stationaryHostileIndexesById(preHostileHostiles, postHostileHostiles, width, true),
+    stationaryHostileIndexesById(
+      preHostileHostiles,
+      postHostileHostiles,
+      width,
+      true,
+    ),
   ) ?? "kizilsungur"
 }
 
@@ -748,9 +805,9 @@ function resolvePlayerSonarContactAudioVariantForPhase(
     return null
   }
 
-  const fishIndexes = new Set((fish ?? []).map((candidate) =>
-    indexForPoint(width, candidate.position)
-  ))
+  const fishIndexes = new Set(
+    (fish ?? []).map((candidate) => indexForPoint(width, candidate.position)),
+  )
   const hasDigitalContact = playerContactReveals.some((reveal) => {
     if (reveal.kind === "capsule" || reveal.kind === "item") {
       return true
@@ -761,7 +818,8 @@ function resolvePlayerSonarContactAudioVariantForPhase(
     }
 
     return reveal.kind === "enemy" &&
-      (fishIndexes.has(reveal.index) || stationaryHostileIndexes.has(reveal.index))
+      (fishIndexes.has(reveal.index) ||
+        stationaryHostileIndexes.has(reveal.index))
   })
 
   return hasDigitalContact ? "digital" : "kizilsungur"
@@ -773,10 +831,12 @@ function stationaryHostileIndexesById(
   width: number,
   usePostHostileIndexes: boolean,
 ): Set<number> {
-  const postHostileById = new Map(postHostileHostiles.map((hostileSubmarine) => [
-    hostileSubmarine.id,
-    hostileSubmarine,
-  ]))
+  const postHostileById = new Map(
+    postHostileHostiles.map((hostileSubmarine) => [
+      hostileSubmarine.id,
+      hostileSubmarine,
+    ]),
+  )
 
   return new Set(
     preHostileHostiles

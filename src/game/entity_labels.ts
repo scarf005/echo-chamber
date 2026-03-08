@@ -14,39 +14,51 @@ export function exactEntityNameAtPoint(
     return i18n._("capsule")
   }
 
-  if (game.hostileSubmarines.some((candidate) =>
-    candidate.position.x === point.x && candidate.position.y === point.y
-  )) {
+  if (
+    game.hostileSubmarines.some((candidate) =>
+      candidate.position.x === point.x && candidate.position.y === point.y
+    )
+  ) {
     return i18n._("enemy submarine")
   }
 
-  if ((game.fish ?? []).some((candidate) =>
-    candidate.position.x === point.x && candidate.position.y === point.y
-  )) {
+  if (
+    (game.fish ?? []).some((candidate) =>
+      candidate.position.x === point.x && candidate.position.y === point.y
+    )
+  ) {
     return i18n._("fish")
   }
 
-  if (game.pickups.some((candidate) =>
-    candidate.position.x === point.x && candidate.position.y === point.y
-  )) {
+  if (
+    game.pickups.some((candidate) =>
+      candidate.position.x === point.x && candidate.position.y === point.y
+    )
+  ) {
     return i18n._("item")
   }
 
-  if (game.torpedoes.some((candidate) =>
-    candidate.position.x === point.x && candidate.position.y === point.y
-  )) {
+  if (
+    game.torpedoes.some((candidate) =>
+      candidate.position.x === point.x && candidate.position.y === point.y
+    )
+  ) {
     return i18n._("torpedo")
   }
 
-  if (game.depthCharges.some((candidate) =>
-    candidate.position.x === point.x && candidate.position.y === point.y
-  )) {
+  if (
+    game.depthCharges.some((candidate) =>
+      candidate.position.x === point.x && candidate.position.y === point.y
+    )
+  ) {
     return i18n._("depth charge")
   }
 
-  if (game.fallingBoulders.some((candidate) =>
-    candidate.position.x === point.x && candidate.position.y === point.y
-  )) {
+  if (
+    game.fallingBoulders.some((candidate) =>
+      candidate.position.x === point.x && candidate.position.y === point.y
+    )
+  ) {
     return i18n._("falling boulder")
   }
 

@@ -2,7 +2,7 @@
 
 import { assert, assertEquals } from "jsr:@std/assert"
 
-import { revealMap, type GameState } from "./game.ts"
+import { type GameState, revealMap } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
 
 Deno.test("revealMap remembers the full terrain layout as fog-of-war", () => {

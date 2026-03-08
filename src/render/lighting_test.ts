@@ -79,8 +79,10 @@ function createMapFromRows(
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>
-    Array.from(row, (cell) =>
-      cell === "#" ? "wall" : cell === "V" ? "vent" : "water" as const
+    Array.from(
+      row,
+      (cell) =>
+        cell === "#" ? "wall" : cell === "V" ? "vent" : "water" as const,
     )
   )
 

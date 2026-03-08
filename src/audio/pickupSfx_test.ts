@@ -1,9 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1"
 
-import {
-  getPickupSampleChoices,
-  getPickupVolume,
-} from "./pickupSfx.ts"
+import { getPickupSampleChoices, getPickupVolume } from "./pickupSfx.ts"
 
 Deno.test("pickup sfx uses the requested reload sample", () => {
   assertEquals(getPickupSampleChoices().map(fileNameFromUrl), [

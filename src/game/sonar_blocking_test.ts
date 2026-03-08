@@ -2,7 +2,7 @@
 
 import { assert, assertEquals } from "jsr:@std/assert"
 
-import { holdPosition, type GameState } from "./game.ts"
+import { type GameState, holdPosition } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
 import { ventPlumeLength } from "./vents.ts"
 
@@ -267,8 +267,16 @@ function createMapFromRows(
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>
-    Array.from(row, (cell) =>
-      cell === "#" ? "wall" : cell === "K" ? "kelp" : cell === "V" ? "vent" : "water" as const
+    Array.from(
+      row,
+      (cell) =>
+        cell === "#"
+          ? "wall"
+          : cell === "K"
+          ? "kelp"
+          : cell === "V"
+          ? "vent"
+          : "water" as const,
     )
   )
 

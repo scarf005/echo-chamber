@@ -1,9 +1,9 @@
 {
   "tasks": {
     "dev": "deno run -A --node-modules-dir npm:vite",
-    "build":{
-       "command": "deno run -A --node-modules-dir npm:vite build",
-       "dependencies": ["i18n:extract"]
+    "build": {
+      "command": "deno run -A --node-modules-dir npm:vite build",
+      "dependencies": ["i18n:extract"]
     },
     "test": "deno test --allow-env=NODE_ENV",
     "preview": "deno run -A --node-modules-dir npm:vite preview",

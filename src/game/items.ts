@@ -13,15 +13,28 @@ import {
   randomChoice,
   shufflePoints,
 } from "./helpers.ts"
-import type { GameState, LogMessage, PickupItem, PickupKind, TileReveal } from "./model.ts"
-import { tileAt, type GeneratedMap, type Point } from "./mapgen.ts"
+import type {
+  GameState,
+  LogMessage,
+  PickupItem,
+  PickupKind,
+  TileReveal,
+} from "./model.ts"
+import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 import { randomIntegerBetween } from "@std/random"
 
-const PICKUP_KINDS: PickupKind[] = ["torpedo-cache", "depth-charge-cache", "map"]
+const PICKUP_KINDS: PickupKind[] = [
+  "torpedo-cache",
+  "depth-charge-cache",
+  "map",
+]
 const MIN_PICKUP_ANCHOR_DISTANCE = 5
 const MIN_PICKUP_SPACING = 6
 
-export function createCornerPickups(map: GeneratedMap, seed: string): PickupItem[] {
+export function createCornerPickups(
+  map: GeneratedMap,
+  seed: string,
+): PickupItem[] {
   const random = createDeterministicRandom(`${seed}:corner-pickups`)
   const candidates = shufflePoints(findCornerCandidates(map), random)
     .filter((point) => {
@@ -35,7 +48,11 @@ export function createCornerPickups(map: GeneratedMap, seed: string): PickupItem
   const spaced: Point[] = []
 
   for (const candidate of candidates) {
-    if (spaced.some((point) => chebyshevDistance(point, candidate) < MIN_PICKUP_SPACING)) {
+    if (
+      spaced.some((point) =>
+        chebyshevDistance(point, candidate) < MIN_PICKUP_SPACING
+      )
+    ) {
       continue
     }
 
@@ -64,7 +81,9 @@ export function collectPickups(
   tileReveals: TileReveal[]
   message: LogMessage | null
 } {
-  const collected = pickups.filter((pickup) => isSamePoint(pickup.position, player))
+  const collected = pickups.filter((pickup) =>
+    isSamePoint(pickup.position, player)
+  )
 
   if (collected.length === 0) {
     return {
@@ -93,13 +112,20 @@ export function collectPickups(
             "neutral",
             () => i18n._("Recovered {recovered} torpedoes.", { recovered }),
           )
-          : createLogMessage(i18n._("Torpedo tubes already full."), "neutral", () => i18n._("Torpedo tubes already full.")),
+          : createLogMessage(
+            i18n._("Torpedo tubes already full."),
+            "neutral",
+            () => i18n._("Torpedo tubes already full."),
+          ),
       )
       continue
     }
 
     if (pickup.kind === "depth-charge-cache") {
-      const nextAmmo = Math.min(MAX_DEPTH_CHARGES, depthChargeAmmo + ITEM_AMMO_BUNDLE)
+      const nextAmmo = Math.min(
+        MAX_DEPTH_CHARGES,
+        depthChargeAmmo + ITEM_AMMO_BUNDLE,
+      )
       const recovered = nextAmmo - depthChargeAmmo
       depthChargeAmmo = nextAmmo
       messages.push(
@@ -109,13 +135,26 @@ export function collectPickups(
             "neutral",
             () => i18n._("Recovered {recovered} depth charges.", { recovered }),
           )
-          : createLogMessage(i18n._("Depth charge racks already full."), "neutral", () => i18n._("Depth charge racks already full.")),
+          : createLogMessage(
+            i18n._("Depth charge racks already full."),
+            "neutral",
+            () => i18n._("Depth charge racks already full."),
+          ),
       )
       continue
     }
 
-    tileReveals = mergeTileReveals(tileReveals, createMapReveal(game, pickup.position))
-    messages.push(createLogMessage(i18n._("Recovered a survey map."), "neutral", () => i18n._("Recovered a survey map.")))
+    tileReveals = mergeTileReveals(
+      tileReveals,
+      createMapReveal(game, pickup.position),
+    )
+    messages.push(
+      createLogMessage(
+        i18n._("Recovered a survey map."),
+        "neutral",
+        () => i18n._("Recovered a survey map."),
+      ),
+    )
   }
 
   return {
@@ -123,13 +162,11 @@ export function collectPickups(
     torpedoAmmo,
     depthChargeAmmo,
     tileReveals,
-    message: messages.length === 1
-      ? messages[0]
-      : createLogMessage(
-        messages.map((entry) => resolveLogMessageText(entry)).join(" "),
-        "neutral",
-        () => messages.map((entry) => resolveLogMessageText(entry)).join(" "),
-      ),
+    message: messages.length === 1 ? messages[0] : createLogMessage(
+      messages.map((entry) => resolveLogMessageText(entry)).join(" "),
+      "neutral",
+      () => messages.map((entry) => resolveLogMessageText(entry)).join(" "),
+    ),
   }
 }
 
@@ -157,13 +194,27 @@ function createMapReveal(game: GameState, pickupPosition: Point): TileReveal[] {
     }
   }
 
-  const candidates = distantCandidates.length > 0 ? distantCandidates : hiddenCandidates
-  const center = candidates.length > 0 ? randomChoice(candidates, random) : { ...pickupPosition }
+  const candidates = distantCandidates.length > 0
+    ? distantCandidates
+    : hiddenCandidates
+  const center = candidates.length > 0
+    ? randomChoice(candidates, random)
+    : { ...pickupPosition }
   const reveals: TileReveal[] = []
 
-  for (let y = center.y - MAP_REVEAL_RADIUS; y <= center.y + MAP_REVEAL_RADIUS; y += 1) {
-    for (let x = center.x - MAP_REVEAL_RADIUS; x <= center.x + MAP_REVEAL_RADIUS; x += 1) {
-      if (x <= 0 || x >= game.map.width - 1 || y <= 0 || y >= game.map.height - 1) {
+  for (
+    let y = center.y - MAP_REVEAL_RADIUS;
+    y <= center.y + MAP_REVEAL_RADIUS;
+    y += 1
+  ) {
+    for (
+      let x = center.x - MAP_REVEAL_RADIUS;
+      x <= center.x + MAP_REVEAL_RADIUS;
+      x += 1
+    ) {
+      if (
+        x <= 0 || x >= game.map.width - 1 || y <= 0 || y >= game.map.height - 1
+      ) {
         continue
       }
 
@@ -198,10 +249,14 @@ function findCornerCandidates(map: GeneratedMap): Point[] {
       const down = tileAt(map, x, y + 1)
       const left = tileAt(map, x - 1, y)
       const cornerPairs = [
-        up === "wall" && left === "wall" && right === "water" && down === "water",
-        up === "wall" && right === "wall" && left === "water" && down === "water",
-        right === "wall" && down === "wall" && up === "water" && left === "water",
-        down === "wall" && left === "wall" && up === "water" && right === "water",
+        up === "wall" && left === "wall" && right === "water" &&
+        down === "water",
+        up === "wall" && right === "wall" && left === "water" &&
+        down === "water",
+        right === "wall" && down === "wall" && up === "water" &&
+        left === "water",
+        down === "wall" && left === "wall" && up === "water" &&
+        right === "water",
       ]
 
       if (cornerPairs.some(Boolean)) {
@@ -213,7 +268,10 @@ function findCornerCandidates(map: GeneratedMap): Point[] {
   return candidates
 }
 
-function mergeTileReveals(current: TileReveal[], next: TileReveal[]): TileReveal[] {
+function mergeTileReveals(
+  current: TileReveal[],
+  next: TileReveal[],
+): TileReveal[] {
   const merged = new Map<number, TileReveal>()
 
   for (const reveal of [...current, ...next]) {

@@ -55,7 +55,10 @@ Deno.test("hostile step emits notable ai decisions", () => {
   )
 
   assertEquals(next.aiDecisionLogs, ["hostile-1: will attack 3,2"])
-  assertEquals(next.hostileSubmarines[0].lastAiLog, "hostile-1: will attack 3,2")
+  assertEquals(
+    next.hostileSubmarines[0].lastAiLog,
+    "hostile-1: will attack 3,2",
+  )
 })
 
 Deno.test("hostile step suppresses duplicate ai decisions on unchanged objective", () => {
@@ -115,7 +118,10 @@ Deno.test("hostile step suppresses duplicate ai decisions on unchanged objective
 
   assertEquals(first.aiDecisionLogs, ["hostile-1: will attack 3,2"])
   assertEquals(second.aiDecisionLogs, [])
-  assertEquals(second.hostileSubmarines[0].lastAiLog, "hostile-1: will attack 3,2")
+  assertEquals(
+    second.hostileSubmarines[0].lastAiLog,
+    "hostile-1: will attack 3,2",
+  )
 })
 
 Deno.test("hostiles carry their planned path forward after moving", () => {
@@ -319,8 +325,14 @@ Deno.test("hostiles ignore vent plumes when tracking bubble clues", () => {
     1,
   )
 
-  assertEquals(withVentTrail.hostileSubmarines[0].position, baseline.hostileSubmarines[0].position)
-  assertEquals(withVentTrail.hostileSubmarines[0].target, baseline.hostileSubmarines[0].target)
+  assertEquals(
+    withVentTrail.hostileSubmarines[0].position,
+    baseline.hostileSubmarines[0].position,
+  )
+  assertEquals(
+    withVentTrail.hostileSubmarines[0].target,
+    baseline.hostileSubmarines[0].target,
+  )
 })
 
 Deno.test("hunters hold position and drop depth charges on fresh deeper pursuit fixes", () => {

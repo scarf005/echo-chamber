@@ -6,9 +6,9 @@ import type { GameState } from "../../game/game.ts"
 import type { GeneratedMap, Point } from "../../game/mapgen.ts"
 import {
   describeHostileAiDecision,
-  describeNotableHostileAiDecision,
   describeHoveredInspectorRows,
   describeInspectorContact,
+  describeNotableHostileAiDecision,
   filterInspectorRows,
   hasExactInspectorVisibility,
 } from "./inspector.ts"
@@ -33,7 +33,10 @@ Deno.test("inspector falls back to remembered coarse contact without exact entit
 
   withoutFish.entityMemory![index] = "non-hostile"
 
-  assertEquals(describeInspectorContact(withoutFish, { x: 4, y: 2 }), "non-hostile contact")
+  assertEquals(
+    describeInspectorContact(withoutFish, { x: 4, y: 2 }),
+    "non-hostile contact",
+  )
 })
 
 Deno.test("inspector renames remembered enemy contact to entity", () => {
@@ -95,8 +98,14 @@ Deno.test("inspector hides dev-only rows outside dev builds", () => {
   assertEquals(rows?.find((row) => row.label === "mode")?.devOnly, true)
   assertEquals(productionRows?.some((row) => row.label === "visibility"), false)
   assertEquals(productionRows?.some((row) => row.label === "mode"), false)
-  assertEquals(productionRows?.find((row) => row.label === "terrain")?.value, "water")
-  assertEquals(productionRows?.find((row) => row.label === "contact")?.value, "fish")
+  assertEquals(
+    productionRows?.find((row) => row.label === "terrain")?.value,
+    "water",
+  )
+  assertEquals(
+    productionRows?.find((row) => row.label === "contact")?.value,
+    "fish",
+  )
 })
 
 Deno.test("inspector does not leak unseen terrain outside exact visibility", () => {
@@ -105,13 +114,19 @@ Deno.test("inspector does not leak unseen terrain outside exact visibility", () 
 
   const hiddenRows = describeHoveredInspectorRows(game, hiddenWallPoint)
 
-  assertEquals(hiddenRows?.find((row) => row.label === "terrain")?.value, "unknown")
+  assertEquals(
+    hiddenRows?.find((row) => row.label === "terrain")?.value,
+    "unknown",
+  )
 
   game.memory[hiddenWallPoint.y * game.map.width + hiddenWallPoint.x] = "wall"
 
   const rememberedRows = describeHoveredInspectorRows(game, hiddenWallPoint)
 
-  assertEquals(rememberedRows?.find((row) => row.label === "terrain")?.value, "wall")
+  assertEquals(
+    rememberedRows?.find((row) => row.label === "terrain")?.value,
+    "wall",
+  )
 })
 
 Deno.test("inspector keeps dev-only rows in dev builds", () => {
@@ -154,7 +169,10 @@ Deno.test("god mode inspector reveals hidden hostile entities under cursor", () 
     revealAllEntities: true,
   })
 
-  assertEquals(rows?.find((row) => row.label === "contact")?.value, "enemy submarine")
+  assertEquals(
+    rows?.find((row) => row.label === "contact")?.value,
+    "enemy submarine",
+  )
   assertEquals(rows?.some((row) => row.label === "enemy id"), true)
 })
 
@@ -165,10 +183,19 @@ Deno.test("god mode inspector shows detailed hostile ai state", () => {
 
   game.visibility[index] = 3
 
-  const rows = filterInspectorRows(describeHoveredInspectorRows(game, hostilePoint), true)
+  const rows = filterInspectorRows(
+    describeHoveredInspectorRows(game, hostilePoint),
+    true,
+  )
 
-  assertEquals(rows?.find((row) => row.label === "ai source")?.value, "player sonar")
-  assertEquals(rows?.find((row) => row.label === "attack block")?.value, "needs direct detection")
+  assertEquals(
+    rows?.find((row) => row.label === "ai source")?.value,
+    "player sonar",
+  )
+  assertEquals(
+    rows?.find((row) => row.label === "attack block")?.value,
+    "needs direct detection",
+  )
   assertEquals(rows?.find((row) => row.label === "fired weapon")?.value, "--")
   assertEquals(rows?.find((row) => row.label === "guessed shot")?.value, "3,2")
 })
@@ -181,8 +208,14 @@ Deno.test("hostile ai helpers only expose notable targeted decisions to orders",
     target: null,
   }
 
-  assertEquals(describeHostileAiDecision(targetedHostile), "hostile-1: will attack 2,2")
-  assertEquals(describeNotableHostileAiDecision(targetedHostile), "hostile-1: will attack 2,2")
+  assertEquals(
+    describeHostileAiDecision(targetedHostile),
+    "hostile-1: will attack 2,2",
+  )
+  assertEquals(
+    describeNotableHostileAiDecision(targetedHostile),
+    "hostile-1: will attack 2,2",
+  )
   assertEquals(describeNotableHostileAiDecision(patrollingHostile), null)
 })
 

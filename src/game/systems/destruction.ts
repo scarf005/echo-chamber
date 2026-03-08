@@ -13,7 +13,7 @@ import {
   uniqueBoulders,
 } from "../helpers.ts"
 import type { CrackCell, FadeCell, FallingBoulder } from "../model.ts"
-import { carveDisc, tileAt, type GeneratedMap, type Point } from "../mapgen.ts"
+import { carveDisc, type GeneratedMap, type Point, tileAt } from "../mapgen.ts"
 
 const MAX_FLOATING_COMPONENT_TILES = 35
 const FLOATING_COMPONENT_RELEASE_DISTANCE = 4
@@ -51,8 +51,10 @@ export function detonateTorpedo(
   for (let index = 0; index < 3; index += 1) {
     const direction = randomChoice(baseCrackDirections(), random)
     const center = {
-      x: impactPoint.x + direction.x * randomInteger(random, 1, TORPEDO_BLAST_RADIUS),
-      y: impactPoint.y + direction.y * randomInteger(random, 1, TORPEDO_BLAST_RADIUS),
+      x: impactPoint.x +
+        direction.x * randomInteger(random, 1, TORPEDO_BLAST_RADIUS),
+      y: impactPoint.y +
+        direction.y * randomInteger(random, 1, TORPEDO_BLAST_RADIUS),
     }
     carveDisc(map.tiles, map.width, map.height, center, 1)
   }
@@ -100,7 +102,9 @@ export function detonateTorpedo(
   applyStructuralDamageSeed(map, nextStructuralDamage, collapseSeeds)
   dust = mergeFadeCells(
     dust,
-    fallingBoulders.flatMap((boulder) => createDustBurst(map, boulder.position, 0.42)),
+    fallingBoulders.flatMap((boulder) =>
+      createDustBurst(map, boulder.position, 0.42)
+    ),
   )
   const uniqueFallingBoulders = uniqueBoulders(fallingBoulders)
 
@@ -114,7 +118,10 @@ export function detonateTorpedo(
 }
 
 function canDislodgeBoulder(map: GeneratedMap, point: Point): boolean {
-  if (point.x <= 0 || point.x >= map.width - 1 || point.y <= 0 || point.y >= map.height - 2) {
+  if (
+    point.x <= 0 || point.x >= map.width - 1 || point.y <= 0 ||
+    point.y >= map.height - 2
+  ) {
     return false
   }
 
@@ -187,13 +194,18 @@ function releaseFloatingTerrain(
     }
 
     for (const neighbor of wallNeighbors(current)) {
-      if (neighbor.x < 0 || neighbor.x >= map.width || neighbor.y < 0 || neighbor.y >= map.height) {
+      if (
+        neighbor.x < 0 || neighbor.x >= map.width || neighbor.y < 0 ||
+        neighbor.y >= map.height
+      ) {
         continue
       }
 
       const index = indexForPoint(map.width, neighbor)
 
-      if (connected.has(index) || tileAt(map, neighbor.x, neighbor.y) !== "wall") {
+      if (
+        connected.has(index) || tileAt(map, neighbor.x, neighbor.y) !== "wall"
+      ) {
         continue
       }
 
@@ -209,7 +221,10 @@ function releaseFloatingTerrain(
       const candidate = { x, y }
       const index = indexForPoint(map.width, candidate)
 
-      if (visited.has(index) || connected.has(index) || tileAt(map, x, y) !== "wall") {
+      if (
+        visited.has(index) || connected.has(index) ||
+        tileAt(map, x, y) !== "wall"
+      ) {
         continue
       }
 
@@ -282,7 +297,8 @@ function canReleaseWallComponent(
     0,
   )
 
-  return damage > 0 && STRUCTURAL_DAMAGE_COLLAPSE_FACTOR * damage > component.length
+  return damage > 0 &&
+    STRUCTURAL_DAMAGE_COLLAPSE_FACTOR * damage > component.length
 }
 
 function collectWallComponent(
@@ -303,7 +319,10 @@ function collectWallComponent(
 
     const index = indexForPoint(map.width, current)
 
-    if (seen.has(index) || connected.has(index) || tileAt(map, current.x, current.y) !== "wall") {
+    if (
+      seen.has(index) || connected.has(index) ||
+      tileAt(map, current.x, current.y) !== "wall"
+    ) {
       continue
     }
 
@@ -311,7 +330,10 @@ function collectWallComponent(
     component.push(index)
 
     for (const neighbor of wallNeighbors(current)) {
-      if (neighbor.x <= 0 || neighbor.x >= map.width - 1 || neighbor.y <= 0 || neighbor.y >= map.height - 1) {
+      if (
+        neighbor.x <= 0 || neighbor.x >= map.width - 1 || neighbor.y <= 0 ||
+        neighbor.y >= map.height - 1
+      ) {
         continue
       }
 

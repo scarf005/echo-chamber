@@ -1,9 +1,6 @@
 import { assertEquals } from "jsr:@std/assert@1"
 
-import {
-  getDeathSampleChoices,
-  getDeathVolume,
-} from "./deathSfx.ts"
+import { getDeathSampleChoices, getDeathVolume } from "./deathSfx.ts"
 
 Deno.test("death sfx uses the metallic explosion sample", () => {
   assertEquals(getDeathSampleChoices().map(fileNameFromUrl), [

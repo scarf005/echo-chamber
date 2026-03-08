@@ -14,7 +14,9 @@ import { drawTileBackground } from "../helpers/draw.ts"
 import { drawGlyph } from "../helpers/draw.ts"
 import type { RenderOptions } from "../options.ts"
 
-export function colorForHostileSubmarine(hostileSubmarine: HostileSubmarine): string {
+export function colorForHostileSubmarine(
+  hostileSubmarine: HostileSubmarine,
+): string {
   switch (hostileSubmarine.archetype) {
     case "turtle":
       return COLORS.hostileSubmarineTurtle
@@ -40,7 +42,8 @@ export function resolveHostileEstimatedPlayerPosition(
     return { ...guessedTarget }
   }
 
-  const confirmedPlayerPosition = hostileSubmarine.debugState?.confirmedPlayerPosition
+  const confirmedPlayerPosition = hostileSubmarine.debugState
+    ?.confirmedPlayerPosition
 
   if (confirmedPlayerPosition) {
     return { ...confirmedPlayerPosition }
@@ -62,7 +65,8 @@ export function resolveHostileEstimateOverlay(
   const estimatedPositions: Point[] = []
   const hoveredHostile = hoveredTile
     ? game.hostileSubmarines.find((candidate) =>
-      candidate.position.x === hoveredTile.x && candidate.position.y === hoveredTile.y
+      candidate.position.x === hoveredTile.x &&
+      candidate.position.y === hoveredTile.y
     )
     : null
   const highlightedEstimatedPosition = hoveredHostile
@@ -70,7 +74,9 @@ export function resolveHostileEstimateOverlay(
     : null
 
   for (const hostileSubmarine of game.hostileSubmarines) {
-    const estimatedPosition = resolveHostileEstimatedPlayerPosition(hostileSubmarine)
+    const estimatedPosition = resolveHostileEstimatedPlayerPosition(
+      hostileSubmarine,
+    )
 
     if (!estimatedPosition || !pointInBounds(game, estimatedPosition)) {
       continue
@@ -88,10 +94,10 @@ export function resolveHostileEstimateOverlay(
 
   return {
     estimatedPositions,
-    highlightedEstimatedPosition:
-      highlightedEstimatedPosition && pointInBounds(game, highlightedEstimatedPosition)
-        ? highlightedEstimatedPosition
-        : null,
+    highlightedEstimatedPosition: highlightedEstimatedPosition &&
+        pointInBounds(game, highlightedEstimatedPosition)
+      ? highlightedEstimatedPosition
+      : null,
   }
 }
 
@@ -339,7 +345,8 @@ function colorForPickup(pickup: PickupItem): string {
 }
 
 function pointInBounds(game: GameState, point: Point): boolean {
-  return point.x >= 0 && point.x < game.map.width && point.y >= 0 && point.y < game.map.height
+  return point.x >= 0 && point.x < game.map.width && point.y >= 0 &&
+    point.y < game.map.height
 }
 
 function indexForPoint(game: GameState, point: Point): number {

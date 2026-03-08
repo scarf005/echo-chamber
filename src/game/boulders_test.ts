@@ -57,7 +57,10 @@ Deno.test("falling boulders crush the player instead of only logging impact text
 
   assertEquals(next.status, "lost")
   assertEquals(next.fallingBoulders.length, 0)
-  assertEquals(next.message, "Cave-in debris crushes your hull. Press R for a new run.")
+  assertEquals(
+    next.message,
+    "Cave-in debris crushes your hull. Press R for a new run.",
+  )
 })
 
 Deno.test("falling boulders crush hostile submarines in their path", () => {
@@ -79,7 +82,9 @@ Deno.test("falling boulders crush hostile submarines in their path", () => {
   assertEquals(next.message, "loud falling rocks detected at ↘")
 })
 
-function createBoulderLandingGame(overrides: Partial<GameState> = {}): GameState {
+function createBoulderLandingGame(
+  overrides: Partial<GameState> = {},
+): GameState {
   const map = createMapFromRows(
     [
       "#######",

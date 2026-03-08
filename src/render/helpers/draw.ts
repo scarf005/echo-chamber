@@ -1,6 +1,9 @@
 import type { GameState } from "../../game/game.ts"
 
-export function calculateTileSize(container: HTMLDivElement, game: GameState): number {
+export function calculateTileSize(
+  container: HTMLDivElement,
+  game: GameState,
+): number {
   const width = container.clientWidth || window.innerWidth
   const height = container.clientHeight || window.innerHeight
   return Math.max(
@@ -51,6 +54,7 @@ export function screenShakeOffset(game: GameState): { x: number; y: number } {
 
   return {
     x: Math.sin(game.turn * 1.73 + game.screenShake) * game.screenShake * 1.6,
-    y: Math.cos(game.turn * 2.11 + game.screenShake * 0.7) * game.screenShake * 1.3,
+    y: Math.cos(game.turn * 2.11 + game.screenShake * 0.7) * game.screenShake *
+      1.3,
   }
 }

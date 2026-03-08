@@ -41,7 +41,8 @@ export function createSonarLoop(): SonarLoopController {
   }
   let tickerId: number | null = null
 
-  const targetVolume = () => state.enabled ? getSonarLoopVolume(state.volume) : 0
+  const targetVolume = () =>
+    state.enabled ? getSonarLoopVolume(state.volume) : 0
 
   const syncVolume = () => {
     const nextVolume = stepSonarLoopVolume(audio.volume, targetVolume())

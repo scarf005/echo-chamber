@@ -4,8 +4,8 @@ import { assertEquals } from "jsr:@std/assert"
 
 import { activateLocale, defaultLocale, i18n } from "../i18n.ts"
 import {
-  createLogMessage,
   createInitialLogs,
+  createLogMessage,
   formatGroupedLogMessage,
   groupLogMessages,
   groupVisibleLogMessages,
@@ -47,7 +47,9 @@ Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
     createLogMessage("Launch torpedo upwards with C."),
     createLogMessage("Drop depth charge with X."),
     createLogMessage("Toggle display with M."),
-    createLogMessage("When sunk, press R to restart. Use Options for restart or random run anytime."),
+    createLogMessage(
+      "When sunk, press R to restart. Use Options for restart or random run anytime.",
+    ),
   ])
 })
 

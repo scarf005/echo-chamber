@@ -83,7 +83,10 @@ function createMapFromRows(
     width,
     height,
     tiles: rows.flatMap((row) =>
-      Array.from(row, (cell) => cell === "#" ? "wall" as const : "water" as const)
+      Array.from(
+        row,
+        (cell) => cell === "#" ? "wall" as const : "water" as const,
+      )
     ),
     spawn,
     capsule,

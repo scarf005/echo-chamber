@@ -126,7 +126,10 @@ Deno.test("generateMap grows passable kelp strands from rock shelves", () => {
 
       kelpCount += 1
       assertEquals(isPassableTile(tileAt(map, x, y)), true)
-      assertEquals(tileAt(map, x, y + 1), y === map.height - 2 ? "wall" : tileAt(map, x, y + 1))
+      assertEquals(
+        tileAt(map, x, y + 1),
+        y === map.height - 2 ? "wall" : tileAt(map, x, y + 1),
+      )
     }
   }
 
@@ -152,11 +155,17 @@ Deno.test("generateMap adds stalactites and stalagmites", () => {
         const east = tileAt(map, x + 1, y)
         const west = tileAt(map, x - 1, y)
 
-        if (north === "wall" && south === "water" && east !== "wall" && west !== "wall") {
+        if (
+          north === "wall" && south === "water" && east !== "wall" &&
+          west !== "wall"
+        ) {
           stalactiteCount += 1
         }
 
-        if (north === "water" && south === "wall" && east !== "wall" && west !== "wall") {
+        if (
+          north === "water" && south === "wall" && east !== "wall" &&
+          west !== "wall"
+        ) {
           stalagmiteCount += 1
         }
       }

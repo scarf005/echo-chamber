@@ -1,12 +1,12 @@
-import { tileAt, type GeneratedMap, type Point } from "./mapgen.ts"
+import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 import type {
   DepthCharge,
   Direction,
-  Fish,
   FallingBoulder,
+  Fish,
+  HorizontalDirection,
   HostileAiDebugState,
   HostileSubmarine,
-  HorizontalDirection,
   Torpedo,
 } from "./model.ts"
 
@@ -52,7 +52,9 @@ export function cloneBoulder(boulder: FallingBoulder): FallingBoulder {
   }
 }
 
-export function cloneHostileSubmarine(hostileSubmarine: HostileSubmarine): HostileSubmarine {
+export function cloneHostileSubmarine(
+  hostileSubmarine: HostileSubmarine,
+): HostileSubmarine {
   return {
     ...hostileSubmarine,
     position: { ...hostileSubmarine.position },
@@ -60,7 +62,9 @@ export function cloneHostileSubmarine(hostileSubmarine: HostileSubmarine): Hosti
     previousPosition: hostileSubmarine.previousPosition
       ? { ...hostileSubmarine.previousPosition }
       : null,
-    recentPositions: hostileSubmarine.recentPositions?.map((point) => ({ ...point })),
+    recentPositions: hostileSubmarine.recentPositions?.map((point) => ({
+      ...point,
+    })),
     initialPosition: hostileSubmarine.initialPosition
       ? { ...hostileSubmarine.initialPosition }
       : undefined,
@@ -80,15 +84,23 @@ export function cloneHostileSubmarine(hostileSubmarine: HostileSubmarine): Hosti
   }
 }
 
-function cloneHostileAiDebugState(debugState: HostileAiDebugState): HostileAiDebugState {
+function cloneHostileAiDebugState(
+  debugState: HostileAiDebugState,
+): HostileAiDebugState {
   return {
     ...debugState,
     confirmedPlayerPosition: debugState.confirmedPlayerPosition
       ? { ...debugState.confirmedPlayerPosition }
       : null,
-    cluePosition: debugState.cluePosition ? { ...debugState.cluePosition } : null,
-    playerVector: debugState.playerVector ? { ...debugState.playerVector } : null,
-    movementTarget: debugState.movementTarget ? { ...debugState.movementTarget } : null,
+    cluePosition: debugState.cluePosition
+      ? { ...debugState.cluePosition }
+      : null,
+    playerVector: debugState.playerVector
+      ? { ...debugState.playerVector }
+      : null,
+    movementTarget: debugState.movementTarget
+      ? { ...debugState.movementTarget }
+      : null,
     attack: {
       ...debugState.attack,
       attackTarget: debugState.attack.attackTarget
@@ -171,7 +183,11 @@ export function hashSeed(seed: string): number {
   return hash >>> 0
 }
 
-export function randomInteger(random: () => number, min: number, max: number): number {
+export function randomInteger(
+  random: () => number,
+  min: number,
+  max: number,
+): number {
   if (max <= min) {
     return min
   }

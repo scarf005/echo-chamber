@@ -165,7 +165,11 @@ export function didShockwaveReachPointThisTurn(
   const pointIndex = indexForPoint(map.width, point)
   const dustByIndex = indexAlphaLookup(dust)
   const entitiesByIndex = buildEntitiesByIndex(map.width, revealableEntities)
-  const blockerIndexes = buildBlockerIndexes(map.width, revealableEntities, trails)
+  const blockerIndexes = buildBlockerIndexes(
+    map.width,
+    revealableEntities,
+    trails,
+  )
   const trace = traceWaveBand(
     map,
     wave,

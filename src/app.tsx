@@ -47,8 +47,8 @@ import {
 } from "./audio/settings.ts"
 import {
   type AppSettings,
-  difficultyToHostileSubmarineCount,
   type DifficultySetting,
+  difficultyToHostileSubmarineCount,
   readAppSettings,
   writeAppSettings,
 } from "./settings.ts"
@@ -98,7 +98,9 @@ function createConfiguredGame(rawSeed: string, settings: AppSettings) {
   const runSeed = parseRunSeed(rawSeed, DEFAULT_SEED)
   const game = createGame({
     seed: runSeed.gameSeed,
-    hostileSubmarineCount: difficultyToHostileSubmarineCount(settings.difficulty),
+    hostileSubmarineCount: difficultyToHostileSubmarineCount(
+      settings.difficulty,
+    ),
   })
   return shouldRevealDevMap(settings) || runSeed.enableMapMode
     ? revealMap(game)
@@ -128,7 +130,8 @@ export function App() {
   const activeRunSeedConfig = parseRunSeed(activeRunSeed, DEFAULT_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
     activeRunSeedConfig.enableMapMode
-  const isGodMode = game.status === "won" || activeRunSeedConfig.enableGodMode ||
+  const isGodMode = game.status === "won" ||
+    activeRunSeedConfig.enableGodMode ||
     (IS_DEV_BUILD && showDevEntityOverlay)
   const activeSeedModes = [
     activeRunSeedConfig.enableGodMode ? "god" : null,
@@ -424,7 +427,10 @@ export function App() {
     autoMoveTargetSignal.value = null
     hoveredTileSignal.value = null
     resetAutoMoveSeenAnomalies()
-    gameSignal.value = createConfiguredGame(normalizedSeed, appSettingsSignal.peek())
+    gameSignal.value = createConfiguredGame(
+      normalizedSeed,
+      appSettingsSignal.peek(),
+    )
   }
 
   const restartRun = () => {
@@ -437,21 +443,23 @@ export function App() {
     }
 
     viewportModeSignal.value = nextViewportMode
-    updateGame((current) => withGameMessage(
-      {
-        ...current,
-      },
-      createLogMessage(
-        nextViewportMode === "full"
-          ? t`Display set to full map.`
-          : t`Display set to tracking camera.`,
-        "neutral",
-        () =>
+    updateGame((current) =>
+      withGameMessage(
+        {
+          ...current,
+        },
+        createLogMessage(
           nextViewportMode === "full"
             ? t`Display set to full map.`
             : t`Display set to tracking camera.`,
-      ),
-    ))
+          "neutral",
+          () =>
+            nextViewportMode === "full"
+              ? t`Display set to full map.`
+              : t`Display set to tracking camera.`,
+        ),
+      )
+    )
   }
 
   const previewPath = previewTarget ? findAutoMovePath(game, previewTarget) : []
@@ -520,7 +528,12 @@ export function App() {
                 anomaly.point,
               ),
               "warning",
-              () => createAutoMoveStopMessage(anomaly.reason, current.player, anomaly.point),
+              () =>
+                createAutoMoveStopMessage(
+                  anomaly.reason,
+                  current.player,
+                  anomaly.point,
+                ),
             ),
           )
         }
@@ -541,7 +554,12 @@ export function App() {
                 autoMoveTarget,
               ),
               "warning",
-              () => createAutoMoveStopMessage("no plotted course", current.player, autoMoveTarget),
+              () =>
+                createAutoMoveStopMessage(
+                  "no plotted course",
+                  current.player,
+                  autoMoveTarget,
+                ),
             ),
           )
         }
@@ -551,13 +569,25 @@ export function App() {
         if (!isPassableTile(tileAt(current.map, nextPoint.x, nextPoint.y))) {
           autoMoveTargetSignal.value = null
           clearAutoMoveRoute()
-          return withGameMessage({
-            ...current,
-          }, createLogMessage(
-            createAutoMoveStopMessage("wall ahead", current.player, nextPoint),
-            "warning",
-            () => createAutoMoveStopMessage("wall ahead", current.player, nextPoint),
-          ))
+          return withGameMessage(
+            {
+              ...current,
+            },
+            createLogMessage(
+              createAutoMoveStopMessage(
+                "wall ahead",
+                current.player,
+                nextPoint,
+              ),
+              "warning",
+              () =>
+                createAutoMoveStopMessage(
+                  "wall ahead",
+                  current.player,
+                  nextPoint,
+                ),
+            ),
+          )
         }
 
         const direction = directionBetweenPoints(path[0], nextPoint)
@@ -601,7 +631,12 @@ export function App() {
                 nextAnomaly.point,
               ),
               "warning",
-              () => createAutoMoveStopMessage(nextAnomaly.reason, next.player, nextAnomaly.point),
+              () =>
+                createAutoMoveStopMessage(
+                  nextAnomaly.reason,
+                  next.player,
+                  nextAnomaly.point,
+                ),
             ),
           )
         }
@@ -646,7 +681,12 @@ export function App() {
               point,
             ),
             "warning",
-            () => createAutoMoveStopMessage("charted wall at destination", current.player, point),
+            () =>
+              createAutoMoveStopMessage(
+                "charted wall at destination",
+                current.player,
+                point,
+              ),
           ),
         )
       )
@@ -660,13 +700,16 @@ export function App() {
       beginAutoMoveRoute(point)
       autoMoveTargetSignal.value = { ...point }
       updateGame((current) =>
-        withGameMessage({
-          ...current,
-        }, createLogMessage(
-          t`Auto-nav engaged to ${formatPoint(point)}.`,
-          "neutral",
-          () => t`Auto-nav engaged to ${formatPoint(point)}.`,
-        ))
+        withGameMessage(
+          {
+            ...current,
+          },
+          createLogMessage(
+            t`Auto-nav engaged to ${formatPoint(point)}.`,
+            "neutral",
+            () => t`Auto-nav engaged to ${formatPoint(point)}.`,
+          ),
+        )
       )
       return
     }
@@ -685,7 +728,10 @@ export function App() {
           ? createLogMessage(
             t`Course plotted to ${formatPoint(point)}. Click again to engage.`,
             "neutral",
-            () => t`Course plotted to ${formatPoint(point)}. Click again to engage.`,
+            () =>
+              t`Course plotted to ${
+                formatPoint(point)
+              }. Click again to engage.`,
           )
           : createLogMessage(
             createAutoMoveStopMessage(
@@ -694,7 +740,12 @@ export function App() {
               point,
             ),
             "warning",
-            () => createAutoMoveStopMessage("no plotted course", current.player, point),
+            () =>
+              createAutoMoveStopMessage(
+                "no plotted course",
+                current.player,
+                point,
+              ),
           ),
       )
     )
@@ -720,7 +771,10 @@ export function App() {
 
       if (event.key === "Escape") {
         event.preventDefault()
-        runSeedSignal.value = createRestartRunSeed(runSeedSignal.peek(), DEFAULT_SEED)
+        runSeedSignal.value = createRestartRunSeed(
+          runSeedSignal.peek(),
+          DEFAULT_SEED,
+        )
         isOptionsOpenSignal.value = true
         isOrdersModalOpenSignal.value = false
         return
@@ -837,11 +891,16 @@ export function App() {
     cameraTileWidth: 30,
     cameraTileHeight: 20,
   }
-  const viewportLabel = viewportMode === "full" ? t`FULL MAP (M)` : t`TRACKING (M)`
+  const viewportLabel = viewportMode === "full"
+    ? t`FULL MAP (M)`
+    : t`TRACKING (M)`
   const hoveredInspectorRows = describeHoveredInspectorRows(game, hoveredTile, {
     revealAllEntities: isGodMode,
   })
-  const visibleInspectorRows = filterInspectorRows(hoveredInspectorRows, isGodMode)
+  const visibleInspectorRows = filterInspectorRows(
+    hoveredInspectorRows,
+    isGodMode,
+  )
   const onOffLabel = (enabled: boolean) => enabled ? t`ON` : t`OFF`
 
   const handleMusicEnabledChange = (
@@ -1059,7 +1118,10 @@ export function App() {
 
       {isOptionsOpen
         ? (
-          <div class="modal-backdrop" onClick={() => isOptionsOpenSignal.value = false}>
+          <div
+            class="modal-backdrop"
+            onClick={() => isOptionsOpenSignal.value = false}
+          >
             <section
               class="modal-panel"
               role="dialog"
@@ -1107,10 +1169,16 @@ export function App() {
               </div>
               <div class="language-switch-row">
                 <span class="sidebar-heading">{t`language`}</span>
-                <div class="language-switch" role="group" aria-label={t`language`}>
+                <div
+                  class="language-switch"
+                  role="group"
+                  aria-label={t`language`}
+                >
                   <button
                     type="button"
-                    class={`language-switch-button${locale === "en" ? " is-active" : ""}`}
+                    class={`language-switch-button${
+                      locale === "en" ? " is-active" : ""
+                    }`}
                     aria-pressed={locale === "en"}
                     aria-label={t`English`}
                     onClick={() => handleLanguageChange("en")}
@@ -1119,7 +1187,9 @@ export function App() {
                   </button>
                   <button
                     type="button"
-                    class={`language-switch-button${locale === "ko" ? " is-active" : ""}`}
+                    class={`language-switch-button${
+                      locale === "ko" ? " is-active" : ""
+                    }`}
                     aria-pressed={locale === "ko"}
                     aria-label={t`Korean`}
                     onClick={() => handleLanguageChange("ko")}
@@ -1130,10 +1200,16 @@ export function App() {
               </div>
               <div class="language-switch-row">
                 <span class="sidebar-heading">{t`difficulty`}</span>
-                <div class="language-switch" role="group" aria-label={t`difficulty`}>
+                <div
+                  class="language-switch"
+                  role="group"
+                  aria-label={t`difficulty`}
+                >
                   <button
                     type="button"
-                    class={`language-switch-button${difficulty === "easy" ? " is-active" : ""}`}
+                    class={`language-switch-button${
+                      difficulty === "easy" ? " is-active" : ""
+                    }`}
                     aria-pressed={difficulty === "easy"}
                     aria-label={t`easy`}
                     onClick={() => handleDifficultyChange("easy")}
@@ -1142,7 +1218,9 @@ export function App() {
                   </button>
                   <button
                     type="button"
-                    class={`language-switch-button${difficulty === "medium" ? " is-active" : ""}`}
+                    class={`language-switch-button${
+                      difficulty === "medium" ? " is-active" : ""
+                    }`}
                     aria-pressed={difficulty === "medium"}
                     aria-label={t`medium`}
                     onClick={() => handleDifficultyChange("medium")}
@@ -1151,7 +1229,9 @@ export function App() {
                   </button>
                   <button
                     type="button"
-                    class={`language-switch-button${difficulty === "hard" ? " is-active" : ""}`}
+                    class={`language-switch-button${
+                      difficulty === "hard" ? " is-active" : ""
+                    }`}
                     aria-pressed={difficulty === "hard"}
                     aria-label={t`hard`}
                     onClick={() => handleDifficultyChange("hard")}
@@ -1357,12 +1437,15 @@ export function App() {
               </div>
             </section>
           </div>
-          )
+        )
         : null}
 
       {isOrdersModalOpen
         ? (
-          <div class="modal-backdrop" onClick={() => isOrdersModalOpenSignal.value = false}>
+          <div
+            class="modal-backdrop"
+            onClick={() => isOrdersModalOpenSignal.value = false}
+          >
             <section
               class="modal-panel message-modal"
               role="dialog"

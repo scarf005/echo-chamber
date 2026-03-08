@@ -14,18 +14,55 @@ const INITIAL_MISSION_MESSAGE = createLogMessage(
     ),
 )
 const HELP_LOG_MESSAGES = [
-  createLogMessage(i18n._("Move with WASD or arrows."), "neutral", () => i18n._("Move with WASD or arrows.")),
-  createLogMessage(i18n._("Click once to plot a course."), "neutral", () => i18n._("Click once to plot a course.")),
-  createLogMessage(i18n._("Click the same tile again to engage auto-nav."), "neutral", () => i18n._("Click the same tile again to engage auto-nav.")),
-  createLogMessage(i18n._("Wait with ."), "neutral", () => i18n._("Wait with .")),
-  createLogMessage(i18n._("Launch torpedo with Z."), "neutral", () => i18n._("Launch torpedo with Z.")),
-  createLogMessage(i18n._("Launch torpedo upwards with C."), "neutral", () => i18n._("Launch torpedo upwards with C.")),
-  createLogMessage(i18n._("Drop depth charge with X."), "neutral", () => i18n._("Drop depth charge with X.")),
-  createLogMessage(i18n._("Toggle display with M."), "neutral", () => i18n._("Toggle display with M.")),
   createLogMessage(
-    i18n._("When sunk, press R to restart. Use Options for restart or random run anytime."),
+    i18n._("Move with WASD or arrows."),
     "neutral",
-    () => i18n._("When sunk, press R to restart. Use Options for restart or random run anytime."),
+    () => i18n._("Move with WASD or arrows."),
+  ),
+  createLogMessage(
+    i18n._("Click once to plot a course."),
+    "neutral",
+    () => i18n._("Click once to plot a course."),
+  ),
+  createLogMessage(
+    i18n._("Click the same tile again to engage auto-nav."),
+    "neutral",
+    () => i18n._("Click the same tile again to engage auto-nav."),
+  ),
+  createLogMessage(
+    i18n._("Wait with ."),
+    "neutral",
+    () => i18n._("Wait with ."),
+  ),
+  createLogMessage(
+    i18n._("Launch torpedo with Z."),
+    "neutral",
+    () => i18n._("Launch torpedo with Z."),
+  ),
+  createLogMessage(
+    i18n._("Launch torpedo upwards with C."),
+    "neutral",
+    () => i18n._("Launch torpedo upwards with C."),
+  ),
+  createLogMessage(
+    i18n._("Drop depth charge with X."),
+    "neutral",
+    () => i18n._("Drop depth charge with X."),
+  ),
+  createLogMessage(
+    i18n._("Toggle display with M."),
+    "neutral",
+    () => i18n._("Toggle display with M."),
+  ),
+  createLogMessage(
+    i18n._(
+      "When sunk, press R to restart. Use Options for restart or random run anytime.",
+    ),
+    "neutral",
+    () =>
+      i18n._(
+        "When sunk, press R to restart. Use Options for restart or random run anytime.",
+      ),
   ),
 ]
 export const MAX_LOG_MESSAGES = 200
@@ -49,7 +86,9 @@ export function createLogMessage(
 }
 
 export function createInitialLogs(): LogMessage[] {
-  return [INITIAL_MISSION_MESSAGE, ...HELP_LOG_MESSAGES].map((entry) => cloneLogMessage(entry))
+  return [INITIAL_MISSION_MESSAGE, ...HELP_LOG_MESSAGES].map((entry) =>
+    cloneLogMessage(entry)
+  )
 }
 
 export function createInitialMissionMessage(): string {
@@ -60,7 +99,9 @@ export function withGameMessage(
   game: GameState,
   message: LogMessage | string,
 ): GameState {
-  const nextLog = typeof message === "string" ? createLogMessage(message) : message
+  const nextLog = typeof message === "string"
+    ? createLogMessage(message)
+    : message
   const nextMessage = resolveLogMessageText(nextLog).trim()
 
   if (nextMessage.length === 0) {
@@ -106,7 +147,9 @@ export function groupVisibleLogMessages(
   includeAiMessages = false,
 ): GroupedLogMessage[] {
   return groupLogMessages(
-    includeAiMessages ? messages : messages.filter((message) => message.type !== "ai"),
+    includeAiMessages
+      ? messages
+      : messages.filter((message) => message.type !== "ai"),
   )
 }
 
@@ -115,7 +158,9 @@ export function formatGroupedLogMessage(entry: GroupedLogMessage): string {
   return entry.count > 1 ? `${message} (x${entry.count})` : message
 }
 
-export function resolveLogMessageText(entry: Pick<LogMessage, "message">): string {
+export function resolveLogMessageText(
+  entry: Pick<LogMessage, "message">,
+): string {
   return logMessageResolvers.get(entry as LogMessage)?.() ?? entry.message
 }
 
@@ -127,11 +172,21 @@ function getLogMessageKey(entry: LogMessage | undefined): string {
   return resolveLogMessageText(entry)
 }
 
-function cloneLogMessage(entry: LogMessage, message = entry.message): LogMessage {
-  const clone = createLogMessage(message, entry.type, logMessageResolvers.get(entry))
+function cloneLogMessage(
+  entry: LogMessage,
+  message = entry.message,
+): LogMessage {
+  const clone = createLogMessage(
+    message,
+    entry.type,
+    logMessageResolvers.get(entry),
+  )
   return clone
 }
 
-function cloneGroupedLogMessage(entry: LogMessage, count: number): GroupedLogMessage {
+function cloneGroupedLogMessage(
+  entry: LogMessage,
+  count: number,
+): GroupedLogMessage {
   return Object.assign(cloneLogMessage(entry), { count })
 }

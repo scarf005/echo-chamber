@@ -25,7 +25,8 @@ export function refreshPerception(
   )
 
   const capsuleCollected = game.capsuleCollected ?? false
-  let capsuleKnown = capsuleCollected || game.capsuleKnown || game.status === "won" ||
+  let capsuleKnown = capsuleCollected || game.capsuleKnown ||
+    game.status === "won" ||
     chebyshevDistance(game.player, game.map.capsule) <= PASSIVE_EXACT_RADIUS
 
   for (let y = 0; y < game.map.height; y += 1) {

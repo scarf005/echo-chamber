@@ -167,7 +167,9 @@ export function createPickupSfx(): PickupSfxController {
   }
 }
 
-async function loadPickupAudio(audioContext: AudioContext): Promise<AudioBuffer> {
+async function loadPickupAudio(
+  audioContext: AudioContext,
+): Promise<AudioBuffer> {
   const response = await fetch(PICKUP_SAMPLE_URLS[0])
 
   if (!response.ok) {
@@ -183,8 +185,15 @@ function createImpulseResponse(
   durationSeconds: number,
   decay: number,
 ): AudioBuffer {
-  const frameCount = Math.max(1, Math.floor(audioContext.sampleRate * durationSeconds))
-  const impulse = audioContext.createBuffer(2, frameCount, audioContext.sampleRate)
+  const frameCount = Math.max(
+    1,
+    Math.floor(audioContext.sampleRate * durationSeconds),
+  )
+  const impulse = audioContext.createBuffer(
+    2,
+    frameCount,
+    audioContext.sampleRate,
+  )
 
   for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
     const data = impulse.getChannelData(channel)

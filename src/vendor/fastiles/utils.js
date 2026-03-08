@@ -15,7 +15,6 @@ export const QUAD = [
 
 export function createProgram(gl, ...sources) {
   const program = gl.createProgram()
-
   ;[gl.VERTEX_SHADER, gl.FRAGMENT_SHADER].forEach((type, index) => {
     const shader = gl.createShader(type)
     gl.shaderSource(shader, sources[index])

@@ -61,7 +61,10 @@ interface RunSeedFlags {
 const GOD_MODE_PREFIX = "god:"
 const MAP_MODE_PREFIX = "map:"
 
-export function parseRunSeed(rawSeed: string, fallbackSeed: string): RunSeedConfig {
+export function parseRunSeed(
+  rawSeed: string,
+  fallbackSeed: string,
+): RunSeedConfig {
   let remaining = rawSeed.trim()
   let enableGodMode = false
   let enableMapMode = false
@@ -98,7 +101,9 @@ export function parseRunSeed(rawSeed: string, fallbackSeed: string): RunSeedConf
 }
 
 export function formatRunSeed(gameSeed: string, flags: RunSeedFlags): string {
-  return `${flags.enableGodMode ? GOD_MODE_PREFIX : ""}${flags.enableMapMode ? MAP_MODE_PREFIX : ""}${gameSeed.trim()}`
+  return `${flags.enableGodMode ? GOD_MODE_PREFIX : ""}${
+    flags.enableMapMode ? MAP_MODE_PREFIX : ""
+  }${gameSeed.trim()}`
 }
 
 export function randomizeRunSeed(

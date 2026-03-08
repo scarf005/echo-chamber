@@ -8,9 +8,6 @@ import { WIN_SEED_MODE_HINT } from "../runSeed.ts"
 import {
   advanceTurn,
   createGame,
-  HOSTILE_GUARD_MAX_CAPSULE_DISTANCE,
-  HOSTILE_HUNTER_MIN_COUNT,
-  HOSTILE_SALVO_OFFSET,
   type Direction,
   directionBetweenPoints,
   dropDepthCharge,
@@ -20,6 +17,9 @@ import {
   fireTorpedo,
   type GameState,
   holdPosition,
+  HOSTILE_GUARD_MAX_CAPSULE_DISTANCE,
+  HOSTILE_HUNTER_MIN_COUNT,
+  HOSTILE_SALVO_OFFSET,
   isAutoMoveNavigable,
   isPlayerSonarEnabled,
   movePlayer,
@@ -57,16 +57,18 @@ Deno.test("hostile spawns include minimum composition and matching fish", () => 
     height: 40,
     hostileSubmarineCount: 14,
   })
-  const scoutCount = game.hostileSubmarines.filter((hostileSubmarine) =>
-    hostileSubmarine.archetype === "scout"
-  ).length
+  const scoutCount =
+    game.hostileSubmarines.filter((hostileSubmarine) =>
+      hostileSubmarine.archetype === "scout"
+    ).length
   const guards = game.hostileSubmarines.filter((hostileSubmarine) =>
     hostileSubmarine.archetype === "guard"
   )
 
-  const hunterCount = game.hostileSubmarines.filter((hostileSubmarine) =>
-    hostileSubmarine.archetype === "hunter"
-  ).length
+  const hunterCount =
+    game.hostileSubmarines.filter((hostileSubmarine) =>
+      hostileSubmarine.archetype === "hunter"
+    ).length
 
   assertEquals(scoutCount >= 6, true)
   assertEquals(guards.length >= 2, true)
@@ -538,7 +540,10 @@ Deno.test("game is won by bringing the capsule back to the dock", () => {
     current.message,
     "Capsule delivered to dock. Press R for a new run.",
   )
-  assertEquals(current.logs.some((entry) => entry.message === WIN_SEED_MODE_HINT), true)
+  assertEquals(
+    current.logs.some((entry) => entry.message === WIN_SEED_MODE_HINT),
+    true,
+  )
   assertEquals(current.memory, current.map.tiles)
 })
 
@@ -658,11 +663,21 @@ Deno.test("torpedoes keep cruising beyond sonar range until they hit a wall", ()
   assertEquals(current.torpedoes.length, 0)
   assertEquals(current.map.tiles[impactIndex], "water")
   assert(current.shockwaveFront.some((cell) => cell.index === impactIndex))
-  assertEquals(current.logs.some((entry) => entry.message === "small explosion detected at →"), true)
-  assertEquals(current.logs.find((entry) => entry.message === "small explosion detected at →"), {
-    message: "small explosion detected at →",
-    type: "warning",
-  })
+  assertEquals(
+    current.logs.some((entry) =>
+      entry.message === "small explosion detected at →"
+    ),
+    true,
+  )
+  assertEquals(
+    current.logs.find((entry) =>
+      entry.message === "small explosion detected at →"
+    ),
+    {
+      message: "small explosion detected at →",
+      type: "warning",
+    },
+  )
 })
 
 Deno.test("large detached wall chunks stay put when 36 or more tiles remain", () => {
@@ -683,7 +698,7 @@ Deno.test("repeated torpedo strikes can collapse a large detached chunk", () => 
     current = fireTorpedo(current, "right")
   }
 
-  assert((current.structuralDamage?.some((value) => value > 0) ?? false))
+  assert(current.structuralDamage?.some((value) => value > 0) ?? false)
   assert(current.fallingBoulders.length > 0)
   assertEquals(current.map.tiles[deepChunkIndex], "water")
 })
@@ -699,7 +714,11 @@ Deno.test("depth charge keeps falling past nearby obstacles until impact", () =>
 
   const settled = movePlayer(dropped, "left")
   let crashed = settled
-  for (let index = 0; index < 6 && crashed.depthCharges.length > 0; index += 1) {
+  for (
+    let index = 0;
+    index < 6 && crashed.depthCharges.length > 0;
+    index += 1
+  ) {
     crashed = holdPosition(crashed)
   }
   const detonationIndex = 4 * crashed.map.width + 3
@@ -902,8 +921,14 @@ Deno.test("hostile submarines avoid suicidal VLS cave-ins", () => {
   const launched = holdPosition(game)
 
   assertEquals(launched.torpedoes.length, 1)
-  assertEquals(launched.hostileSubmarines[0].debugState?.attack.attackTarget, { x: 5, y: 3 })
-  assertEquals(launched.hostileSubmarines[0].debugState?.attack.ceilingTrapDirection, null)
+  assertEquals(launched.hostileSubmarines[0].debugState?.attack.attackTarget, {
+    x: 5,
+    y: 3,
+  })
+  assertEquals(
+    launched.hostileSubmarines[0].debugState?.attack.ceilingTrapDirection,
+    null,
+  )
 })
 
 Deno.test("hostile submarines use VLS cave-ins when they have an escape lane", () => {
@@ -912,8 +937,14 @@ Deno.test("hostile submarines use VLS cave-ins when they have an escape lane", (
 
   assertEquals(launched.torpedoes.length, 1)
   assertEquals(launched.torpedoes[0].direction, "up")
-  assertEquals(launched.hostileSubmarines[0].debugState?.attack.attackTarget, { x: 5, y: 2 })
-  assertEquals(launched.hostileSubmarines[0].debugState?.attack.ceilingTrapDirection, "up")
+  assertEquals(launched.hostileSubmarines[0].debugState?.attack.attackTarget, {
+    x: 5,
+    y: 2,
+  })
+  assertEquals(
+    launched.hostileSubmarines[0].debugState?.attack.ceilingTrapDirection,
+    "up",
+  )
 })
 
 Deno.test("hostile submarines do not waste depth charges on targets directly above", () => {
@@ -1069,7 +1100,10 @@ Deno.test("scouts fire at their estimated player position before pressing forwar
   assertEquals(fired.torpedoes[0].senderId, "hostile-1")
   assertEquals(fired.torpedoes[0].direction, "left")
   assertEquals(fired.hostileSubmarines[0].position, { x: 10, y: 4 })
-  assertEquals(fired.hostileSubmarines[0].lastKnownPlayerPosition, { x: 4, y: 4 })
+  assertEquals(fired.hostileSubmarines[0].lastKnownPlayerPosition, {
+    x: 4,
+    y: 4,
+  })
   assertEquals(fired.hostileSubmarines[0].reload, 3)
   assertEquals(advanced.hostileSubmarines[0].position, { x: 9, y: 4 })
   assertEquals(advanced.hostileSubmarines[0].reload, 2)
@@ -1164,8 +1198,12 @@ Deno.test("enemies hit by player sonar immediately relay the player position", (
 Deno.test("retrieving the capsule gives nearby hostiles an exact fix and distant ones the alarm origin", () => {
   const game = createCapsuleAlarmGame()
   const next = movePlayer(game, "right")
-  const nearbyHunter = next.hostileSubmarines.find((hostile) => hostile.id === "hostile-1")
-  const distantTurtle = next.hostileSubmarines.find((hostile) => hostile.id === "hostile-2")
+  const nearbyHunter = next.hostileSubmarines.find((hostile) =>
+    hostile.id === "hostile-1"
+  )
+  const distantTurtle = next.hostileSubmarines.find((hostile) =>
+    hostile.id === "hostile-2"
+  )
 
   assertEquals(next.capsuleCollected, true)
   assertEquals(next.message, "Capsule retrieved. Return to dock.")
@@ -3733,8 +3771,10 @@ function createMapFromRows(
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>
-    Array.from(row, (cell) =>
-      cell === "#" ? "wall" : cell === "k" ? "kelp" : "water" as const
+    Array.from(
+      row,
+      (cell) =>
+        cell === "#" ? "wall" : cell === "k" ? "kelp" : "water" as const,
     )
   )
 

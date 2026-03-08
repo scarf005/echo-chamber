@@ -40,7 +40,9 @@ export function buildVentLightMap(game: GameState): Map<number, LightCell> {
       return
     }
 
-    const alpha = Number(Math.min(0.22, Math.max(...color) / 255 * 0.2).toFixed(3))
+    const alpha = Number(
+      Math.min(0.22, Math.max(...color) / 255 * 0.2).toFixed(3),
+    )
 
     if (alpha < 0.06) {
       return

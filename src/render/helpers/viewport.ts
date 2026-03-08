@@ -22,18 +22,14 @@ export function resolveViewportMetrics(
   renderOptions: RenderOptions = {},
 ): ViewportMetrics {
   const mode = renderOptions.viewportMode ?? "camera"
-  const width = mode === "full"
-    ? game.map.width
-    : Math.min(
-      game.map.width,
-      Math.max(1, renderOptions.cameraTileWidth ?? DEFAULT_CAMERA_TILE_WIDTH),
-    )
-  const height = mode === "full"
-    ? game.map.height
-    : Math.min(
-      game.map.height,
-      Math.max(1, renderOptions.cameraTileHeight ?? DEFAULT_CAMERA_TILE_HEIGHT),
-    )
+  const width = mode === "full" ? game.map.width : Math.min(
+    game.map.width,
+    Math.max(1, renderOptions.cameraTileWidth ?? DEFAULT_CAMERA_TILE_WIDTH),
+  )
+  const height = mode === "full" ? game.map.height : Math.min(
+    game.map.height,
+    Math.max(1, renderOptions.cameraTileHeight ?? DEFAULT_CAMERA_TILE_HEIGHT),
+  )
   const left = mode === "full"
     ? 0
     : clamp(game.player.x - Math.floor(width / 2), 0, game.map.width - width)

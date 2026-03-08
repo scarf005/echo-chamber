@@ -7,7 +7,8 @@
 }
 
 :root {
-  --font-terminal: "IBM3270", "IBM Plex Mono", "Fira Mono", "SFMono-Regular", monospace;
+  --font-terminal:
+    "IBM3270", "IBM Plex Mono", "Fira Mono", "SFMono-Regular", monospace;
   font-family: var(--font-terminal);
   line-height: 1.4;
   font-weight: 400;

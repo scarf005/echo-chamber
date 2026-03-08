@@ -2,7 +2,10 @@ import { i18n } from "../i18n.ts"
 import { Path } from "npm:rot-js@2.2.1"
 
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
-import { exactEntityNameAtPoint, inSightReasonForEntity } from "./entity_labels.ts"
+import {
+  exactEntityNameAtPoint,
+  inSightReasonForEntity,
+} from "./entity_labels.ts"
 import { keyOfPoint, pointsEqual } from "./helpers.ts"
 import { createLogMessage, withGameMessage } from "./log.ts"
 import type { Direction, GameState, HorizontalDirection } from "./model.ts"
@@ -110,7 +113,8 @@ export function findAutoMovePath(game: GameState, destination: Point): Point[] {
     (point) => isAutoMoveNavigable(game, point),
   )
 
-  const pathsByDestination = autoMovePathCache.get(game) ?? new Map<string, Point[]>()
+  const pathsByDestination = autoMovePathCache.get(game) ??
+    new Map<string, Point[]>()
   pathsByDestination.set(destinationKey, path)
   autoMovePathCache.set(game, pathsByDestination)
 
@@ -294,8 +298,16 @@ export function togglePlayerSonar(game: GameState): GameState {
       playerSonarEnabled: enabled,
     },
     enabled
-      ? createLogMessage(i18n._("Player sonar enabled."), "positive", () => i18n._("Player sonar enabled."))
-      : createLogMessage(i18n._("Player sonar disabled."), "negative", () => i18n._("Player sonar disabled.")),
+      ? createLogMessage(
+        i18n._("Player sonar enabled."),
+        "positive",
+        () => i18n._("Player sonar enabled."),
+      )
+      : createLogMessage(
+        i18n._("Player sonar disabled."),
+        "negative",
+        () => i18n._("Player sonar disabled."),
+      ),
   )
 }
 
@@ -311,10 +323,17 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
   }
 
   if (!isPassableTile(tileAt(game.map, target.x, target.y))) {
-    return withGameMessage({
-      ...game,
-      facing: horizontalFacingForMove(game.facing, direction),
-    }, createLogMessage(i18n._("Hull blocked."), "warning", () => i18n._("Hull blocked.")))
+    return withGameMessage(
+      {
+        ...game,
+        facing: horizontalFacingForMove(game.facing, direction),
+      },
+      createLogMessage(
+        i18n._("Hull blocked."),
+        "warning",
+        () => i18n._("Hull blocked."),
+      ),
+    )
   }
 
   return advanceTurn(
@@ -336,7 +355,11 @@ export function holdPosition(game: GameState): GameState {
     game.player,
     game.facing,
     null,
-    createLogMessage(i18n._("Holding position."), "neutral", () => i18n._("Holding position.")),
+    createLogMessage(
+      i18n._("Holding position."),
+      "neutral",
+      () => i18n._("Holding position."),
+    ),
   )
 }
 
@@ -352,10 +375,17 @@ export function fireTorpedo(
     direction === "left" || direction === "right" ? direction : game.facing
 
   if (game.torpedoAmmo <= 0) {
-    return withGameMessage({
-      ...game,
-      facing: nextFacing,
-    }, createLogMessage(i18n._("No torpedoes remaining."), "negative", () => i18n._("No torpedoes remaining.")))
+    return withGameMessage(
+      {
+        ...game,
+        facing: nextFacing,
+      },
+      createLogMessage(
+        i18n._("No torpedoes remaining."),
+        "negative",
+        () => i18n._("No torpedoes remaining."),
+      ),
+    )
   }
 
   return advanceTurn(
@@ -386,9 +416,16 @@ export function dropDepthCharge(game: GameState): GameState {
   }
 
   if (game.depthChargeAmmo <= 0) {
-    return withGameMessage({
-      ...game,
-    }, createLogMessage(i18n._("No depth charges remaining."), "negative", () => i18n._("No depth charges remaining.")))
+    return withGameMessage(
+      {
+        ...game,
+      },
+      createLogMessage(
+        i18n._("No depth charges remaining."),
+        "negative",
+        () => i18n._("No depth charges remaining."),
+      ),
+    )
   }
 
   return advanceTurn(
@@ -396,6 +433,10 @@ export function dropDepthCharge(game: GameState): GameState {
     game.player,
     game.facing,
     { kind: "depth-charge" },
-    createLogMessage(i18n._("Depth charge away."), "neutral", () => i18n._("Depth charge away.")),
+    createLogMessage(
+      i18n._("Depth charge away."),
+      "neutral",
+      () => i18n._("Depth charge away."),
+    ),
   )
 }

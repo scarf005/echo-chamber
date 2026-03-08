@@ -9,8 +9,8 @@ import {
   AUDIO_SETTINGS_STORAGE_KEY,
   DEFAULT_DIFFICULTY_SETTING,
   defaultAppSettings,
-  difficultyToHostileSubmarineCount,
   DEV_ENTITY_OVERLAY_STORAGE_KEY,
+  difficultyToHostileSubmarineCount,
   normalizeDifficultySetting,
   readAppSettings,
   writeAppSettings,
@@ -35,7 +35,10 @@ Deno.test("difficulty settings normalize and scale hostile counts", () => {
   assertEquals(normalizeDifficultySetting("easy"), "easy")
   assertEquals(normalizeDifficultySetting("medium"), "medium")
   assertEquals(normalizeDifficultySetting("hard"), "hard")
-  assertEquals(normalizeDifficultySetting("unknown"), DEFAULT_DIFFICULTY_SETTING)
+  assertEquals(
+    normalizeDifficultySetting("unknown"),
+    DEFAULT_DIFFICULTY_SETTING,
+  )
 
   assertEquals(
     difficultyToHostileSubmarineCount("easy"),

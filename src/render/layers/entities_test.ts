@@ -6,8 +6,8 @@ import type { GameState, HostileSubmarine } from "../../game/game.ts"
 import {
   markerForEntityMemory,
   resolveEntityVisibilityLevel,
-  resolveHostileEstimateOverlay,
   resolveHostileEstimatedPlayerPosition,
+  resolveHostileEstimateOverlay,
   shouldRenderProjectileInDarkness,
 } from "./entities.ts"
 
@@ -96,7 +96,10 @@ Deno.test("hostile estimate prefers guessed target and falls back to known playe
   }
 
   assertEquals(resolveHostileEstimatedPlayerPosition(withGuess), { x: 3, y: 2 })
-  assertEquals(resolveHostileEstimatedPlayerPosition(withFixOnly), { x: 2, y: 2 })
+  assertEquals(resolveHostileEstimatedPlayerPosition(withFixOnly), {
+    x: 2,
+    y: 2,
+  })
 })
 
 Deno.test("hostile estimate overlay highlights hovered hostile estimate only", () => {
@@ -112,7 +115,10 @@ Deno.test("hostile estimate overlay highlights hovered hostile estimate only", (
   assertEquals(unhoveredOverlay.highlightedEstimatedPosition, null)
 })
 
-function comparePoints(left: GameState["player"], right: GameState["player"]): number {
+function comparePoints(
+  left: GameState["player"],
+  right: GameState["player"],
+): number {
   return left.y - right.y || left.x - right.x
 }
 

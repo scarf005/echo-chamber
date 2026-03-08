@@ -17,7 +17,11 @@ export function collectVentPoints(map: GeneratedMap): Point[] {
   return vents
 }
 
-export function ventPlumeLength(seed: string, vent: Point, turn: number): number {
+export function ventPlumeLength(
+  seed: string,
+  vent: Point,
+  turn: number,
+): number {
   const hash = hashSeed(`${seed}:vent-plume:${vent.x}:${vent.y}:${turn}`)
   return 3 + (hash % 6)
 }

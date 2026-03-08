@@ -129,9 +129,13 @@ export function drawShockwaveLayer(
     return
   }
 
-  const hiddenEnemySonar = front.requiresVisibility && game.visibility[index] === 0
+  const hiddenEnemySonar = front.requiresVisibility &&
+    game.visibility[index] === 0
 
-  if (hiddenEnemySonar && !showHiddenEnemySonar && !shouldRevealEffectsOnDeath(game)) {
+  if (
+    hiddenEnemySonar && !showHiddenEnemySonar &&
+    !shouldRevealEffectsOnDeath(game)
+  ) {
     return
   }
 

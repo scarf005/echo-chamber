@@ -3,8 +3,8 @@
 import { assertEquals } from "jsr:@std/assert"
 
 import {
-  createRestartRunSeed,
   createRandomSeed,
+  createRestartRunSeed,
   formatRunSeed,
   parseRunSeed,
   randomizeRunSeed,

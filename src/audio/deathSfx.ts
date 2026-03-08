@@ -168,7 +168,9 @@ export function createDeathSfx(): DeathSfxController {
   }
 }
 
-async function loadDeathAudio(audioContext: AudioContext): Promise<AudioBuffer> {
+async function loadDeathAudio(
+  audioContext: AudioContext,
+): Promise<AudioBuffer> {
   const response = await fetch(DEATH_SAMPLE_URLS[0])
 
   if (!response.ok) {

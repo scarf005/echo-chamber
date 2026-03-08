@@ -19,7 +19,9 @@ export function localizeTileKind(tile: TileKind | "void" | null): string {
   return i18n._("void")
 }
 
-export function localizeEntityMemory(kind: EntityMemoryKind | "unknown" | string | null): string {
+export function localizeEntityMemory(
+  kind: EntityMemoryKind | "unknown" | string | null,
+): string {
   if (kind === "item") return i18n._("item")
   if (kind === "enemy") return i18n._("hostile entity")
   if (kind === "non-hostile") return i18n._("non-hostile contact")
@@ -52,7 +54,9 @@ export function localizeHostileMode(mode: HostileSubmarineMode): string {
   return i18n._("retreat")
 }
 
-export function localizeHostileArchetype(archetype: HostileSubmarineArchetype | "hunter"): string {
+export function localizeHostileArchetype(
+  archetype: HostileSubmarineArchetype | "hunter",
+): string {
   if (archetype === "scout") return i18n._("scout")
   if (archetype === "guard") return i18n._("guard")
   if (archetype === "turtle") return i18n._("turtle")
@@ -65,7 +69,16 @@ export function localizeHostileWeapon(weapon: HostileWeaponKind): string {
   return i18n._("depth charge")
 }
 
-export function localizeKnowledgeSource(source: "visual" | "player sonar" | "relay" | "capsule" | "message" | "clue" | "none"): string {
+export function localizeKnowledgeSource(
+  source:
+    | "visual"
+    | "player sonar"
+    | "relay"
+    | "capsule"
+    | "message"
+    | "clue"
+    | "none",
+): string {
   if (source === "visual") return i18n._("visual")
   if (source === "player sonar") return i18n._("player sonar")
   if (source === "relay") return i18n._("relay")
@@ -82,24 +95,40 @@ export function localizeBoolean(value: boolean): string {
 export function localizeAttackBlockReason(reason: string | null): string {
   if (reason === "reloading") return i18n._("reloading")
   if (reason === "no player fix") return i18n._("no player fix")
-  if (reason === "needs direct detection") return i18n._("needs direct detection")
-  if (reason === "player outside attack radius") return i18n._("player outside attack radius")
+  if (reason === "needs direct detection") {
+    return i18n._("needs direct detection")
+  }
+  if (reason === "player outside attack radius") {
+    return i18n._("player outside attack radius")
+  }
   if (reason === "stale player fix") return i18n._("stale player fix")
-  if (reason === "low confidence shot skipped") return i18n._("low confidence shot skipped")
+  if (reason === "low confidence shot skipped") {
+    return i18n._("low confidence shot skipped")
+  }
   if (reason === "friendly fire risk") return i18n._("friendly fire risk")
-  if (reason === "no valid weapon solution") return i18n._("no valid weapon solution")
+  if (reason === "no valid weapon solution") {
+    return i18n._("no valid weapon solution")
+  }
   return reason ?? "--"
 }
 
 export function localizeAutoMoveReason(reason: string): string {
   if (reason === "wall ahead") return i18n._("wall ahead")
   if (reason === "no plotted course") return i18n._("no plotted course")
-  if (reason === "charted wall at destination") return i18n._("charted wall at destination")
+  if (reason === "charted wall at destination") {
+    return i18n._("charted wall at destination")
+  }
   if (reason === "torpedo in sight") return i18n._("torpedo in sight")
   if (reason === "depth charge in sight") return i18n._("depth charge in sight")
-  if (reason === "falling boulder in sight") return i18n._("falling boulder in sight")
-  if (reason === "torpedo cache in sight") return i18n._("torpedo cache in sight")
-  if (reason === "depth charge cache in sight") return i18n._("depth charge cache in sight")
+  if (reason === "falling boulder in sight") {
+    return i18n._("falling boulder in sight")
+  }
+  if (reason === "torpedo cache in sight") {
+    return i18n._("torpedo cache in sight")
+  }
+  if (reason === "depth charge cache in sight") {
+    return i18n._("depth charge cache in sight")
+  }
   if (reason === "survey map in sight") return i18n._("survey map in sight")
   if (reason === "capsule in sight") return i18n._("capsule in sight")
   if (reason === "sonar") return i18n._("sonar")

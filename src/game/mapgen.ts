@@ -221,7 +221,13 @@ export function mapToAscii(map: GeneratedMap): string {
       }
 
       const tile = tileAt(map, x, y)
-      row += tile === "wall" ? "#" : tile === "kelp" ? '"' : tile === "vent" ? "!" : "."
+      row += tile === "wall"
+        ? "#"
+        : tile === "kelp"
+        ? '"'
+        : tile === "vent"
+        ? "!"
+        : "."
     }
 
     rows.push(row)
@@ -351,7 +357,8 @@ function addKelpOnRock(
         continue
       }
 
-      const strandHeight = 1 + Math.floor(kelpHash(seed, x + width, y + height) * 3)
+      const strandHeight = 1 +
+        Math.floor(kelpHash(seed, x + width, y + height) * 3)
 
       for (let offset = 0; offset < strandHeight; offset += 1) {
         const kelpY = y - offset
@@ -413,7 +420,8 @@ function maybeGrowStalactite(
     return
   }
 
-  const spikeLength = 1 + Math.floor(spikeHash(seed, "ceiling-length", x, y) * 2)
+  const spikeLength = 1 +
+    Math.floor(spikeHash(seed, "ceiling-length", x, y) * 2)
 
   for (let offset = 1; offset <= spikeLength; offset += 1) {
     const spikeY = y + offset
@@ -585,7 +593,12 @@ function indexForTile(width: number, x: number, y: number): number {
   return y * width + x
 }
 
-function isInterior(width: number, height: number, x: number, y: number): boolean {
+function isInterior(
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+): boolean {
   return x > 0 && x < width - 1 && y > 0 && y < height - 1
 }
 
@@ -593,7 +606,11 @@ function isSamePoint(a: Point, b: Point): boolean {
   return a.x === b.x && a.y === b.y
 }
 
-function isProtectedPoint(x: number, y: number, protectedPoints: Point[]): boolean {
+function isProtectedPoint(
+  x: number,
+  y: number,
+  protectedPoints: Point[],
+): boolean {
   return protectedPoints.some((point) => point.x === x && point.y === y)
 }
 
@@ -620,7 +637,12 @@ function kelpHash(seed: string, x: number, y: number): number {
   return hashSeed(`${seed}:kelp:${x}:${y}`) / 0xffffffff
 }
 
-function spikeHash(seed: string, axis: "ceiling" | "floor" | "ceiling-length" | "floor-length", x: number, y: number): number {
+function spikeHash(
+  seed: string,
+  axis: "ceiling" | "floor" | "ceiling-length" | "floor-length",
+  x: number,
+  y: number,
+): number {
   return hashSeed(`${seed}:spike:${axis}:${x}:${y}`) / 0xffffffff
 }
 

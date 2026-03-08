@@ -398,7 +398,6 @@ export function stepDepthCharges(
         screenShake = Math.max(screenShake, explosion.screenShake)
         break
       }
-
     }
 
     if (!exploded && remaining > 0) {
