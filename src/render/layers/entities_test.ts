@@ -89,10 +89,17 @@ Deno.test("hostile estimate overlay highlights hovered hostile estimate only", (
   const hoveredOverlay = resolveHostileEstimateOverlay(game, { x: 4, y: 1 })
   const unhoveredOverlay = resolveHostileEstimateOverlay(game, { x: 1, y: 1 })
 
-  assertEquals(Array.from(hoveredOverlay.estimatedIndexes).sort((a, b) => a - b), [13, 17])
-  assertEquals(hoveredOverlay.highlightedEstimatedIndex, 13)
-  assertEquals(unhoveredOverlay.highlightedEstimatedIndex, null)
+  assertEquals(hoveredOverlay.estimatedPositions.sort(comparePoints), [
+    { x: 3, y: 2 },
+    { x: 2, y: 3 },
+  ])
+  assertEquals(hoveredOverlay.highlightedEstimatedPosition, { x: 3, y: 2 })
+  assertEquals(unhoveredOverlay.highlightedEstimatedPosition, null)
 })
+
+function comparePoints(left: GameState["player"], right: GameState["player"]): number {
+  return left.y - right.y || left.x - right.x
+}
 
 function createEstimateOverlayGame(): GameState {
   return {

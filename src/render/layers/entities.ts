@@ -55,10 +55,11 @@ export function resolveHostileEstimateOverlay(
   game: GameState,
   hoveredTile: Point | null,
 ): {
-  estimatedIndexes: Set<number>
-  highlightedEstimatedIndex: number | null
+  estimatedPositions: Point[]
+  highlightedEstimatedPosition: Point | null
 } {
-  const estimatedIndexes = new Set<number>()
+  const estimatedPositionIndexes = new Set<number>()
+  const estimatedPositions: Point[] = []
   const hoveredHostile = hoveredTile
     ? game.hostileSubmarines.find((candidate) =>
       candidate.position.x === hoveredTile.x && candidate.position.y === hoveredTile.y
@@ -75,14 +76,21 @@ export function resolveHostileEstimateOverlay(
       continue
     }
 
-    estimatedIndexes.add(indexForPoint(game, estimatedPosition))
+    const estimatedIndex = indexForPoint(game, estimatedPosition)
+
+    if (estimatedPositionIndexes.has(estimatedIndex)) {
+      continue
+    }
+
+    estimatedPositionIndexes.add(estimatedIndex)
+    estimatedPositions.push(estimatedPosition)
   }
 
   return {
-    estimatedIndexes,
-    highlightedEstimatedIndex:
+    estimatedPositions,
+    highlightedEstimatedPosition:
       highlightedEstimatedPosition && pointInBounds(game, highlightedEstimatedPosition)
-        ? indexForPoint(game, highlightedEstimatedPosition)
+        ? highlightedEstimatedPosition
         : null,
   }
 }

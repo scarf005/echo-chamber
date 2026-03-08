@@ -146,18 +146,18 @@ export function drawGame(
         effectMaps,
         renderOptions.debugEntityOverlay === true,
       )
-
-      if (hostileEstimateOverlay?.estimatedIndexes.has(index)) {
-        drawHostileEstimateOverlay(
-          context,
-          game,
-          tileSize,
-          screenX,
-          screenY,
-          index === hostileEstimateOverlay.highlightedEstimatedIndex,
-        )
-      }
     }
+  }
+
+  if (hostileEstimateOverlay) {
+    drawHostileEstimateOverlays(
+      context,
+      game,
+      tileSize,
+      viewport,
+      hostileEstimateOverlay.estimatedPositions,
+      hostileEstimateOverlay.highlightedEstimatedPosition,
+    )
   }
 
   if (previewPath.length > 1) {
@@ -216,6 +216,38 @@ function drawHostileEstimateOverlay(
     Math.max(1, tileSize - inset * 2),
   )
   context.restore()
+}
+
+function drawHostileEstimateOverlays(
+  context: CanvasRenderingContext2D,
+  game: GameState,
+  tileSize: number,
+  viewport: ViewportMetrics,
+  estimatedPositions: readonly Point[],
+  highlightedEstimatedPosition: Point | null,
+): void {
+  for (const point of estimatedPositions) {
+    if (
+      point.x < viewport.left ||
+      point.x >= viewport.left + viewport.width ||
+      point.y < viewport.top ||
+      point.y >= viewport.top + viewport.height
+    ) {
+      continue
+    }
+
+    const viewportPoint = pointToViewport(point, viewport)
+    drawHostileEstimateOverlay(
+      context,
+      game,
+      tileSize,
+      viewportPoint.x * tileSize,
+      viewportPoint.y * tileSize,
+      highlightedEstimatedPosition !== null &&
+        highlightedEstimatedPosition.x === point.x &&
+        highlightedEstimatedPosition.y === point.y,
+    )
+  }
 }
 
 function resolveEffectMaps(game: GameState): EffectMaps {
