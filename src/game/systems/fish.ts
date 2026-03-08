@@ -2,8 +2,6 @@ import {
   FISH_IDLE_MAX_TURNS,
   FISH_MIN_CAPSULE_DISTANCE,
   FISH_MIN_SPAWN_DISTANCE,
-  FISH_SPAWN_MULTIPLIER_MAX,
-  FISH_SPAWN_MULTIPLIER_MIN,
   FISH_SPAWN_SEPARATION,
   FISH_TRAVEL_MAX_TURNS,
   FISH_TRAVEL_MIN_DISTANCE,
@@ -51,8 +49,14 @@ export function spawnFish(
   }
 
   const random = createDeterministicRandom(`${seed}:fish-spawns`)
-  const targetCount = hostileSubmarines.length *
-    randomInteger(random, FISH_SPAWN_MULTIPLIER_MIN, FISH_SPAWN_MULTIPLIER_MAX)
+  const targetCount = hostileSubmarines.filter((hostileSubmarine) =>
+    hostileSubmarine.archetype === "scout"
+  ).length
+
+  if (targetCount <= 0) {
+    return []
+  }
+
   const hostilePositions = hostileSubmarines.map((hostileSubmarine) => ({
     ...hostileSubmarine.position,
   }))

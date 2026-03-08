@@ -7,6 +7,8 @@ import { indexForPoint } from "./helpers.ts"
 import {
   advanceTurn,
   createGame,
+  HOSTILE_GUARD_MAX_CAPSULE_DISTANCE,
+  HOSTILE_SALVO_OFFSET,
   type Direction,
   directionBetweenPoints,
   dropDepthCharge,
@@ -44,6 +46,34 @@ Deno.test("createGame is deterministic for the same seed", () => {
   })
 
   assertEquals(first, second)
+})
+
+Deno.test("hostile spawns include ten scouts two guards and matching fish", () => {
+  const game = createGame({
+    seed: "scout-guard-spawn-test",
+    width: 72,
+    height: 40,
+    hostileSubmarineCount: 14,
+  })
+  const scoutCount = game.hostileSubmarines.filter((hostileSubmarine) =>
+    hostileSubmarine.archetype === "scout"
+  ).length
+  const guards = game.hostileSubmarines.filter((hostileSubmarine) =>
+    hostileSubmarine.archetype === "guard"
+  )
+
+  assertEquals(scoutCount >= 10, true)
+  assertEquals(guards.length >= 2, true)
+  assertEquals(game.fish?.length, scoutCount)
+  assertEquals(
+    guards.every((guard) =>
+      Math.max(
+        Math.abs(guard.position.x - game.map.capsule.x),
+        Math.abs(guard.position.y - game.map.capsule.y),
+      ) <= HOSTILE_GUARD_MAX_CAPSULE_DISTANCE
+    ),
+    true,
+  )
 })
 
 Deno.test("movePlayer advances into an adjacent passable cell", () => {
@@ -104,7 +134,7 @@ Deno.test("auto-move anomalies keep partial hostile contacts generic", () => {
 
   assertEquals(findAutoMoveAnomaly(current), {
     point: contact,
-    reason: "sonar contact",
+    reason: "sonar",
   })
 })
 
@@ -259,6 +289,26 @@ Deno.test("player sonar contact cue fires when a hit hostile moves before reveal
   assertEquals(next.hostileSubmarines[0].lastKnownPlayerPosition, next.player)
 })
 
+Deno.test("player sonar contact cue uses digital audio for non-hostile fish", () => {
+  const emitted = holdPosition({
+    ...createFlatGame(),
+    turn: 4,
+    lastSonarTurn: 0,
+    fish: [{
+      id: "fish-1",
+      position: { x: 5, y: 2 },
+      facing: "right",
+      mode: "idle",
+      target: null,
+      idleTurnsRemaining: 0,
+      travelTurnsRemaining: 0,
+    }],
+  })
+  const contacted = holdPosition(emitted)
+
+  assertEquals(contacted.playerSonarContactCueCount, 1)
+})
+
 Deno.test("player entity hit cue fires when the bow pulps a fish", () => {
   const game = {
     ...createFlatGame(),
@@ -298,27 +348,6 @@ Deno.test("player entity hit cue fires when a torpedo catches a fish", () => {
 
   assertEquals(next.playerEntityHitCueCount, 1)
   assertEquals(next.fish, [])
-})
-
-Deno.test("player death cue fires when a hostile torpedo sinks the sub", () => {
-  const game = createHostileAttackGame()
-  const launched = advanceTurn(
-    game,
-    game.player,
-    game.facing,
-    null,
-    "Hold position.",
-  )
-  const destroyed = advanceTurn(
-    launched,
-    launched.player,
-    launched.facing,
-    null,
-    "Hold position.",
-  )
-
-  assertEquals(launched.playerDeathCueCount, 0)
-  assertEquals(destroyed.playerDeathCueCount, 1)
 })
 
 Deno.test("player death cue fires when a hostile torpedo sinks the sub", () => {
@@ -580,6 +609,19 @@ Deno.test("large detached wall chunks stay put when 36 or more tiles remain", ()
   assertEquals(next.map.tiles[deepChunkIndex], "wall")
 })
 
+Deno.test("repeated torpedo strikes can collapse a large detached chunk", () => {
+  let current = createLargeDetachedChunkGame()
+  const deepChunkIndex = 4 * current.map.width + 10
+
+  for (let shot = 0; shot < 3; shot += 1) {
+    current = fireTorpedo(current, "right")
+  }
+
+  assert((current.structuralDamage?.some((value) => value > 0) ?? false))
+  assert(current.fallingBoulders.length > 0)
+  assertEquals(current.map.tiles[deepChunkIndex], "water")
+})
+
 Deno.test("depth charge falls with bubbles and detonates near obstacles", () => {
   const game = createDepthChargeTestGame()
   const dropped = dropDepthCharge(game)
@@ -667,6 +709,102 @@ Deno.test("hostile submarines launch torpedoes and can sink the player", () => {
   )
 })
 
+Deno.test("hostile scouts sonar every five turns while patrolling", () => {
+  const game = createScoutSonarCadenceGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.hostileSubmarines[0].lastSonarTurn, 5)
+  assertEquals(
+    next.shockwaves.some((wave) =>
+      wave.senderId === "hostile-1" && wave.damaging === false
+    ),
+    true,
+  )
+})
+
+Deno.test("guard submarines patrol the capsule, sonar every ten turns, and fire at threats", () => {
+  const patrolGame = createGuardPatrolGame()
+  const patrolling = holdPosition(patrolGame)
+  const guard = patrolling.hostileSubmarines[0]
+  const threatGame = createGuardThreatGame()
+  const engaged = holdPosition(threatGame)
+
+  assertEquals(guard.archetype, "guard")
+  assertEquals(guard.lastSonarTurn, 10)
+  assertEquals(
+    Math.max(
+      Math.abs(guard.position.x - patrolling.map.capsule.x),
+      Math.abs(guard.position.y - patrolling.map.capsule.y),
+    ) <= HOSTILE_GUARD_MAX_CAPSULE_DISTANCE,
+    true,
+  )
+  assertEquals(
+    patrolling.shockwaves.some((wave) => wave.senderId === "hostile-1"),
+    true,
+  )
+  assertEquals(engaged.torpedoes.length, 1)
+  assertEquals(engaged.torpedoes[0].senderId, "hostile-1")
+})
+
+Deno.test("hostile submarines use torpedo proximity when the player is near their lane", () => {
+  const game = createHostileProximityAttackGame()
+  const launched = holdPosition(game)
+
+  assertEquals(launched.torpedoes.length, 1)
+  assertEquals(launched.torpedoes[0].direction, "left")
+  assertEquals(launched.depthCharges.length, 0)
+  assertEquals(launched.hostileSubmarines[0].torpedoAmmo, 5)
+})
+
+Deno.test("hostile submarines can trigger cave-ins by firing at rock above the player", () => {
+  const game = createHostileCeilingTrapGame()
+  const armed = holdPosition(game)
+  const triggered = holdPosition(armed)
+  const collapsed = holdPosition(triggered)
+
+  assertEquals(armed.torpedoes.length, 1)
+  assertEquals(armed.torpedoes[0].direction, "left")
+  assertEquals(collapsed.status, "lost")
+  assertEquals(
+    collapsed.message,
+    "Cave-in debris crushes your hull. Press R for a new run.",
+  )
+})
+
+Deno.test("hostile submarines use VLS when the player is directly above them", () => {
+  const game = createHostileVlsAttackGame()
+  const launched = holdPosition(game)
+
+  assertEquals(launched.torpedoes.length, 1)
+  assertEquals(launched.torpedoes[0].senderId, "hostile-1")
+  assertEquals(launched.torpedoes[0].direction, "up")
+  assertEquals(launched.depthCharges.length, 0)
+  assertEquals(launched.hostileSubmarines[0].vlsAmmo, 5)
+  assertEquals(launched.hostileSubmarines[0].depthChargeAmmo, 6)
+})
+
+Deno.test("hostile submarines do not waste depth charges on targets directly above", () => {
+  const game = createHostileAboveWithoutVlsGame()
+  const launched = holdPosition(game)
+
+  assertEquals(launched.torpedoes.length, 0)
+  assertEquals(launched.depthCharges.length, 0)
+  assertEquals(launched.hostileSubmarines[0].vlsAmmo, 0)
+  assertEquals(launched.hostileSubmarines[0].depthChargeAmmo, 6)
+  assertEquals(launched.hostileSubmarines[0].reload, 0)
+})
+
+Deno.test("hostile submarines do not waste ranged ammo on diagonal targets", () => {
+  const game = createHostileDiagonalContactGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.depthCharges.length, 0)
+  assertEquals(next.hostileSubmarines[0].torpedoAmmo, 6)
+  assertEquals(next.hostileSubmarines[0].vlsAmmo, 6)
+  assertEquals(next.hostileSubmarines[0].depthChargeAmmo, 6)
+})
+
 Deno.test("hostile submarines do not fire without a fresh player fix", () => {
   const game = createHostileNoEvidenceGame()
   const next = advanceTurn(
@@ -703,6 +841,34 @@ Deno.test("hunters keep closing the lane while reloading", () => {
   assertEquals(next.depthCharges.length, 0)
   assertEquals(next.hostileSubmarines[0].position, { x: 6, y: 2 })
   assertEquals(next.hostileSubmarines[0].reload, 1)
+})
+
+Deno.test("investigating hostiles do not immediately backtrack one tile", () => {
+  const game = createHostileBacktrackGame()
+  const next = holdPosition(game)
+
+  assert(
+    next.hostileSubmarines[0].position.x !== 4 ||
+      next.hostileSubmarines[0].position.y !== 2,
+  )
+})
+
+Deno.test("hunters schedule a three-tile salvo offset lane after the first shot", () => {
+  const first = holdPosition(createHunterSalvoOffsetGame())
+  const firstHunter = first.hostileSubmarines[0]
+  const firstShotLane = first.torpedoes[0].position.y
+  const repositioning = holdPosition(first)
+  const repositioningHunter = repositioning.hostileSubmarines[0]
+
+  assertEquals(firstHunter.salvoMoveTarget !== null, true)
+  assertEquals(
+    Math.abs((firstHunter.salvoMoveTarget?.y ?? firstShotLane) - firstShotLane),
+    HOSTILE_SALVO_OFFSET,
+  )
+  assertEquals(
+    repositioningHunter.position.y,
+    firstShotLane + (firstHunter.salvoStepDirection === "up" ? -1 : 1),
+  )
 })
 
 Deno.test("hostile submarines can ram the player to sink them", () => {
@@ -886,7 +1052,12 @@ Deno.test("enemy sonar only becomes visible when the emitter has line of sight",
     "Hold position.",
   )
 
-  assertEquals(visibleNext.shockwaveFront.length > 0, true)
+  assertEquals(
+    visibleNext.shockwaves.some((wave) =>
+      wave.senderId === "hostile-1" && wave.visibleToPlayer === true
+    ),
+    true,
+  )
   assertEquals(
     hiddenNext.shockwaveFront.every((cell) => cell.requiresVisibility === true),
     true,
@@ -1052,6 +1223,7 @@ function createFlatGame(): GameState {
     entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
+    playerDeathCueCount: 0,
     playerPickupCueCount: 0,
     shockwaves: [],
     shockwaveFront: [],
@@ -1673,6 +1845,267 @@ function createHostileAttackGame(): GameState {
   }
 }
 
+function createHostileVlsAttackGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "##########",
+      "#........#",
+      "#........#",
+      "#........#",
+      "#........#",
+      "##########",
+    ],
+    { x: 1, y: 4 },
+    { x: 8, y: 1 },
+  )
+
+  return {
+    map,
+    player: { x: 4, y: 1 },
+    seed: "hostile-vls-attack-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 4, y: 4 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createHostileAboveWithoutVlsGame(): GameState {
+  const game = createHostileVlsAttackGame()
+
+  return {
+    ...game,
+    seed: "hostile-above-without-vls-test",
+    hostileSubmarines: [{
+      ...game.hostileSubmarines[0],
+      position: { ...game.hostileSubmarines[0].position },
+      initialPosition: game.hostileSubmarines[0].initialPosition
+        ? { ...game.hostileSubmarines[0].initialPosition }
+        : { ...game.hostileSubmarines[0].position },
+      vlsAmmo: 0,
+    }],
+  }
+}
+
+function createHostileDiagonalContactGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 1, y: 5 },
+    { x: 10, y: 1 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 1 },
+    seed: "hostile-diagonal-contact-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 7, y: 4 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createScoutSonarCadenceGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 1, y: 2 },
+    { x: 10, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "scout-sonar-cadence-test",
+    turn: 4,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 8, y: 2 },
+      archetype: "scout",
+      lastSonarTurn: 0,
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createHostileProximityAttackGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 1, y: 4 },
+    { x: 10, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "hostile-proximity-attack-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 7, y: 4 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createHostileCeilingTrapGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "###########",
+      "#.........#",
+      "#.........#",
+      "#....#....#",
+      "#.........#",
+      "#.........#",
+      "#.........#",
+      "###########",
+    ],
+    { x: 1, y: 5 },
+    { x: 9, y: 5 },
+  )
+
+  return {
+    map,
+    player: { x: 5, y: 6 },
+    seed: "hostile-ceiling-trap-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 8, y: 3 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
 function createHostileNoEvidenceGame(): GameState {
   return {
     map: createMapFromRows(
@@ -1732,6 +2165,182 @@ function createHunterReloadPursuitGame(): GameState {
       }),
       reload: 2,
     }],
+  }
+}
+
+function createGuardPatrolGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "##################",
+      "#................#",
+      "#................#",
+      "#................#",
+      "#................#",
+      "##################",
+    ],
+    { x: 1, y: 3 },
+    { x: 9, y: 3 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 1 },
+    seed: "guard-patrol-test",
+    turn: 9,
+    status: "playing",
+    playerSonarEnabled: false,
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 11, y: 3 },
+      archetype: "guard",
+      lastSonarTurn: 0,
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createGuardThreatGame(): GameState {
+  const game = createGuardPatrolGame()
+
+  return {
+    ...game,
+    seed: "guard-threat-test",
+    turn: 0,
+    player: { x: 5, y: 3 },
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 11, y: 3 },
+      archetype: "guard",
+      lastKnownPlayerPosition: { x: 5, y: 3 },
+      lastKnownPlayerTurn: 0,
+    })],
+  }
+}
+
+function createHostileBacktrackGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 1, y: 2 },
+    { x: 10, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 1 },
+    seed: "hostile-backtrack-test",
+    turn: 0,
+    status: "playing",
+    playerSonarEnabled: false,
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 5, y: 2 },
+      archetype: "hunter",
+      previousPosition: { x: 4, y: 2 },
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createHunterSalvoOffsetGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "####################",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    { x: 1, y: 5 },
+    { x: 18, y: 5 },
+  )
+
+  return {
+    map,
+    player: { x: 3, y: 5 },
+    seed: "hunter-salvo-offset-test",
+    turn: 0,
+    status: "playing",
+    playerSonarEnabled: false,
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 10, y: 4 },
+      archetype: "hunter",
+      lastKnownPlayerPosition: { x: 3, y: 5 },
+      lastKnownPlayerTurn: 0,
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
   }
 }
 
@@ -1903,7 +2512,7 @@ function createHostileCommunicationGame(): GameState {
     map,
     player: { x: 4, y: 2 },
     seed: "hostile-communication-test",
-    turn: 2,
+    turn: 4,
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
@@ -1922,7 +2531,7 @@ function createHostileCommunicationGame(): GameState {
         archetype: "scout",
         target: { x: 4, y: 2 },
         lastKnownPlayerPosition: { x: 4, y: 2 },
-        lastKnownPlayerTurn: 2,
+        lastKnownPlayerTurn: 4,
         lastSonarTurn: 0,
       }),
       createHostile({
@@ -2363,7 +2972,7 @@ function createEnemySonarVisibilityGame(blocked: boolean): GameState {
     map,
     player: { x: 2, y: 2 },
     seed: blocked ? "enemy-sonar-hidden-test" : "enemy-sonar-visible-test",
-    turn: 2,
+    turn: 4,
     status: "playing",
     capsuleKnown: false,
     memory: Array.from({ length: map.tiles.length }, () => null),
@@ -2378,10 +2987,7 @@ function createEnemySonarVisibilityGame(blocked: boolean): GameState {
     hostileSubmarines: [createHostile({
       id: "hostile-1",
       position: blocked ? { x: 8, y: 1 } : { x: 8, y: 2 },
-      archetype: "scout",
-      target: { x: 2, y: 2 },
-      lastKnownPlayerPosition: { x: 2, y: 2 },
-      lastKnownPlayerTurn: 2,
+      archetype: "hunter",
       lastSonarTurn: 0,
     })],
     trails: [],
@@ -2391,6 +2997,7 @@ function createEnemySonarVisibilityGame(blocked: boolean): GameState {
     facing: "right",
     torpedoAmmo: 6,
     depthChargeAmmo: 6,
+    playerSonarEnabled: false,
     screenShake: 0,
     message: "",
     logs: [],
@@ -2453,15 +3060,18 @@ function createHostile(
   options: {
     id: string
     position: Point
-    archetype: "scout" | "hunter" | "turtle"
+    archetype: "scout" | "hunter" | "turtle" | "guard"
     target?: Point | null
     lastKnownPlayerPosition?: Point | null
     lastKnownPlayerTurn?: number | null
     lastSonarTurn?: number
+    previousPosition?: Point | null
   },
 ): GameState["hostileSubmarines"][number] {
   const loadout = options.archetype === "scout"
     ? { torpedoAmmo: 2, vlsAmmo: 2, depthChargeAmmo: 2 }
+    : options.archetype === "guard"
+    ? { torpedoAmmo: 4, vlsAmmo: 4, depthChargeAmmo: 4 }
     : options.archetype === "turtle"
     ? { torpedoAmmo: 4, vlsAmmo: 4, depthChargeAmmo: 4 }
     : { torpedoAmmo: 6, vlsAmmo: 6, depthChargeAmmo: 6 }
@@ -2471,7 +3081,9 @@ function createHostile(
     position: options.position,
     initialPosition: { ...options.position },
     facing: "left",
-    mode: options.archetype === "turtle" ? "patrol" : "attack",
+    mode: options.archetype === "turtle" || options.archetype === "guard"
+      ? "patrol"
+      : "attack",
     target: options.target ?? null,
     reload: 0,
     archetype: options.archetype,
@@ -2482,6 +3094,7 @@ function createHostile(
     lastKnownPlayerPosition: options.lastKnownPlayerPosition ?? null,
     lastKnownPlayerVector: null,
     lastKnownPlayerTurn: options.lastKnownPlayerTurn ?? null,
+    previousPosition: options.previousPosition ?? null,
   }
 }
 

@@ -10,7 +10,7 @@ export type HostileSubmarineMode =
   | "investigate"
   | "attack"
   | "retreat"
-export type HostileSubmarineArchetype = "scout" | "hunter" | "turtle"
+export type HostileSubmarineArchetype = "scout" | "hunter" | "turtle" | "guard"
 export type EntityMemoryKind = "item" | "enemy" | "non-hostile"
 
 export type RevealableEntityKind =
@@ -24,8 +24,14 @@ export type RevealableEntityKind =
   | "fish"
 
 export type EntityRevealKind = "player" | "capsule" | "enemy" | "item"
+export type SonarContactAudioVariant = "digital" | "kizilsungur"
 export type SonarMessage = { kind: "player-location"; position: Point }
-export type LogMessageTone = "positive" | "negative" | "warning" | "neutral"
+export type LogMessageTone =
+  | "positive"
+  | "negative"
+  | "warning"
+  | "neutral"
+  | "ai"
 
 export interface LogMessage {
   message: string
@@ -127,9 +133,11 @@ export interface HostileSubmarine {
   lastKnownPlayerPosition?: Point | null
   lastKnownPlayerVector?: Point | null
   lastKnownPlayerTurn?: number | null
+  previousPosition?: Point | null
   plannedPath?: Point[]
+  lastAiLog?: string | null
   salvoShotsRemaining?: number
-  salvoStepDirection?: "up" | "down" | null
+  salvoStepDirection?: Direction | null
   salvoMoveTarget?: Point | null
 }
 
@@ -147,9 +155,9 @@ export interface GameState {
   visibility: VisibilityLevel[]
   lastSonarTurn: number
   playerSonarContactCueCount?: number
-  playerDeathCueCount?: number
-  playerDeathCueCount?: number
+  playerSonarContactAudioVariant?: SonarContactAudioVariant | null
   playerEntityHitCueCount?: number
+  playerDeathCueCount?: number
   playerPickupCueCount?: number
   shockwaves: Shockwave[]
   shockwaveFront: FadeCell[]
@@ -161,6 +169,7 @@ export interface GameState {
   trails: FadeCell[]
   dust: FadeCell[]
   cracks: CrackCell[]
+  structuralDamage?: number[]
   fallingBoulders: FallingBoulder[]
   facing: HorizontalDirection
   torpedoAmmo: number

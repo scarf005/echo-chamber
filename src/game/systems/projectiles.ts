@@ -8,7 +8,10 @@ import type {
   Shockwave,
   Torpedo,
 } from "../model.ts"
-import { TORPEDO_BLAST_RADIUS } from "../constants.ts"
+import {
+  PROJECTILE_PROXIMITY_RADIUS,
+  TORPEDO_BLAST_RADIUS,
+} from "../constants.ts"
 import {
   mergeCrackCells,
   mergeFadeCell,
@@ -27,12 +30,12 @@ import {
 import { type GeneratedMap, type Point, tileAt } from "../mapgen.ts"
 import { detonateTorpedo } from "./destruction.ts"
 
-const PROJECTILE_PROXIMITY_RADIUS = 2
 const EXPLOSION_DAMAGE_RADIUS = Math.max(2, TORPEDO_BLAST_RADIUS)
 
 interface ExplosionResolution {
   trails: FadeCell[]
   cracks: CrackCell[]
+  structuralDamage: number[]
   dust: FadeCell[]
   fallingBoulders: FallingBoulder[]
   shockwave: Shockwave
@@ -49,6 +52,7 @@ export function stepTorpedoes(
   torpedoes: Torpedo[],
   trails: FadeCell[],
   cracks: CrackCell[],
+  structuralDamage: number[],
   dust: FadeCell[],
   fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
@@ -59,6 +63,7 @@ export function stepTorpedoes(
   torpedoes: Torpedo[]
   trails: FadeCell[]
   cracks: CrackCell[]
+  structuralDamage: number[]
   dust: FadeCell[]
   fallingBoulders: FallingBoulder[]
   impacts: number
@@ -73,6 +78,7 @@ export function stepTorpedoes(
   const nextTorpedoes: Torpedo[] = []
   let nextTrails = trails
   let nextCracks = cracks
+  let nextStructuralDamage = structuralDamage
   let nextDust = dust
   const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
@@ -111,6 +117,7 @@ export function stepTorpedoes(
           torpedo.senderId,
           nextTrails,
           nextCracks,
+          nextStructuralDamage,
           nextDust,
           nextFish,
           nextHostileSubmarines,
@@ -119,6 +126,7 @@ export function stepTorpedoes(
 
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
+        nextStructuralDamage = explosion.structuralDamage
         nextDust = explosion.dust
         nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
@@ -157,6 +165,7 @@ export function stepTorpedoes(
           torpedo.senderId,
           nextTrails,
           nextCracks,
+          nextStructuralDamage,
           nextDust,
           nextFish,
           nextHostileSubmarines,
@@ -165,6 +174,7 @@ export function stepTorpedoes(
 
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
+        nextStructuralDamage = explosion.structuralDamage
         nextDust = explosion.dust
         nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
@@ -200,6 +210,7 @@ export function stepTorpedoes(
     torpedoes: nextTorpedoes,
     trails: nextTrails,
     cracks: nextCracks,
+    structuralDamage: nextStructuralDamage,
     dust: nextDust,
     fallingBoulders,
     impacts,
@@ -218,6 +229,7 @@ export function stepDepthCharges(
   depthCharges: DepthCharge[],
   trails: FadeCell[],
   cracks: CrackCell[],
+  structuralDamage: number[],
   dust: FadeCell[],
   fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
@@ -228,6 +240,7 @@ export function stepDepthCharges(
   depthCharges: DepthCharge[]
   trails: FadeCell[]
   cracks: CrackCell[]
+  structuralDamage: number[]
   dust: FadeCell[]
   fallingBoulders: FallingBoulder[]
   impacts: number
@@ -242,6 +255,7 @@ export function stepDepthCharges(
   const nextDepthCharges: DepthCharge[] = []
   let nextTrails = trails
   let nextCracks = cracks
+  let nextStructuralDamage = structuralDamage
   let nextDust = dust
   const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
@@ -286,6 +300,7 @@ export function stepDepthCharges(
           depthCharge.senderId,
           nextTrails,
           nextCracks,
+          nextStructuralDamage,
           nextDust,
           nextFish,
           nextHostileSubmarines,
@@ -294,6 +309,7 @@ export function stepDepthCharges(
 
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
+        nextStructuralDamage = explosion.structuralDamage
         nextDust = explosion.dust
         nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
@@ -329,6 +345,7 @@ export function stepDepthCharges(
           depthCharge.senderId,
           nextTrails,
           nextCracks,
+          nextStructuralDamage,
           nextDust,
           nextFish,
           nextHostileSubmarines,
@@ -337,6 +354,7 @@ export function stepDepthCharges(
 
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
+        nextStructuralDamage = explosion.structuralDamage
         nextDust = explosion.dust
         nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
@@ -377,6 +395,7 @@ export function stepDepthCharges(
           depthCharge.senderId,
           nextTrails,
           nextCracks,
+          nextStructuralDamage,
           nextDust,
           nextFish,
           nextHostileSubmarines,
@@ -385,6 +404,7 @@ export function stepDepthCharges(
 
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
+        nextStructuralDamage = explosion.structuralDamage
         nextDust = explosion.dust
         nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
@@ -413,6 +433,7 @@ export function stepDepthCharges(
           depthCharge.senderId,
           nextTrails,
           nextCracks,
+          nextStructuralDamage,
           nextDust,
           nextFish,
           nextHostileSubmarines,
@@ -421,6 +442,7 @@ export function stepDepthCharges(
 
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
+        nextStructuralDamage = explosion.structuralDamage
         nextDust = explosion.dust
         nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
@@ -455,6 +477,7 @@ export function stepDepthCharges(
     depthCharges: nextDepthCharges,
     trails: nextTrails,
     cracks: nextCracks,
+    structuralDamage: nextStructuralDamage,
     dust: nextDust,
     fallingBoulders,
     impacts,
@@ -475,12 +498,13 @@ function detonateProjectile(
   senderId: string,
   trails: FadeCell[],
   cracks: CrackCell[],
+  structuralDamage: number[],
   dust: FadeCell[],
   fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
 ): ExplosionResolution {
-  const explosion = detonateTorpedo(map, impactPoint, seedKey)
+  const explosion = detonateTorpedo(map, impactPoint, seedKey, structuralDamage)
   const nextFish = resolveFishBlastDamage(impactPoint, fish)
   const nextHostileSubmarines = resolveHostileBlastDamage(
     impactPoint,
@@ -503,6 +527,7 @@ function detonateProjectile(
   return {
     trails: nextTrails,
     cracks: mergeCrackCells(cracks, explosion.cracks),
+    structuralDamage: explosion.structuralDamage,
     dust: nextDust,
     fallingBoulders: explosion.fallingBoulders,
     shockwave: createExplosionShockwave(impactPoint, senderId),

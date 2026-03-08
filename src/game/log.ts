@@ -13,7 +13,7 @@ const HELP_LOG_MESSAGES = [
   createLogMessage("Toggle display with M."),
   createLogMessage("Press R for random run."),
 ]
-const MAX_LOG_MESSAGES = 200
+export const MAX_LOG_MESSAGES = 200
 
 export interface GroupedLogMessage extends LogMessage {
   count: number

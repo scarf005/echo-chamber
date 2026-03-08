@@ -1,4 +1,8 @@
-import { BOULDER_FALL_SPEED, TORPEDO_BLAST_RADIUS } from "../constants.ts"
+import {
+  BOULDER_FALL_SPEED,
+  STRUCTURAL_DAMAGE_COLLAPSE_FACTOR,
+  TORPEDO_BLAST_RADIUS,
+} from "../constants.ts"
 import { createDustBurst, mergeFadeCells } from "../effects.ts"
 import {
   createDeterministicRandom,
@@ -18,19 +22,31 @@ export function detonateTorpedo(
   map: GeneratedMap,
   impactPoint: Point,
   seedKey: string,
+  structuralDamage: number[],
 ): {
   cracks: CrackCell[]
   dust: FadeCell[]
   fallingBoulders: FallingBoulder[]
   screenShake: number
+  structuralDamage: number[]
 } {
   const random = createDeterministicRandom(seedKey)
   const cracks: CrackCell[] = []
   const collapseSeeds: Point[] = [{ ...impactPoint }]
   let dust = createDustBurst(map, impactPoint, 0.7)
   let fallingBoulders: FallingBoulder[] = []
+  const nextStructuralDamage = structuralDamage.slice()
+  const impactCanDislodge = canDislodgeBoulder(map, impactPoint)
 
   carveDisc(map.tiles, map.width, map.height, impactPoint, TORPEDO_BLAST_RADIUS)
+
+  if (impactCanDislodge) {
+    nextStructuralDamage[indexForPoint(map.width, impactPoint)] = 0
+    fallingBoulders.push({
+      position: { ...impactPoint },
+      speed: BOULDER_FALL_SPEED,
+    })
+  }
 
   for (let index = 0; index < 3; index += 1) {
     const direction = randomChoice(baseCrackDirections(), random)
@@ -68,6 +84,7 @@ export function detonateTorpedo(
 
       if (canDislodgeBoulder(map, point) && random() > 0.25) {
         map.tiles[indexForPoint(map.width, point)] = "water"
+        nextStructuralDamage[indexForPoint(map.width, point)] = 0
         fallingBoulders.push({
           position: { ...point },
           speed: BOULDER_FALL_SPEED,
@@ -76,7 +93,11 @@ export function detonateTorpedo(
     }
   }
 
-  fallingBoulders = [...fallingBoulders, ...releaseFloatingTerrain(map, collapseSeeds)]
+  fallingBoulders = [
+    ...fallingBoulders,
+    ...releaseFloatingTerrain(map, collapseSeeds, nextStructuralDamage),
+  ]
+  applyStructuralDamageSeed(map, nextStructuralDamage, collapseSeeds)
   dust = mergeFadeCells(
     dust,
     fallingBoulders.flatMap((boulder) => createDustBurst(map, boulder.position, 0.42)),
@@ -88,6 +109,7 @@ export function detonateTorpedo(
     dust,
     fallingBoulders: uniqueFallingBoulders,
     screenShake: 1.1 + Math.min(1.4, uniqueFallingBoulders.length * 0.04),
+    structuralDamage: nextStructuralDamage,
   }
 }
 
@@ -138,7 +160,11 @@ function baseCrackDirections(): Point[] {
   ]
 }
 
-function releaseFloatingTerrain(map: GeneratedMap, seeds: Point[]): FallingBoulder[] {
+function releaseFloatingTerrain(
+  map: GeneratedMap,
+  seeds: Point[],
+  structuralDamage: number[],
+): FallingBoulder[] {
   const connected = new Set<number>()
   const visited = new Set<number>()
   const queue: Point[] = []
@@ -195,7 +221,7 @@ function releaseFloatingTerrain(map: GeneratedMap, seeds: Point[]): FallingBould
 
       if (
         component.length === 0 ||
-        component.length > MAX_FLOATING_COMPONENT_TILES ||
+        !canReleaseWallComponent(component, structuralDamage) ||
         !componentTouchesSeedArea(component, map.width, seeds)
       ) {
         continue
@@ -207,6 +233,7 @@ function releaseFloatingTerrain(map: GeneratedMap, seeds: Point[]): FallingBould
           y: Math.floor(cellIndex / map.width),
         }
         map.tiles[cellIndex] = "water"
+        structuralDamage[cellIndex] = 0
         fallingBoulders.push({
           position: point,
           speed: BOULDER_FALL_SPEED,
@@ -216,6 +243,46 @@ function releaseFloatingTerrain(map: GeneratedMap, seeds: Point[]): FallingBould
   }
 
   return fallingBoulders
+}
+
+function applyStructuralDamageSeed(
+  map: GeneratedMap,
+  structuralDamage: number[],
+  seeds: Point[],
+): void {
+  for (const seed of seeds) {
+    for (const point of [seed, ...wallNeighbors(seed)]) {
+      if (
+        point.x < 0 ||
+        point.y < 0 ||
+        point.x >= map.width ||
+        point.y >= map.height
+      ) {
+        continue
+      }
+
+      if (tileAt(map, point.x, point.y) === "wall") {
+        structuralDamage[indexForPoint(map.width, point)] += 1
+        return
+      }
+    }
+  }
+}
+
+function canReleaseWallComponent(
+  component: number[],
+  structuralDamage: number[],
+): boolean {
+  if (component.length <= MAX_FLOATING_COMPONENT_TILES) {
+    return true
+  }
+
+  const damage = component.reduce(
+    (total, cellIndex) => total + structuralDamage[cellIndex],
+    0,
+  )
+
+  return damage > 0 && STRUCTURAL_DAMAGE_COLLAPSE_FACTOR * damage > component.length
 }
 
 function collectWallComponent(
