@@ -352,17 +352,7 @@ export function stepHostileSubmarines(
       knowledge.directDetection,
     )
 
-    const nextStep = chooseNextStep(
-      map,
-      hostileSubmarine,
-      archetype,
-      position,
-      target,
-      occupied,
-      context.player,
-      reload,
-      knowledge.directDetection,
-    )
+    const nextStep = plannedPath[1] ?? null
 
     if (nextStep) {
       if (nextStep.x !== position.x) {
@@ -671,13 +661,11 @@ function propagateImmediatePlayerFixes(
     )
     .map((hostileSubmarine) => hostileSubmarine.id)
   const visited = new Set(queue)
+  let queueIndex = 0
 
-  while (queue.length > 0) {
-    const senderId = queue.shift()
-
-    if (!senderId) {
-      continue
-    }
+  while (queueIndex < queue.length) {
+    const senderId = queue[queueIndex]
+    queueIndex += 1
 
     const sender = hostileById.get(senderId)
     const senderKnowledge = knowledges.get(senderId)
@@ -1337,18 +1325,16 @@ function findScoutExplorationTarget(
   random: () => number,
 ): Point | null {
   const queue: Point[] = [{ ...start }]
+  let queueIndex = 0
   const parents = new Map<string, Point | null>()
   parents.set(keyOfPoint(start), null)
   const candidates: Array<{ point: Point; score: number }> = []
   let fallback: Point | null = null
   let fallbackDistance = -1
 
-  while (queue.length > 0) {
-    const current = queue.shift()
-
-    if (!current) {
-      continue
-    }
+  while (queueIndex < queue.length) {
+    const current = queue[queueIndex]
+    queueIndex += 1
 
     const currentIndex = indexForPoint(map.width, current)
     const distance = distanceScore(current, start)
@@ -1469,15 +1455,13 @@ function findPathToward(
   occupied: Set<string>,
 ): Point[] {
   const queue: Point[] = [{ ...start }]
+  let queueIndex = 0
   const parents = new Map<string, Point | null>()
   parents.set(keyOfPoint(start), null)
 
-  while (queue.length > 0) {
-    const current = queue.shift()
-
-    if (!current) {
-      continue
-    }
+  while (queueIndex < queue.length) {
+    const current = queue[queueIndex]
+    queueIndex += 1
 
     if (pointsEqual(current, goal)) {
       break
