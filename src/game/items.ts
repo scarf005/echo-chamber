@@ -1,3 +1,4 @@
+import { t } from "@lingui/core/macro"
 import {
   ITEM_AMMO_BUNDLE,
   MAP_REVEAL_RADIUS,
@@ -84,7 +85,7 @@ export function collectPickups(
       const nextAmmo = Math.min(MAX_TORPEDOES, torpedoAmmo + randomIntegerBetween(1, ITEM_AMMO_BUNDLE))
       const recovered = nextAmmo - torpedoAmmo
       torpedoAmmo = nextAmmo
-      messages.push(recovered > 0 ? `Recovered ${recovered} torpedoes.` : "Torpedo tubes already full.")
+      messages.push(recovered > 0 ? t`Recovered ${recovered} torpedoes.` : t`Torpedo tubes already full.`)
       continue
     }
 
@@ -94,14 +95,14 @@ export function collectPickups(
       depthChargeAmmo = nextAmmo
       messages.push(
         recovered > 0
-          ? `Recovered ${recovered} depth charges.`
-          : "Depth charge racks already full.",
+          ? t`Recovered ${recovered} depth charges.`
+          : t`Depth charge racks already full.`,
       )
       continue
     }
 
     tileReveals = mergeTileReveals(tileReveals, createMapReveal(game, pickup.position))
-    messages.push("Recovered a survey map.")
+    messages.push(t`Recovered a survey map.`)
   }
 
   return {
