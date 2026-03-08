@@ -52,7 +52,7 @@ import {
   describeInspectorContact,
   hasExactInspectorVisibility,
 } from "./render/helpers/inspector.ts"
-import type { RenderOptions } from "./render/options.ts"
+import type { RenderOptions, ViewportMode } from "./render/options.ts"
 
 const DEFAULT_SEED = "echo-chamber"
 const AUTO_MOVE_DELAY_MS = 70
@@ -62,6 +62,7 @@ const IS_DEV_BUILD = import.meta.env.DEV
 const appSettingsSignal = signal<AppSettings>(
   readAppSettings(getBrowserStorage(), IS_DEV_BUILD),
 )
+const viewportModeSignal = signal<ViewportMode>("camera")
 
 export function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
@@ -71,6 +72,7 @@ export function App() {
   const [autoMoveTarget, setAutoMoveTarget] = useState<Point | null>(null)
   const [hoveredTile, setHoveredTile] = useState<Point | null>(null)
   const appSettings = appSettingsSignal.value
+  const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
   const runSeedRef = useRef(DEFAULT_SEED)
@@ -320,6 +322,7 @@ export function App() {
     playedEntityHitCueCountRef.current = 0
     playedPickupCueCountRef.current = 0
     playedSonarContactCueCountRef.current = 0
+    viewportModeSignal.value = "camera"
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
     runSeedRef.current = normalizedSeed
     setRunSeed(normalizedSeed)
@@ -579,6 +582,23 @@ export function App() {
         return
       }
 
+      if (event.key === "m" || event.key === "M") {
+        event.preventDefault()
+        const nextViewportMode = viewportModeSignal.peek() === "full"
+          ? "camera"
+          : "full"
+        viewportModeSignal.value = nextViewportMode
+        setGame((current) => withGameMessage(
+          {
+            ...current,
+          },
+          nextViewportMode === "full"
+            ? "Display set to full map."
+            : "Display set to tracking camera.",
+        ))
+        return
+      }
+
       if (event.key === "z" || event.key === "Z") {
         event.preventDefault()
         setPreviewTarget(null)
@@ -648,7 +668,11 @@ export function App() {
   const renderOptions: RenderOptions = {
     debugEntityOverlay: IS_DEV_BUILD && showDevEntityOverlay,
     debugPlannedPaths: IS_DEV_BUILD && showDevEntityOverlay,
+    viewportMode,
+    cameraTileWidth: 30,
+    cameraTileHeight: 20,
   }
+  const viewportLabel = viewportMode === "full" ? "FULL MAP (M)" : "TRACKING (M)"
   const hoveredInspectorRows = IS_DEV_BUILD
     ? describeHoveredTile(game, hoveredTile)
     : null
@@ -771,6 +795,10 @@ export function App() {
           <div class="stat-row">
             <span>target</span>
             <strong>{targetCoordinates}</strong>
+          </div>
+          <div class="stat-row">
+            <span>display</span>
+            <strong>{viewportLabel}</strong>
           </div>
         </section>
 
@@ -905,6 +933,7 @@ export function App() {
                       <button
                         type="button"
                         onClick={() => {
+                          viewportModeSignal.value = "full"
                           setGame((current) =>
                             withGameMessage(
                               revealMap(current),

@@ -4,6 +4,7 @@ import type { GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
 import { TERMINAL_FONT_LOAD } from "./fontFamily.ts"
 import { screenShakeOffset } from "./helpers/draw.ts"
+import { resolveViewportMetrics } from "./helpers/viewport.ts"
 import type { RenderOptions } from "./options.ts"
 import { drawGame } from "./renderer.ts"
 
@@ -76,7 +77,12 @@ export function FastilesViewport(
     }
 
     const onCanvasClick = (event: MouseEvent) => {
-      const point = pointFromMouseEvent(canvas, gameRef.current, event)
+      const point = pointFromMouseEvent(
+        canvas,
+        gameRef.current,
+        renderOptionsRef.current,
+        event,
+      )
 
       if (point) {
         onTileClickRef.current(point)
@@ -85,7 +91,12 @@ export function FastilesViewport(
 
     const onCanvasPointerMove = (event: PointerEvent) => {
       onTileHoverRef.current(
-        pointFromMouseEvent(canvas, gameRef.current, event),
+        pointFromMouseEvent(
+          canvas,
+          gameRef.current,
+          renderOptionsRef.current,
+          event,
+        ),
       )
     }
 
@@ -146,10 +157,19 @@ export function FastilesViewport(
 function pointFromMouseEvent(
   canvas: HTMLCanvasElement,
   game: GameState,
+  renderOptions: RenderOptions | undefined,
   event: MouseEvent,
 ): Point | null {
   const rect = canvas.getBoundingClientRect()
   const shake = screenShakeOffset(game)
+  const viewport = resolveViewportMetrics(
+    game,
+    {
+      width: rect.width,
+      height: rect.height,
+    },
+    renderOptions,
+  )
 
   if (
     event.clientX < rect.left ||
@@ -160,10 +180,12 @@ function pointFromMouseEvent(
     return null
   }
 
-  const tileWidth = rect.width / game.map.width
-  const tileHeight = rect.height / game.map.height
-  const x = Math.floor((event.clientX - rect.left - shake.x) / tileWidth)
-  const y = Math.floor((event.clientY - rect.top - shake.y) / tileHeight)
+  const x = Math.floor(
+    (event.clientX - rect.left - shake.x) / viewport.tileSize,
+  ) + viewport.left
+  const y = Math.floor(
+    (event.clientY - rect.top - shake.y) / viewport.tileSize,
+  ) + viewport.top
 
   if (x < 0 || x >= game.map.width || y < 0 || y >= game.map.height) {
     return null
