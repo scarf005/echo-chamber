@@ -13,6 +13,7 @@ import {
 } from "./helpers.ts"
 import type { GameState, PickupItem, PickupKind, TileReveal } from "./model.ts"
 import { tileAt, type GeneratedMap, type Point } from "./mapgen.ts"
+import { randomIntegerBetween } from "@std/random"
 
 const PICKUP_KINDS: PickupKind[] = ["torpedo-cache", "depth-charge-cache", "map"]
 const MIN_PICKUP_ANCHOR_DISTANCE = 5
@@ -80,7 +81,7 @@ export function collectPickups(
 
   for (const pickup of collected) {
     if (pickup.kind === "torpedo-cache") {
-      const nextAmmo = Math.min(MAX_TORPEDOES, torpedoAmmo + ITEM_AMMO_BUNDLE)
+      const nextAmmo = Math.min(MAX_TORPEDOES, torpedoAmmo + randomIntegerBetween(1, ITEM_AMMO_BUNDLE))
       const recovered = nextAmmo - torpedoAmmo
       torpedoAmmo = nextAmmo
       messages.push(recovered > 0 ? `Recovered ${recovered} torpedoes.` : "Torpedo tubes already full.")
@@ -88,7 +89,7 @@ export function collectPickups(
     }
 
     if (pickup.kind === "depth-charge-cache") {
-      const nextAmmo = Math.min(MAX_DEPTH_CHARGES, depthChargeAmmo + ITEM_AMMO_BUNDLE)
+      const nextAmmo = Math.min(MAX_DEPTH_CHARGES, depthChargeAmmo + randomIntegerBetween(1, ITEM_AMMO_BUNDLE))
       const recovered = nextAmmo - depthChargeAmmo
       depthChargeAmmo = nextAmmo
       messages.push(
