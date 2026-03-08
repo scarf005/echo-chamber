@@ -42,6 +42,8 @@ import type {
   DepthCharge,
   Direction,
   FadeCell,
+  HostileAiDebugState,
+  HostileAttackDebugState,
   HostileSubmarine,
   HostileSubmarineArchetype,
   HostileSubmarineMode,
@@ -111,6 +113,7 @@ interface AttackResolution {
   salvoShotsRemaining: number
   salvoStepDirection: Direction | null
   salvoMoveTarget: Point | null
+  debugState: HostileAttackDebugState
 }
 
 interface Loadout {
@@ -606,10 +609,11 @@ export function stepHostileSubmarines(
       knowledge.receivedImmediateRelay ||
       knowledge.alertedByCapsuleRecovery ||
       (sonarInterval !== null && turn - lastSonarTurn >= sonarInterval)
+    let shouldBroadcastFix = false
 
     if (shouldEmitSonar) {
       lastSonarTurn = turn
-      const shouldBroadcastFix = Boolean(
+      shouldBroadcastFix = Boolean(
         lastKnownPlayerPosition && lastKnownPlayerTurn !== null &&
           turn - lastKnownPlayerTurn <= 2,
       ) || knowledge.detectedByPlayerSonar || knowledge.alertedByCapsuleRecovery
@@ -635,6 +639,24 @@ export function stepHostileSubmarines(
     }
 
     occupied.add(keyOfPoint(position))
+    const debugState: HostileAiDebugState = {
+      confirmedPlayerPosition: knowledge.confirmedPlayerPosition
+        ? { ...knowledge.confirmedPlayerPosition }
+        : null,
+      cluePosition: knowledge.cluePosition ? { ...knowledge.cluePosition } : null,
+      playerVector: knowledge.playerVector ? { ...knowledge.playerVector } : null,
+      directDetection: knowledge.directDetection,
+      detectedByPlayerSonar: knowledge.detectedByPlayerSonar,
+      receivedImmediateRelay: knowledge.receivedImmediateRelay,
+      alertedByCapsuleRecovery: knowledge.alertedByCapsuleRecovery,
+      retainedPlannedPath: retainedPlannedPath !== null,
+      repositioningForSalvo,
+      movementTarget: movementTarget ? { ...movementTarget } : null,
+      sonarInterval,
+      emittedSonar: shouldEmitSonar,
+      broadcastPlayerFix: shouldBroadcastFix,
+      attack: attack.debugState,
+    }
     nextHostileSubmarines.push({
       ...hostileSubmarine,
       archetype,
@@ -657,6 +679,7 @@ export function stepHostileSubmarines(
       salvoShotsRemaining,
       salvoStepDirection,
       salvoMoveTarget,
+      debugState,
     })
   })
 
@@ -1367,27 +1390,65 @@ function resolveAttack(
   salvoStepDirection: Direction | null,
   salvoMoveTarget: Point | null,
 ): AttackResolution {
+  const createDebugState = (
+    overrides: Partial<HostileAttackDebugState>,
+  ): HostileAttackDebugState => ({
+    attackTarget: null,
+    guessedTarget: null,
+    blockedReason: null,
+    directLane: false,
+    horizontalShotOpportunity: false,
+    verticalShotOpportunity: false,
+    ceilingTrapDirection: null,
+    turnAge: null,
+    maxEvidenceAge: null,
+    confidence: null,
+    avoidFriendlyFire: archetype === "scout",
+    firedWeapon: null,
+    firedDirection: null,
+    salvoShotsRemaining,
+    salvoStepDirection,
+    salvoMoveTarget: salvoMoveTarget ? { ...salvoMoveTarget } : null,
+    ...overrides,
+  })
   const noAttack = (
     nextReload = reload,
     resetSalvo = false,
-  ): AttackResolution => ({
-    torpedoes: [],
-    depthCharges: [],
-    reload: nextReload,
-    torpedoAmmo,
-    vlsAmmo,
-    depthChargeAmmo,
-    salvoShotsRemaining: resetSalvo ? 0 : salvoShotsRemaining,
-    salvoStepDirection: resetSalvo ? null : salvoStepDirection,
-    salvoMoveTarget: resetSalvo ? null : salvoMoveTarget,
-  })
+    debugStateOverrides: Partial<HostileAttackDebugState> = {},
+  ): AttackResolution => {
+    const nextSalvoShotsRemaining = resetSalvo ? 0 : salvoShotsRemaining
+    const nextSalvoStepDirection = resetSalvo ? null : salvoStepDirection
+    const nextSalvoMoveTarget = resetSalvo ? null : salvoMoveTarget
+
+    return {
+      torpedoes: [],
+      depthCharges: [],
+      reload: nextReload,
+      torpedoAmmo,
+      vlsAmmo,
+      depthChargeAmmo,
+      salvoShotsRemaining: nextSalvoShotsRemaining,
+      salvoStepDirection: nextSalvoStepDirection,
+      salvoMoveTarget: nextSalvoMoveTarget,
+      debugState: createDebugState({
+        salvoShotsRemaining: nextSalvoShotsRemaining,
+        salvoStepDirection: nextSalvoStepDirection,
+        salvoMoveTarget: nextSalvoMoveTarget ? { ...nextSalvoMoveTarget } : null,
+        ...debugStateOverrides,
+      }),
+    }
+  }
 
   if (!lastKnownPlayerPosition || reload > 0) {
-    return noAttack(reload, !lastKnownPlayerPosition)
+    return noAttack(reload, !lastKnownPlayerPosition, {
+      blockedReason: lastKnownPlayerPosition ? "reloading" : "no player fix",
+    })
   }
 
   if ((archetype === "hunter" || archetype === "guard") && !directDetection) {
-    return noAttack(reload, true)
+    return noAttack(reload, true, {
+      blockedReason: "needs direct detection",
+    })
   }
 
   if (
@@ -1395,7 +1456,9 @@ function resolveAttack(
     chebyshevDistance(position, lastKnownPlayerPosition) >
       HOSTILE_PLAYER_DETECTION_RADIUS
   ) {
-    return noAttack(reload, true)
+    return noAttack(reload, true, {
+      blockedReason: "player outside attack radius",
+    })
   }
 
   const guessRadius = archetype === "hunter" ? 2 : 1
@@ -1446,9 +1509,24 @@ function resolveAttack(
     : turnAge === 0
     ? 0.62
     : 0.28
+  const debugStateBase = {
+    attackTarget: { ...attackTarget },
+    guessedTarget: { ...guessedTarget },
+    directLane,
+    horizontalShotOpportunity,
+    verticalShotOpportunity,
+    ceilingTrapDirection: ceilingTrapShot?.direction ?? null,
+    turnAge,
+    maxEvidenceAge,
+    confidence,
+    avoidFriendlyFire: archetype === "scout",
+  } satisfies Partial<HostileAttackDebugState>
 
   if (turnAge > maxEvidenceAge) {
-    return noAttack(reload, true)
+    return noAttack(reload, true, {
+      ...debugStateBase,
+      blockedReason: "stale player fix",
+    })
   }
 
   if (
@@ -1459,7 +1537,10 @@ function resolveAttack(
     !ceilingTrapShot &&
     random() > confidence
   ) {
-    return noAttack()
+    return noAttack(reload, false, {
+      ...debugStateBase,
+      blockedReason: "low confidence shot skipped",
+    })
   }
 
   const avoidFriendlyFire = archetype === "scout"
@@ -1468,7 +1549,10 @@ function resolveAttack(
     avoidFriendlyFire &&
     !isAttackLaneSafe(attackTarget, hostileSubmarine, hostileSubmarines)
   ) {
-    return noAttack()
+    return noAttack(reload, false, {
+      ...debugStateBase,
+      blockedReason: "friendly fire risk",
+    })
   }
 
   const torpedoes: Torpedo[] = []
@@ -1483,6 +1567,8 @@ function resolveAttack(
     ? { ...salvoMoveTarget }
     : null
   let firedOrientation: "horizontal" | "vertical" | null = null
+  let firedWeapon: HostileAttackDebugState["firedWeapon"] = null
+  let firedDirection: Direction | null = null
 
   if (horizontalShotOpportunity && nextTorpedoAmmo > 0) {
     const direction: Direction = lastKnownPlayerPosition.x < position.x
@@ -1498,6 +1584,8 @@ function resolveAttack(
     })
     nextTorpedoAmmo -= 1
     firedOrientation = "horizontal"
+    firedWeapon = "torpedo"
+    firedDirection = direction
   } else if (verticalShotOpportunity && nextVlsAmmo > 0) {
     torpedoes.push({
       position: { ...position },
@@ -1509,6 +1597,8 @@ function resolveAttack(
     })
     nextVlsAmmo -= 1
     firedOrientation = "vertical"
+    firedWeapon = "vls"
+    firedDirection = "up"
   } else if (ceilingTrapShot && nextTorpedoAmmo > 0 && ceilingTrapShot.direction !== "up") {
     torpedoes.push({
       position: { ...position },
@@ -1519,6 +1609,8 @@ function resolveAttack(
       avoidFriendlyFire,
     })
     nextTorpedoAmmo -= 1
+    firedWeapon = "torpedo"
+    firedDirection = ceilingTrapShot.direction
   } else if (ceilingTrapShot && nextVlsAmmo > 0 && ceilingTrapShot.direction === "up") {
     torpedoes.push({
       position: { ...position },
@@ -1530,6 +1622,8 @@ function resolveAttack(
     })
     nextVlsAmmo -= 1
     firedOrientation = "vertical"
+    firedWeapon = "vls"
+    firedDirection = "up"
   } else if (
     directLane &&
     lastKnownPlayerPosition.x === position.x &&
@@ -1544,10 +1638,14 @@ function resolveAttack(
       avoidFriendlyFire,
     })
     nextDepthChargeAmmo -= 1
+    firedWeapon = "depth-charge"
   }
 
   if (torpedoes.length === 0 && depthCharges.length === 0) {
-    return noAttack(Math.max(0, reload), archetype === "hunter")
+    return noAttack(Math.max(0, reload), archetype === "hunter", {
+      ...debugStateBase,
+      blockedReason: "no valid weapon solution",
+    })
   }
 
   if (archetype === "hunter" && firedOrientation) {
@@ -1599,6 +1697,14 @@ function resolveAttack(
     salvoShotsRemaining: nextSalvoShotsRemaining,
     salvoStepDirection: nextSalvoStepDirection,
     salvoMoveTarget: nextSalvoMoveTarget,
+    debugState: createDebugState({
+      ...debugStateBase,
+      firedWeapon,
+      firedDirection,
+      salvoShotsRemaining: nextSalvoShotsRemaining,
+      salvoStepDirection: nextSalvoStepDirection,
+      salvoMoveTarget: nextSalvoMoveTarget ? { ...nextSalvoMoveTarget } : null,
+    }),
   }
 }
 

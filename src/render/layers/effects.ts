@@ -88,6 +88,10 @@ export function drawShockwaveLayer(
     return
   }
 
+  const enemySonar = front.requiresVisibility === true
+  const sonarColor = enemySonar ? COLORS.enemySonar : COLORS.sonar
+  const sonarGlow = enemySonar ? COLORS.enemySonarGlow : COLORS.sonarGlow
+
   const sonarAlpha = front.alpha * Math.max(0.1, 1 - dustAlpha * 0.85)
 
   if (sonarAlpha <= 0) {
@@ -99,7 +103,7 @@ export function drawShockwaveLayer(
     screenX,
     screenY,
     tileSize,
-    COLORS.sonarGlow,
+    sonarGlow,
     sonarAlpha * 0.5,
   )
   drawGlyph(
@@ -108,7 +112,7 @@ export function drawShockwaveLayer(
     screenY,
     tileSize,
     "◌",
-    COLORS.sonar,
+    sonarColor,
     sonarAlpha,
   )
 }

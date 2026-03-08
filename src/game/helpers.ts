@@ -4,6 +4,7 @@ import type {
   Direction,
   Fish,
   FallingBoulder,
+  HostileAiDebugState,
   HostileSubmarine,
   HorizontalDirection,
   Torpedo,
@@ -56,6 +57,49 @@ export function cloneHostileSubmarine(hostileSubmarine: HostileSubmarine): Hosti
     ...hostileSubmarine,
     position: { ...hostileSubmarine.position },
     target: hostileSubmarine.target ? { ...hostileSubmarine.target } : null,
+    previousPosition: hostileSubmarine.previousPosition
+      ? { ...hostileSubmarine.previousPosition }
+      : null,
+    initialPosition: hostileSubmarine.initialPosition
+      ? { ...hostileSubmarine.initialPosition }
+      : undefined,
+    lastKnownPlayerPosition: hostileSubmarine.lastKnownPlayerPosition
+      ? { ...hostileSubmarine.lastKnownPlayerPosition }
+      : null,
+    lastKnownPlayerVector: hostileSubmarine.lastKnownPlayerVector
+      ? { ...hostileSubmarine.lastKnownPlayerVector }
+      : null,
+    plannedPath: hostileSubmarine.plannedPath?.map((point) => ({ ...point })),
+    salvoMoveTarget: hostileSubmarine.salvoMoveTarget
+      ? { ...hostileSubmarine.salvoMoveTarget }
+      : null,
+    debugState: hostileSubmarine.debugState
+      ? cloneHostileAiDebugState(hostileSubmarine.debugState)
+      : undefined,
+  }
+}
+
+function cloneHostileAiDebugState(debugState: HostileAiDebugState): HostileAiDebugState {
+  return {
+    ...debugState,
+    confirmedPlayerPosition: debugState.confirmedPlayerPosition
+      ? { ...debugState.confirmedPlayerPosition }
+      : null,
+    cluePosition: debugState.cluePosition ? { ...debugState.cluePosition } : null,
+    playerVector: debugState.playerVector ? { ...debugState.playerVector } : null,
+    movementTarget: debugState.movementTarget ? { ...debugState.movementTarget } : null,
+    attack: {
+      ...debugState.attack,
+      attackTarget: debugState.attack.attackTarget
+        ? { ...debugState.attack.attackTarget }
+        : null,
+      guessedTarget: debugState.attack.guessedTarget
+        ? { ...debugState.attack.guessedTarget }
+        : null,
+      salvoMoveTarget: debugState.attack.salvoMoveTarget
+        ? { ...debugState.attack.salvoMoveTarget }
+        : null,
+    },
   }
 }
 

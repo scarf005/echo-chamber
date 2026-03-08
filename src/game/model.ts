@@ -11,6 +11,7 @@ export type HostileSubmarineMode =
   | "attack"
   | "retreat"
 export type HostileSubmarineArchetype = "scout" | "hunter" | "turtle" | "guard"
+export type HostileWeaponKind = "torpedo" | "vls" | "depth-charge"
 export type EntityMemoryKind = "item" | "enemy" | "non-hostile"
 
 export type RevealableEntityKind =
@@ -117,6 +118,42 @@ export interface Fish {
   travelTurnsRemaining?: number
 }
 
+export interface HostileAttackDebugState {
+  attackTarget: Point | null
+  guessedTarget: Point | null
+  blockedReason: string | null
+  directLane: boolean
+  horizontalShotOpportunity: boolean
+  verticalShotOpportunity: boolean
+  ceilingTrapDirection: Direction | null
+  turnAge: number | null
+  maxEvidenceAge: number | null
+  confidence: number | null
+  avoidFriendlyFire: boolean
+  firedWeapon: HostileWeaponKind | null
+  firedDirection: Direction | null
+  salvoShotsRemaining: number
+  salvoStepDirection: Direction | null
+  salvoMoveTarget: Point | null
+}
+
+export interface HostileAiDebugState {
+  confirmedPlayerPosition: Point | null
+  cluePosition: Point | null
+  playerVector: Point | null
+  directDetection: boolean
+  detectedByPlayerSonar: boolean
+  receivedImmediateRelay: boolean
+  alertedByCapsuleRecovery: boolean
+  retainedPlannedPath: boolean
+  repositioningForSalvo: boolean
+  movementTarget: Point | null
+  sonarInterval: number | null
+  emittedSonar: boolean
+  broadcastPlayerFix: boolean
+  attack: HostileAttackDebugState
+}
+
 export interface HostileSubmarine {
   id: string
   position: Point
@@ -139,6 +176,7 @@ export interface HostileSubmarine {
   salvoShotsRemaining?: number
   salvoStepDirection?: Direction | null
   salvoMoveTarget?: Point | null
+  debugState?: HostileAiDebugState
 }
 
 export interface GameState {

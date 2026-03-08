@@ -13,6 +13,8 @@ export const COLORS = {
   dustGlow: "#382e23",
   sonar: "#8af4ff",
   sonarGlow: "#123348",
+  enemySonar: "#ff5d55",
+  enemySonarGlow: "#4a1712",
   torpedo: "#ffe28a",
   depthCharge: "#ff9f6e",
   pickup: "#b7ff8a",

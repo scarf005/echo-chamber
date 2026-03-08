@@ -114,6 +114,33 @@ Deno.test("inspector includes hostile ai log in god mode rows", () => {
   )
 })
 
+Deno.test("god mode inspector reveals hidden hostile entities under cursor", () => {
+  const game = createInspectorHostileGame()
+  const hostilePoint = { x: 5, y: 2 }
+
+  const rows = describeHoveredInspectorRows(game, hostilePoint, {
+    revealAllEntities: true,
+  })
+
+  assertEquals(rows?.find((row) => row.label === "contact")?.value, "enemy submarine")
+  assertEquals(rows?.some((row) => row.label === "enemy id"), true)
+})
+
+Deno.test("god mode inspector shows detailed hostile ai state", () => {
+  const game = createInspectorHostileGame()
+  const hostilePoint = { x: 5, y: 2 }
+  const index = hostilePoint.y * game.map.width + hostilePoint.x
+
+  game.visibility[index] = 3
+
+  const rows = filterInspectorRows(describeHoveredInspectorRows(game, hostilePoint), true)
+
+  assertEquals(rows?.find((row) => row.label === "ai source")?.value, "player sonar")
+  assertEquals(rows?.find((row) => row.label === "attack block")?.value, "needs direct detection")
+  assertEquals(rows?.find((row) => row.label === "fired weapon")?.value, "--")
+  assertEquals(rows?.find((row) => row.label === "guessed shot")?.value, "3,2")
+})
+
 Deno.test("hostile ai helpers only expose notable targeted decisions to orders", () => {
   const targetedHostile = createInspectorHostileGame().hostileSubmarines[0]
   const patrollingHostile = {
@@ -206,6 +233,39 @@ function createInspectorHostileGame(): GameState {
       lastKnownPlayerTurn: 3,
       plannedPath: [{ x: 5, y: 2 }, { x: 4, y: 2 }],
       lastAiLog: "hostile-1: will attack 2,2",
+      debugState: {
+        confirmedPlayerPosition: { x: 2, y: 2 },
+        cluePosition: { x: 2, y: 2 },
+        playerVector: { x: -1, y: 0 },
+        directDetection: false,
+        detectedByPlayerSonar: true,
+        receivedImmediateRelay: false,
+        alertedByCapsuleRecovery: false,
+        retainedPlannedPath: true,
+        repositioningForSalvo: false,
+        movementTarget: { x: 2, y: 2 },
+        sonarInterval: 5,
+        emittedSonar: true,
+        broadcastPlayerFix: true,
+        attack: {
+          attackTarget: { x: 2, y: 2 },
+          guessedTarget: { x: 3, y: 2 },
+          blockedReason: "needs direct detection",
+          directLane: true,
+          horizontalShotOpportunity: true,
+          verticalShotOpportunity: false,
+          ceilingTrapDirection: null,
+          turnAge: 0,
+          maxEvidenceAge: 2,
+          confidence: 0.32,
+          avoidFriendlyFire: false,
+          firedWeapon: null,
+          firedDirection: null,
+          salvoShotsRemaining: 0,
+          salvoStepDirection: null,
+          salvoMoveTarget: null,
+        },
+      },
     }],
     fish: [],
   }

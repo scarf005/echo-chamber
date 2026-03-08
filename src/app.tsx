@@ -758,7 +758,9 @@ export function App() {
     cameraTileHeight: 20,
   }
   const viewportLabel = viewportMode === "full" ? "FULL MAP (M)" : "TRACKING (M)"
-  const hoveredInspectorRows = describeHoveredInspectorRows(game, hoveredTile)
+  const hoveredInspectorRows = describeHoveredInspectorRows(game, hoveredTile, {
+    revealAllEntities: isGodMode,
+  })
   const visibleInspectorRows = filterInspectorRows(hoveredInspectorRows, isGodMode)
 
   const handleMusicEnabledChange = (

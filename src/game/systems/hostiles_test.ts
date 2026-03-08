@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import { assertEquals } from "jsr:@std/assert"
 
 import { stepHostileSubmarines } from "./hostiles.ts"
@@ -54,6 +56,66 @@ Deno.test("hostile step emits notable ai decisions", () => {
 
   assertEquals(next.aiDecisionLogs, ["hostile-1: will attack 3,2"])
   assertEquals(next.hostileSubmarines[0].lastAiLog, "hostile-1: will attack 3,2")
+})
+
+Deno.test("hostile step suppresses duplicate ai decisions on unchanged objective", () => {
+  const map = createMapFromRows(
+    [
+      "##########",
+      "#........#",
+      "#........#",
+      "##########",
+    ],
+    { x: 1, y: 2 },
+    { x: 8, y: 2 },
+  )
+  const hostile: HostileSubmarine = {
+    id: "hostile-1",
+    position: { x: 7, y: 2 },
+    facing: "left",
+    mode: "patrol",
+    target: null,
+    reload: 0,
+    archetype: "hunter",
+    initialPosition: { x: 7, y: 2 },
+    torpedoAmmo: 6,
+    vlsAmmo: 6,
+    depthChargeAmmo: 6,
+    lastSonarTurn: 0,
+    lastKnownPlayerPosition: null,
+    lastKnownPlayerVector: null,
+    lastKnownPlayerTurn: null,
+    plannedPath: [],
+    lastAiLog: null,
+  }
+  const context = {
+    player: { x: 3, y: 2 },
+    previousPlayer: { x: 3, y: 2 },
+    shockwaves: [],
+    trails: [],
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    playerSonarHitHostiles: new Set<string>(),
+    capsuleRetrievedThisTurn: false,
+  }
+
+  const first = stepHostileSubmarines(
+    map,
+    [hostile],
+    context,
+    "hostile-ai-log-test",
+    1,
+  )
+  const second = stepHostileSubmarines(
+    map,
+    first.hostileSubmarines,
+    context,
+    "hostile-ai-log-test",
+    2,
+  )
+
+  assertEquals(first.aiDecisionLogs, ["hostile-1: will attack 3,2"])
+  assertEquals(second.aiDecisionLogs, [])
+  assertEquals(second.hostileSubmarines[0].lastAiLog, "hostile-1: will attack 3,2")
 })
 
 Deno.test("hostiles carry their planned path forward after moving", () => {
