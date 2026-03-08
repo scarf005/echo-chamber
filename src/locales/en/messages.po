@@ -14,24 +14,168 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
+#: src/game/entity_labels.ts:10
+msgid "player submarine"
+msgstr "player submarine"
+
+#. js-lingui-explicit-id
+#: src/game/entity_labels.ts:14
+#: src/game/localize.ts:72
+msgid "capsule"
+msgstr "capsule"
+
+#. js-lingui-explicit-id
+#: src/game/entity_labels.ts:20
+msgid "enemy submarine"
+msgstr "enemy submarine"
+
+#. js-lingui-explicit-id
+#: src/game/entity_labels.ts:26
+msgid "fish"
+msgstr "fish"
+
+#. js-lingui-explicit-id
+#: src/game/entity_labels.ts:32
+#: src/game/localize.ts:23
+msgid "item"
+msgstr "item"
+
+#. js-lingui-explicit-id
+#: src/game/entity_labels.ts:38
+#: src/game/localize.ts:63
+msgid "torpedo"
+msgstr "torpedo"
+
+#. js-lingui-explicit-id
+#: src/game/entity_labels.ts:44
+#: src/game/localize.ts:65
+msgid "depth charge"
+msgstr "depth charge"
+
+#. js-lingui-explicit-id
+#: src/game/entity_labels.ts:50
+msgid "falling boulder"
+msgstr "falling boulder"
+
+#. js-lingui-explicit-id
 #: src/game/entity_labels.ts:57
 msgid "{name} in sight"
 msgstr "{name} in sight"
 
 #. js-lingui-explicit-id
-#: src/game/items.ts:88
+#: src/game/items.ts:90
 msgid "Recovered {recovered} torpedoes."
 msgstr "Recovered {recovered} torpedoes."
 
 #. js-lingui-explicit-id
-#: src/game/items.ts:98
+#: src/game/items.ts:91
+msgid "Torpedo tubes already full."
+msgstr "Torpedo tubes already full."
+
+#. js-lingui-explicit-id
+#: src/game/items.ts:102
 msgid "Recovered {recovered} depth charges."
 msgstr "Recovered {recovered} depth charges."
+
+#. js-lingui-explicit-id
+#: src/game/items.ts:103
+msgid "Depth charge racks already full."
+msgstr "Depth charge racks already full."
+
+#. js-lingui-explicit-id
+#: src/game/items.ts:109
+msgid "Recovered a survey map."
+msgstr "Recovered a survey map."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:5
+msgid "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns."
+msgstr "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:10
+msgid "Move with WASD or arrows."
+msgstr "Move with WASD or arrows."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:11
+msgid "Click once to plot a course."
+msgstr "Click once to plot a course."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:12
+msgid "Click the same tile again to engage auto-nav."
+msgstr "Click the same tile again to engage auto-nav."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:13
+msgid "Wait with ."
+msgstr "Wait with ."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:14
+msgid "Launch torpedo with Z."
+msgstr "Launch torpedo with Z."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:15
+msgid "Drop depth charge with X."
+msgstr "Drop depth charge with X."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:16
+msgid "Toggle display with M."
+msgstr "Toggle display with M."
+
+#. js-lingui-explicit-id
+#: src/game/log.ts:17
+msgid "When sunk, press R to restart. Use Options for restart or random run anytime."
+msgstr "When sunk, press R to restart. Use Options for restart or random run anytime."
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:101
+msgid "A hostile submarine rams your hull. Press R for a new run."
+msgstr "A hostile submarine rams your hull. Press R for a new run."
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:161
+msgid "A hostile torpedo tears through your hull. Press R for a new run."
+msgstr "A hostile torpedo tears through your hull. Press R for a new run."
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:192
+msgid "A hostile blast caves in your hull. Press R for a new run."
+msgstr "A hostile blast caves in your hull. Press R for a new run."
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:216
+msgid "Cave-in debris crushes your hull. Press R for a new run."
+msgstr "Cave-in debris crushes your hull. Press R for a new run."
 
 #. js-lingui-explicit-id
 #: src/game/turn.ts:338
 msgid "hostile sonar from {direction}"
 msgstr "hostile sonar from {direction}"
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:400
+msgid "Capsule retrieved. Return to dock."
+msgstr "Capsule retrieved. Return to dock."
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:405
+msgid "Your submarine is destroyed. Press R for a new run."
+msgstr "Your submarine is destroyed. Press R for a new run."
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:407
+msgid "Capsule delivered to dock. Press R for a new run."
+msgstr "Capsule delivered to dock. Press R for a new run."
+
+#. js-lingui-explicit-id
+#: src/game/turn.ts:415
+msgid "You paste a fish against the bow."
+msgstr "You paste a fish against the bow."
 
 #. js-lingui-explicit-id
 #: src/game/turn.ts:416
@@ -62,11 +206,6 @@ msgstr "vent"
 #: src/game/localize.ts:19
 msgid "void"
 msgstr "void"
-
-#. js-lingui-explicit-id
-#: src/game/localize.ts:23
-msgid "item"
-msgstr "item"
 
 #. js-lingui-explicit-id
 #: src/game/localize.ts:24
@@ -174,19 +313,9 @@ msgid "hunter"
 msgstr "hunter"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:63
-msgid "torpedo"
-msgstr "torpedo"
-
-#. js-lingui-explicit-id
 #: src/game/localize.ts:64
 msgid "VLS"
 msgstr "VLS"
-
-#. js-lingui-explicit-id
-#: src/game/localize.ts:65
-msgid "depth charge"
-msgstr "depth charge"
 
 #. js-lingui-explicit-id
 #: src/game/localize.ts:69
@@ -202,11 +331,6 @@ msgstr "player sonar"
 #: src/game/localize.ts:71
 msgid "relay"
 msgstr "relay"
-
-#. js-lingui-explicit-id
-#: src/game/localize.ts:72
-msgid "capsule"
-msgstr "capsule"
 
 #. js-lingui-explicit-id
 #: src/game/localize.ts:73
@@ -327,6 +451,76 @@ msgstr "capsule in sight"
 #: src/game/localize.ts:105
 msgid "sonar"
 msgstr "sonar"
+
+#. js-lingui-explicit-id
+#: src/game/effects.ts:63
+msgid "Violent torpedo impact. Cracks race overhead."
+msgstr "Violent torpedo impact. Cracks race overhead."
+
+#. js-lingui-explicit-id
+#: src/game/effects.ts:67
+msgid "Cave-in debris slams through the silt."
+msgstr "Cave-in debris slams through the silt."
+
+#. js-lingui-explicit-id
+#: src/game/effects.ts:71
+msgid "Violent torpedo impact."
+msgstr "Violent torpedo impact."
+
+#. js-lingui-explicit-id
+#: src/game/effects.ts:75
+msgid "Depth charge detonates below."
+msgstr "Depth charge detonates below."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:297
+msgid "Player sonar enabled."
+msgstr "Player sonar enabled."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:298
+msgid "Player sonar disabled."
+msgstr "Player sonar disabled."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:317
+msgid "Hull blocked."
+msgstr "Hull blocked."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:325
+msgid "Advance."
+msgstr "Advance."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:339
+msgid "Holding position."
+msgstr "Holding position."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:355
+msgid "No torpedoes remaining."
+msgstr "No torpedoes remaining."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:365
+msgid "Tube away to port."
+msgstr "Tube away to port."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:366
+msgid "Tube away to starboard."
+msgstr "Tube away to starboard."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:379
+msgid "No depth charges remaining."
+msgstr "No depth charges remaining."
+
+#. js-lingui-explicit-id
+#: src/game/actions.ts:387
+msgid "Depth charge away."
+msgstr "Depth charge away."
 
 #. js-lingui-explicit-id
 #: src/render/helpers/inspector.ts:311
