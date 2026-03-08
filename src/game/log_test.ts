@@ -43,6 +43,7 @@ Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
     createLogMessage("Click the same tile again to engage auto-nav."),
     createLogMessage("Wait with ."),
     createLogMessage("Launch torpedo with Z."),
+    createLogMessage("Launch torpedo upwards with C."),
     createLogMessage("Drop depth charge with X."),
     createLogMessage("Toggle display with M."),
     createLogMessage("When sunk, press R to restart. Use Options for restart or random run anytime."),
