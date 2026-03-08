@@ -78,6 +78,7 @@ function createConfiguredGame(seed: string, settings: AppSettings) {
 
 export function App() {
   const [isOptionsOpen, setIsOptionsOpen] = useState(false)
+  const [isOrdersModalOpen, setIsOrdersModalOpen] = useState(false)
   const [runSeed, setRunSeed] = useState(DEFAULT_SEED)
   const [game, setGame] = useState(() =>
     createConfiguredGame(DEFAULT_SEED, appSettingsSignal.value)
@@ -93,6 +94,7 @@ export function App() {
   const isGodMode = IS_DEV_BUILD && showDevEntityOverlay
   const runSeedRef = useRef(DEFAULT_SEED)
   const isOptionsOpenRef = useRef(false)
+  const isOrdersModalOpenRef = useRef(false)
   const backgroundMusicRef = useRef<
     ReturnType<typeof createBackgroundMusic> | null
   >(null)
@@ -189,6 +191,10 @@ export function App() {
   useEffect(() => {
     isOptionsOpenRef.current = isOptionsOpen
   }, [isOptionsOpen])
+
+  useEffect(() => {
+    isOrdersModalOpenRef.current = isOrdersModalOpen
+  }, [isOrdersModalOpen])
 
   useEffect(() => {
     const backgroundMusic = createBackgroundMusic()
@@ -631,10 +637,11 @@ export function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target
 
-      if (isOptionsOpenRef.current) {
+      if (isOptionsOpenRef.current || isOrdersModalOpenRef.current) {
         if (event.key === "Escape") {
           event.preventDefault()
           setIsOptionsOpen(false)
+          setIsOrdersModalOpen(false)
         }
 
         return
@@ -747,10 +754,11 @@ export function App() {
       return message ? [createLogMessage(message, "ai")] : []
     })
     : []
-  const visibleLogMessages = groupVisibleLogMessages([
+  const allLogMessages = groupVisibleLogMessages([
     ...game.logs,
     ...godModeAiLogMessages,
-  ], isGodMode).slice(-LOG_PANEL_LINES)
+  ], isGodMode)
+  const visibleLogMessages = allLogMessages.slice(-LOG_PANEL_LINES)
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,
@@ -860,7 +868,10 @@ export function App() {
               aria-label="open options"
               aria-haspopup="dialog"
               aria-expanded={isOptionsOpen}
-              onClick={() => setIsOptionsOpen(true)}
+              onClick={() => {
+                setIsOptionsOpen(true)
+                setIsOrdersModalOpen(false)
+              }}
             >
               <span />
               <span />
@@ -897,8 +908,22 @@ export function App() {
           </div>
         </section>
 
-        <section class="sidebar-panel">
-          <div class="sidebar-heading">orders</div>
+        <section class="sidebar-panel orders-panel">
+          <div class="panel-header">
+            <button
+              type="button"
+              class="panel-title-button"
+              aria-label="open full order log"
+              aria-haspopup="dialog"
+              aria-expanded={isOrdersModalOpen}
+              onClick={() => {
+                setIsOrdersModalOpen(true)
+                setIsOptionsOpen(false)
+              }}
+            >
+              <span class="sidebar-heading">orders</span>
+            </button>
+          </div>
           <div class="sidebar-text-block sidebar-log-list">
             {visibleLogMessages.map((entry, index) => (
               <div
@@ -1173,6 +1198,41 @@ export function App() {
                 >
                   sonar.wav by digit-al (CC0-1.0)
                 </a>
+              </div>
+            </section>
+          </div>
+          )
+        : null}
+
+      {isOrdersModalOpen
+        ? (
+          <div class="modal-backdrop" onClick={() => setIsOrdersModalOpen(false)}>
+            <section
+              class="modal-panel message-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="orders"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div class="panel-header">
+                <div class="sidebar-heading">orders</div>
+                <button
+                  type="button"
+                  class="modal-close"
+                  onClick={() => setIsOrdersModalOpen(false)}
+                >
+                  close
+                </button>
+              </div>
+              <div class="message-modal-scroll">
+                {allLogMessages.map((entry, index) => (
+                  <div
+                    class={`sidebar-log-message sidebar-log-message-${entry.type}`}
+                    key={`${index}:${entry.message}:${entry.count}`}
+                  >
+                    {formatGroupedLogMessage(entry)}
+                  </div>
+                ))}
               </div>
             </section>
           </div>

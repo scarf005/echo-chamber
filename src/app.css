@@ -164,6 +164,35 @@
   text-transform: lowercase;
 }
 
+.message-modal {
+  width: min(50rem, 100%);
+  height: calc(100vh - 2rem);
+  max-height: calc(100vh - 2rem);
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.message-modal-scroll {
+  display: grid;
+  gap: 0.1rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.orders-panel {
+  overflow: hidden;
+}
+
+.panel-title-button {
+  all: unset;
+  cursor: pointer;
+  text-transform: lowercase;
+}
+
+.panel-title-button:focus-visible {
+  outline: 1px solid rgba(186, 243, 247, 0.58);
+}
+
 .audio-controls {
   display: grid;
   gap: 0.8rem;
