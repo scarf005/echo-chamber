@@ -8,8 +8,22 @@ import type {
   Torpedo,
 } from "../../game/game.ts"
 import { COLORS } from "../colors.ts"
+import { drawTileBackground } from "../helpers/draw.ts"
 import { drawGlyph } from "../helpers/draw.ts"
 import type { RenderOptions } from "../options.ts"
+
+function colorForHostileSubmarine(hostileSubmarine: HostileSubmarine): string {
+  switch (hostileSubmarine.archetype) {
+    case "turtle":
+      return COLORS.hostileSubmarineTurtle
+    case "hunter":
+      return COLORS.hostileSubmarineHunter
+    case "guard":
+      return COLORS.hostileSubmarineGuard
+    default:
+      return COLORS.hostileSubmarine
+  }
+}
 
 export function drawEntitiesLayer(
   context: CanvasRenderingContext2D,
@@ -115,21 +129,26 @@ export function drawEntitiesLayer(
 
   const torpedo = entityMaps.torpedoes.get(index)
   if (torpedo) {
-    drawGlyph(
-      context,
-      screenX,
-      screenY,
-      tileSize,
-      torpedo.direction === "left"
-        ? "<"
-        : torpedo.direction === "right"
-        ? ">"
-        : torpedo.direction === "up"
-        ? "^"
-        : "v",
-      COLORS.torpedo,
-      1,
-    )
+    const exact = visibility >= 3 || torpedo.senderId === "player"
+    if (exact) {
+      drawGlyph(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        torpedo.direction === "left"
+          ? "<"
+          : torpedo.direction === "right"
+          ? ">"
+          : torpedo.direction === "up"
+          ? "^"
+          : "v",
+        COLORS.torpedo,
+        1,
+      )
+    } else {
+      drawEntityMemory(context, screenX, screenY, tileSize, "enemy")
+    }
   }
 
   const depthCharge = entityMaps.depthCharges.get(index)
@@ -182,7 +201,7 @@ export function drawEntitiesLayer(
         screenY,
         tileSize,
         hostileSubmarine.facing === "left" ? "◄" : "►",
-        COLORS.hostileSubmarine,
+        colorForHostileSubmarine(hostileSubmarine),
         1,
       )
     } else {
@@ -196,7 +215,7 @@ export function drawEntitiesLayer(
         screenY,
         tileSize,
         hostileSubmarine.facing === "left" ? "◄" : "►",
-        COLORS.hostileSubmarine,
+        colorForHostileSubmarine(hostileSubmarine),
         debugOverlayAlpha,
       )
     }
@@ -248,6 +267,17 @@ function drawEntityMemory(
 ): void {
   const marker = markerForEntityMemory(kind)
 
+  if (marker.backgroundColor) {
+    drawTileBackground(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      marker.backgroundColor,
+      1,
+    )
+  }
+
   drawGlyph(
     context,
     screenX,
@@ -261,12 +291,16 @@ function drawEntityMemory(
 
 export function markerForEntityMemory(
   kind: EntityMemoryKind,
-): { glyph: string; color: string } {
+): { glyph: string; color: string; backgroundColor?: string } {
   switch (kind) {
     case "item":
       return { glyph: "?", color: COLORS.pickup }
     case "enemy":
-      return { glyph: "!", color: COLORS.hostileSubmarine }
+      return {
+        glyph: "?",
+        color: COLORS.enemySonar,
+        backgroundColor: COLORS.torpedo,
+      }
     case "non-hostile":
       return { glyph: "~", color: COLORS.fish }
   }
@@ -374,7 +408,7 @@ function drawExactEntityOverlay(
       screenY,
       tileSize,
       hostileSubmarine.facing === "left" ? "◄" : "►",
-      COLORS.hostileSubmarine,
+      colorForHostileSubmarine(hostileSubmarine),
       alpha,
     )
   }
