@@ -233,7 +233,7 @@ function reasonForVisibility(
   exactReason: string,
 ): string {
   const index = point.y * game.map.width + point.x
-  return game.visibility[index] >= 3 ? exactReason : "sonar contact"
+  return game.visibility[index] >= 3 ? exactReason : "sonar"
 }
 
 export function directionFromKey(key: string): Direction | null {
