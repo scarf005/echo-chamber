@@ -1,11 +1,19 @@
+/// <reference lib="deno.ns" />
+
 import { assertEquals } from "jsr:@std/assert"
 
 import type { GameState } from "../../game/game.ts"
 import type { GeneratedMap, Point } from "../../game/mapgen.ts"
-import { describeInspectorContact } from "./inspector.ts"
+import {
+  describeInspectorContact,
+  hasExactInspectorVisibility,
+} from "./inspector.ts"
 
-Deno.test("inspector prefers exact fish contact over coarse non-hostile memory", () => {
+Deno.test("inspector shows exact fish contact at full visibility", () => {
   const game = createInspectorFishGame()
+  const index = 2 * game.map.width + 4
+
+  game.visibility[index] = 3
 
   assertEquals(describeInspectorContact(game, { x: 4, y: 2 }), "fish")
 })
@@ -22,6 +30,34 @@ Deno.test("inspector falls back to remembered coarse contact without exact entit
   withoutFish.entityMemory![index] = "non-hostile"
 
   assertEquals(describeInspectorContact(withoutFish, { x: 4, y: 2 }), "non-hostile")
+})
+
+Deno.test("inspector renames remembered enemy contact to entity", () => {
+  const game = createInspectorFishGame()
+  const enemyPoint = { x: 5, y: 2 }
+  const index = enemyPoint.y * game.map.width + enemyPoint.x
+
+  game.entityMemory![index] = "enemy"
+
+  assertEquals(describeInspectorContact(game, enemyPoint), "entity")
+})
+
+Deno.test("inspector does not leak fish identity outside detected visibility", () => {
+  const game = createInspectorFishGame()
+
+  assertEquals(describeInspectorContact(game, { x: 4, y: 2 }), null)
+})
+
+Deno.test("exact inspector entity details require full visibility", () => {
+  const game = createInspectorFishGame()
+  const fishPoint = { x: 4, y: 2 }
+  const index = fishPoint.y * game.map.width + fishPoint.x
+
+  assertEquals(hasExactInspectorVisibility(game, fishPoint), false)
+
+  game.visibility[index] = 3
+
+  assertEquals(hasExactInspectorVisibility(game, fishPoint), true)
 })
 
 function createInspectorFishGame(): GameState {

@@ -47,7 +47,10 @@ import {
   writeAppSettings,
 } from "./settings.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
-import { describeInspectorContact } from "./render/helpers/inspector.ts"
+import {
+  describeInspectorContact,
+  hasExactInspectorVisibility,
+} from "./render/helpers/inspector.ts"
 import type { RenderOptions } from "./render/options.ts"
 
 const DEFAULT_SEED = "echo-chamber"
@@ -1089,6 +1092,7 @@ function describeHoveredTile(
   }
 
   const index = point.y * game.map.width + point.x
+  const hasExactEntityVisibility = hasExactInspectorVisibility(game, point)
   const rows: InspectorRow[] = [
     { label: "terrain", value: tileAt(game.map, point.x, point.y) ?? "void" },
     { label: "visibility", value: String(game.visibility[index] ?? 0) },
@@ -1120,7 +1124,7 @@ function describeHoveredTile(
     candidate.position.x === point.x && candidate.position.y === point.y
   )
 
-  if (hostileSubmarine) {
+  if (hasExactEntityVisibility && hostileSubmarine) {
     rows.push({ label: "entity", value: "enemy submarine" })
     rows.push({ label: "enemy id", value: hostileSubmarine.id })
     rows.push({ label: "ai", value: hostileSubmarine.archetype ?? "hunter" })
@@ -1184,7 +1188,7 @@ function describeHoveredTile(
     candidate.position.x === point.x && candidate.position.y === point.y
   )
 
-  if (pickup) {
+  if (hasExactEntityVisibility && pickup) {
     rows.push({ label: "entity", value: "item" })
     rows.push({ label: "item kind", value: pickup.kind })
   }
@@ -1193,7 +1197,7 @@ function describeHoveredTile(
     candidate.position.x === point.x && candidate.position.y === point.y
   )
 
-  if (fish) {
+  if (hasExactEntityVisibility && fish) {
     rows.push({ label: "entity", value: "fish" })
     rows.push({ label: "facing", value: fish.facing })
     rows.push({ label: "mode", value: fish.mode })
@@ -1207,7 +1211,7 @@ function describeHoveredTile(
     candidate.position.x === point.x && candidate.position.y === point.y
   )
 
-  if (torpedo) {
+  if (hasExactEntityVisibility && torpedo) {
     rows.push({ label: "entity", value: "torpedo" })
     rows.push({ label: "direction", value: torpedo.direction })
     rows.push({ label: "sender", value: torpedo.senderId })
@@ -1218,13 +1222,14 @@ function describeHoveredTile(
     candidate.position.x === point.x && candidate.position.y === point.y
   )
 
-  if (depthCharge) {
+  if (hasExactEntityVisibility && depthCharge) {
     rows.push({ label: "entity", value: "depth charge" })
     rows.push({ label: "sender", value: depthCharge.senderId })
     rows.push({ label: "range", value: String(depthCharge.rangeRemaining) })
   }
 
   if (
+    hasExactEntityVisibility &&
     game.fallingBoulders.some((candidate) =>
       candidate.position.x === point.x && candidate.position.y === point.y
     )
