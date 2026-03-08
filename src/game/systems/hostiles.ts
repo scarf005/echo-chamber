@@ -1269,6 +1269,21 @@ function chooseNextStep(
     return null
   }
 
+  if (
+    archetype === "scout" &&
+    hostileSubmarine.lastKnownPlayerPosition &&
+    shouldScoutHoldForEstimatedShot(
+      map,
+      hostileSubmarine,
+      position,
+      hostileSubmarine.lastKnownPlayerPosition,
+      occupied,
+      reload,
+    )
+  ) {
+    return null
+  }
+
   if (archetype === "scout" && hostileSubmarine.lastKnownPlayerPosition) {
     return chooseRetreatStep(
       map,
@@ -1313,6 +1328,21 @@ function describePlannedPath(
     reload,
     directDetection,
   )) {
+    return [{ ...position }]
+  }
+
+  if (
+    archetype === "scout" &&
+    hostileSubmarine.lastKnownPlayerPosition &&
+    shouldScoutHoldForEstimatedShot(
+      map,
+      hostileSubmarine,
+      position,
+      hostileSubmarine.lastKnownPlayerPosition,
+      occupied,
+      reload,
+    )
+  ) {
     return [{ ...position }]
   }
 
@@ -1401,6 +1431,33 @@ function shouldHoldAttackPosition(
     (ceilingTrapShot !== null &&
       (ceilingTrapShot.direction !== "up" ||
         canEscapeVerticalCaveIn(map, position, ceilingTrapShot.impactPoint, occupied)))
+}
+
+function shouldScoutHoldForEstimatedShot(
+  map: GeneratedMap,
+  hostileSubmarine: ResolvedHostileSubmarine,
+  position: Point,
+  target: Point,
+  occupied: ReadonlySet<string>,
+  reload: number,
+): boolean {
+  if (reload > 0 || !hasRangedAmmo(hostileSubmarine)) {
+    return false
+  }
+
+  const ceilingTrapShot = findCeilingTrapShot(map, position, target)
+  const safeCeilingTrap = ceilingTrapShot !== null &&
+      (ceilingTrapShot.direction !== "up" ||
+        canEscapeVerticalCaveIn(map, position, ceilingTrapShot.impactPoint, occupied))
+    ? ceilingTrapShot
+    : null
+
+  return (hostileSubmarine.torpedoAmmo > 0 &&
+      hasHorizontalShotOpportunity(map, position, target)) ||
+    (hostileSubmarine.vlsAmmo > 0 && hasVerticalShotOpportunity(map, position, target)) ||
+    (safeCeilingTrap !== null &&
+      ((safeCeilingTrap.direction === "up" && hostileSubmarine.vlsAmmo > 0) ||
+        (safeCeilingTrap.direction !== "up" && hostileSubmarine.torpedoAmmo > 0)))
 }
 
 function hasRangedAmmo(hostileSubmarine: ResolvedHostileSubmarine): boolean {

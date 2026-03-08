@@ -986,6 +986,19 @@ Deno.test("scout sonar messages hand off the player's location to hunters", () =
   assertEquals(hunter?.lastKnownPlayerPosition, relayed.player)
 })
 
+Deno.test("scouts fire at their estimated player position before retreating", () => {
+  const game = createScoutFireBeforeRetreatGame()
+  const fired = holdPosition(game)
+  const retreated = holdPosition(fired)
+
+  assertEquals(fired.torpedoes.length, 1)
+  assertEquals(fired.torpedoes[0].senderId, "hostile-1")
+  assertEquals(fired.hostileSubmarines[0].position, { x: 10, y: 4 })
+  assertEquals(fired.hostileSubmarines[0].lastKnownPlayerPosition, { x: 4, y: 4 })
+  assertEquals(retreated.hostileSubmarines[0].position, { x: 11, y: 4 })
+  assertEquals(retreated.status, "playing")
+})
+
 Deno.test("scouts keep a valid exploration target instead of retargeting every turn", () => {
   const game = createScoutExplorationPersistenceGame()
   const first = advanceTurn(
@@ -2621,8 +2634,8 @@ function createCapsuleAlarmGame(): GameState {
       }),
       createHostile({
         id: "hostile-2",
-        position: { x: 10, y: 2 },
-        archetype: "hunter",
+        position: { x: 10, y: 1 },
+        archetype: "turtle",
       }),
     ],
     trails: [],
@@ -2687,6 +2700,70 @@ function createHostileCommunicationGame(): GameState {
     trails: [],
     dust: [],
     cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createScoutFireBeforeRetreatGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "##############",
+      "#............#",
+      "#............#",
+      "#............#",
+      "#............#",
+      "#............#",
+      "##############",
+    ],
+    { x: 1, y: 3 },
+    { x: 12, y: 3 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 1 },
+    seed: "scout-fire-before-retreat-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [
+      createHostile({
+        id: "hostile-1",
+        position: { x: 10, y: 4 },
+        archetype: "scout",
+        lastKnownPlayerPosition: { x: 4, y: 4 },
+        lastKnownPlayerTurn: 0,
+      }),
+      {
+        ...createHostile({
+          id: "hostile-2",
+          position: { x: 12, y: 5 },
+          archetype: "hunter",
+        }),
+        torpedoAmmo: 0,
+        vlsAmmo: 0,
+        depthChargeAmmo: 0,
+      },
+    ],
+    trails: [],
+    dust: [],
+    cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
     fallingBoulders: [],
     facing: "right",
     torpedoAmmo: 6,
