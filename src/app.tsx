@@ -707,6 +707,15 @@ export function App() {
         return
       }
 
+      if (event.key === "c" || event.key === "C") {
+        event.preventDefault()
+        setPreviewTarget(null)
+        setAutoMoveTarget(null)
+        clearAutoMoveRoute()
+        setGame((current) => fireTorpedo(current, "up"))
+        return
+      }
+
       if (event.key === "x" || event.key === "X") {
         event.preventDefault()
         setPreviewTarget(null)

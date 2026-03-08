@@ -234,5 +234,5 @@ export interface GameOptions {
 }
 
 export type TurnAction =
-  | { kind: "torpedo"; direction: HorizontalDirection }
+  | { kind: "torpedo"; direction: Direction }
   | { kind: "depth-charge" }

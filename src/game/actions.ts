@@ -341,26 +341,33 @@ export function holdPosition(game: GameState): GameState {
 
 export function fireTorpedo(
   game: GameState,
-  direction: HorizontalDirection = game.facing,
+  direction: Direction = game.facing,
 ): GameState {
   if (game.status !== "playing") {
     return game
   }
 
+  const nextFacing: HorizontalDirection =
+    direction === "left" || direction === "right" ? direction : game.facing
+
   if (game.torpedoAmmo <= 0) {
     return withGameMessage({
       ...game,
-      facing: direction,
+      facing: nextFacing,
     }, createLogMessage("No torpedoes remaining.", "negative"))
   }
 
   return advanceTurn(
     game,
     game.player,
-    direction,
+    nextFacing,
     { kind: "torpedo", direction },
     createLogMessage(
-      direction === "left" ? "Tube away to port." : "Tube away to starboard.",
+      direction === "left"
+        ? "Tube away to port."
+        : direction === "right"
+        ? "Tube away to starboard."
+        : "VLS launch upward.",
     ),
   )
 }
