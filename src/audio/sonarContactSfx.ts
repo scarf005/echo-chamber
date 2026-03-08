@@ -7,6 +7,7 @@ const SONAR_CONTACT_SAMPLE_URLS = [
   "/audio/sonar-contact-digital.mp3",
 ] as const
 const SONAR_CONTACT_VOLUME = 0.5
+export const SONAR_CONTACT_COOLDOWN_MS = 2_000
 const CHANNELS_PER_SAMPLE = 2
 
 export type SonarContactSfxController = {
@@ -25,6 +26,14 @@ export function getSonarContactVolume(volume: number): number {
   return clampAudioLevel(volume) * SONAR_CONTACT_VOLUME
 }
 
+export function canPlaySonarContactPing(
+  lastPlayedAt: number | null,
+  playedAt: number,
+): boolean {
+  return lastPlayedAt === null ||
+    playedAt - lastPlayedAt >= SONAR_CONTACT_COOLDOWN_MS
+}
+
 export function createSonarContactSfx(): SonarContactSfxController {
   const sampleUrls = Array.from(SONAR_CONTACT_SAMPLE_URLS)
   const playersByUrl = new Map(sampleUrls.map((url) => [
@@ -33,6 +42,7 @@ export function createSonarContactSfx(): SonarContactSfxController {
   ]))
   const nextPlayerIndexByUrl = new Map(sampleUrls.map((url) => [url, 0]))
   let unlocked = false
+  let lastPlayedAt: number | null = null
   const state = {
     enabled: true,
     volume: 1,
@@ -61,6 +71,12 @@ export function createSonarContactSfx(): SonarContactSfxController {
       return
     }
 
+    const playedAt = Date.now()
+
+    if (!canPlaySonarContactPing(lastPlayedAt, playedAt)) {
+      return
+    }
+
     const sampleUrl = sample(sampleUrls) ?? sampleUrls[0]
     const players = playersByUrl.get(sampleUrl) ?? []
     const preferredIndex = nextPlayerIndexByUrl.get(sampleUrl) ?? 0
@@ -79,10 +95,12 @@ export function createSonarContactSfx(): SonarContactSfxController {
     audio.currentTime = 0
     audio.volume = volume
     audio.muted = false
+    lastPlayedAt = playedAt
 
     try {
       await audio.play()
     } catch {
+      lastPlayedAt = null
       audio.pause()
       audio.currentTime = 0
     }
@@ -98,6 +116,7 @@ export function createSonarContactSfx(): SonarContactSfxController {
 
   const dispose = () => {
     unlocked = false
+    lastPlayedAt = null
 
     for (const players of playersByUrl.values()) {
       for (const player of players) {

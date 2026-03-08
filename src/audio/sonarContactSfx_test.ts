@@ -1,6 +1,8 @@
 import { assertEquals } from "jsr:@std/assert@1"
 
 import {
+  canPlaySonarContactPing,
+  SONAR_CONTACT_COOLDOWN_MS,
   getSonarContactSampleChoices,
   getSonarContactVolume,
 } from "./sonarContactSfx.ts"
@@ -20,4 +22,10 @@ Deno.test("sonar contact sfx plays at half of the active sfx volume", () => {
 Deno.test("sonar contact sfx volume clamps invalid values", () => {
   assertEquals(getSonarContactVolume(8), 0.5)
   assertEquals(getSonarContactVolume(-1), 0)
+})
+
+Deno.test("sonar contact sfx enforces a two-second cooldown", () => {
+  assertEquals(canPlaySonarContactPing(null, 1_000), true)
+  assertEquals(canPlaySonarContactPing(1_000, 2_999), false)
+  assertEquals(canPlaySonarContactPing(1_000, 1_000 + SONAR_CONTACT_COOLDOWN_MS), true)
 })
