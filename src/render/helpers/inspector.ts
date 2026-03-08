@@ -1,5 +1,18 @@
-import { t } from "@lingui/core/macro"
+import { i18n } from "../../i18n.ts"
 import { exactEntityNameAtPoint } from "../../game/entity_labels.ts"
+import {
+  localizeAttackBlockReason,
+  localizeBoolean,
+  localizeDirection,
+  localizeEntityMemory,
+  localizeFishMode,
+  localizeHostileArchetype,
+  localizeHostileMode,
+  localizeHostileWeapon,
+  localizeKnowledgeSource,
+  localizePickupKind,
+  localizeTileKind,
+} from "../../game/localize.ts"
 import type { GameState, HostileAiDebugState, HostileSubmarine } from "../../game/game.ts"
 import type { Point } from "../../game/mapgen.ts"
 import { tileAt } from "../../game/mapgen.ts"
@@ -29,33 +42,37 @@ export function describeHoveredInspectorRows(
     ? tileAt(game.map, point.x, point.y) ?? "void"
     : game.memory[index] ?? "unknown"
   const rows: InspectorRow[] = [
-    { label: t`terrain`, value: terrain },
-    { label: t`contact`, value: describeInspectorContact(game, point, options) ?? "--" },
+    { label: "terrain", value: localizeTileKind(tileAt(game.map, point.x, point.y) ?? "void") },
+    { label: "contact", value: describeInspectorContact(game, point, options) ?? "--" },
     {
-      label: t`visibility`,
+      label: "visibility",
       value: String(game.visibility[index] ?? 0),
       devOnly: true,
     },
-    { label: t`memory`, value: game.memory[index] ?? t`unknown`, devOnly: true },
+    {
+      label: "memory",
+      value: game.memory[index] ? localizeTileKind(game.memory[index]) : "unknown",
+      devOnly: true,
+    },
   ]
 
   if (point.x === game.player.x && point.y === game.player.y) {
-    rows.push({ label: t`entity`, value: t`player submarine` })
-    rows.push({ label: t`facing`, value: game.facing })
+    rows.push({ label: "entity", value: "player submarine" })
+    rows.push({ label: "facing", value: localizeDirection(game.facing) })
     rows.push({
-      label: t`objective load`,
-      value: game.capsuleCollected ? t`capsule secured` : t`empty`,
+      label: "objective load",
+      value: game.capsuleCollected ? "capsule secured" : "empty",
     })
   }
 
   if (point.x === game.map.spawn.x && point.y === game.map.spawn.y) {
-    rows.push({ label: t`objective`, value: t`dock` })
+    rows.push({ label: "objective", value: "dock" })
   }
 
   if (point.x === game.map.capsule.x && point.y === game.map.capsule.y) {
     rows.push({
-      label: t`objective`,
-      value: game.capsuleCollected ? t`capsule origin` : t`capsule`,
+      label: "objective",
+      value: game.capsuleCollected ? "capsule origin" : "capsule",
     })
   }
 
@@ -64,15 +81,15 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && hostileSubmarine) {
-    rows.push({ label: t`entity`, value: t`enemy submarine` })
-    rows.push({ label: t`facing`, value: hostileSubmarine.facing })
-    rows.push({ label: t`enemy id`, value: hostileSubmarine.id, devOnly: true })
+    rows.push({ label: "entity", value: "enemy submarine" })
+    rows.push({ label: "facing", value: hostileSubmarine.facing })
+    rows.push({ label: "enemy id", value: hostileSubmarine.id, devOnly: true })
     rows.push({
       label: "ai",
-      value: hostileSubmarine.archetype ?? "hunter",
+      value: localizeHostileArchetype(hostileSubmarine.archetype ?? "hunter"),
       devOnly: true,
     })
-    rows.push({ label: "mode", value: hostileSubmarine.mode, devOnly: true })
+    rows.push({ label: "mode", value: localizeHostileMode(hostileSubmarine.mode), devOnly: true })
     rows.push({
       label: "intent",
       value: describeHostileIntent(hostileSubmarine),
@@ -155,8 +172,8 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && pickup) {
-    rows.push({ label: t`entity`, value: t`item` })
-    rows.push({ label: t`item kind`, value: pickup.kind })
+    rows.push({ label: "entity", value: "item" })
+    rows.push({ label: "item kind", value: localizePickupKind(pickup.kind) })
   }
 
   const fish = (game.fish ?? []).find((candidate) =>
@@ -164,9 +181,9 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && fish) {
-    rows.push({ label: t`entity`, value: t`fish` })
-    rows.push({ label: t`facing`, value: fish.facing })
-    rows.push({ label: "mode", value: fish.mode, devOnly: true })
+    rows.push({ label: "entity", value: "fish" })
+    rows.push({ label: "facing", value: localizeDirection(fish.facing) })
+    rows.push({ label: "mode", value: localizeFishMode(fish.mode), devOnly: true })
     rows.push({
       label: "target",
       value: fish.target ? formatPoint(fish.target) : "--",
@@ -179,8 +196,8 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && torpedo) {
-    rows.push({ label: t`entity`, value: t`torpedo` })
-    rows.push({ label: t`direction`, value: torpedo.direction })
+    rows.push({ label: "entity", value: "torpedo" })
+    rows.push({ label: "direction", value: localizeDirection(torpedo.direction) })
     rows.push({ label: "sender", value: torpedo.senderId, devOnly: true })
     rows.push({
       label: "range",
@@ -194,7 +211,7 @@ export function describeHoveredInspectorRows(
   )
 
   if (canRevealEntities && depthCharge) {
-    rows.push({ label: t`entity`, value: t`depth charge` })
+    rows.push({ label: "entity", value: "depth charge" })
     rows.push({ label: "sender", value: depthCharge.senderId, devOnly: true })
     rows.push({
       label: "range",
@@ -209,23 +226,23 @@ export function describeHoveredInspectorRows(
       candidate.position.x === point.x && candidate.position.y === point.y
     )
   ) {
-    rows.push({ label: t`entity`, value: t`falling boulder` })
+    rows.push({ label: "entity", value: "falling boulder" })
   }
 
   if (game.shockwaveFront.some((cell) => cell.index === index)) {
-    rows.push({ label: t`effect`, value: t`shockwave front` })
+    rows.push({ label: "effect", value: "shockwave front" })
   }
 
   if (game.trails.some((cell) => cell.index === index)) {
-    rows.push({ label: t`effect`, value: t`bubble trail` })
+    rows.push({ label: "effect", value: "bubble trail" })
   }
 
   if (game.dust.some((cell) => cell.index === index)) {
-    rows.push({ label: t`effect`, value: t`dust` })
+    rows.push({ label: "effect", value: "dust" })
   }
 
   if (game.cracks.some((cell) => cell.index === index)) {
-    rows.push({ label: t`effect`, value: t`crack` })
+    rows.push({ label: "effect", value: "crack" })
   }
 
   return rows
@@ -294,19 +311,19 @@ function describeHostileIntent(hostileSubmarine: HostileSubmarine): string {
   switch (hostileSubmarine.mode) {
     case "retreat":
       return hostileSubmarine.target
-        ? `retreating to ${formatPoint(hostileSubmarine.target)}`
+        ? i18n._("retreating to {target}", { target: formatPoint(hostileSubmarine.target) })
         : "retreating"
     case "attack":
       return hostileSubmarine.target
-        ? `pressing attack at ${formatPoint(hostileSubmarine.target)}`
+        ? i18n._("pressing attack at {target}", { target: formatPoint(hostileSubmarine.target) })
         : "pressing attack"
     case "investigate":
       return hostileSubmarine.target
-        ? `investigating ${formatPoint(hostileSubmarine.target)}`
+        ? i18n._("investigating {target}", { target: formatPoint(hostileSubmarine.target) })
         : "investigating"
     case "patrol":
       return hostileSubmarine.target
-        ? `holding near ${formatPoint(hostileSubmarine.target)}`
+        ? i18n._("holding near {target}", { target: formatPoint(hostileSubmarine.target) })
         : "patrolling"
   }
 }
@@ -318,7 +335,11 @@ export function describeHostileAiDecision(
     ? ` ${formatPoint(hostileSubmarine.target)}`
     : ""
 
-  return `${hostileSubmarine.id}: will ${hostileSubmarine.mode}${targetSuffix}`
+  return i18n._("{id}: will {mode}{targetSuffix}", {
+    id: hostileSubmarine.id,
+    mode: localizeHostileMode(hostileSubmarine.mode),
+    targetSuffix,
+  })
 }
 
 export function describeNotableHostileAiDecision(
@@ -332,7 +353,11 @@ export function describeNotableHostileAiDecision(
 }
 
 function normalizeInspectorContact(contact: string | null): string | null {
-  return contact === "enemy" ? "hostile entity" : contact
+  if (contact === null) {
+    return null
+  }
+
+  return contact === "enemy" ? "hostile entity" : localizeEntityMemory(contact)
 }
 
 function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): InspectorRow[] {
@@ -360,22 +385,22 @@ function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): 
     },
     {
       label: "direct detect",
-      value: formatBoolean(debugState.directDetection),
+      value: localizeBoolean(debugState.directDetection),
       devOnly: true,
     },
     {
       label: "sonar fix",
-      value: formatBoolean(debugState.detectedByPlayerSonar),
+      value: localizeBoolean(debugState.detectedByPlayerSonar),
       devOnly: true,
     },
     {
       label: "relay fix",
-      value: formatBoolean(debugState.receivedImmediateRelay),
+      value: localizeBoolean(debugState.receivedImmediateRelay),
       devOnly: true,
     },
     {
       label: "capsule alert",
-      value: formatBoolean(debugState.alertedByCapsuleRecovery),
+      value: localizeBoolean(debugState.alertedByCapsuleRecovery),
       devOnly: true,
     },
     {
@@ -385,22 +410,22 @@ function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): 
     },
     {
       label: "reuse path",
-      value: formatBoolean(debugState.retainedPlannedPath),
+      value: localizeBoolean(debugState.retainedPlannedPath),
       devOnly: true,
     },
     {
       label: "salvo reposition",
-      value: formatBoolean(debugState.repositioningForSalvo),
+      value: localizeBoolean(debugState.repositioningForSalvo),
       devOnly: true,
     },
     {
       label: "emit sonar",
-      value: formatBoolean(debugState.emittedSonar),
+      value: localizeBoolean(debugState.emittedSonar),
       devOnly: true,
     },
     {
       label: "broadcast fix",
-      value: formatBoolean(debugState.broadcastPlayerFix),
+      value: localizeBoolean(debugState.broadcastPlayerFix),
       devOnly: true,
     },
     {
@@ -424,27 +449,29 @@ function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): 
     },
     {
       label: "attack block",
-      value: debugState.attack.blockedReason ?? "--",
+      value: localizeAttackBlockReason(debugState.attack.blockedReason),
       devOnly: true,
     },
     {
       label: "direct lane",
-      value: formatBoolean(debugState.attack.directLane),
+      value: localizeBoolean(debugState.attack.directLane),
       devOnly: true,
     },
     {
       label: "horizontal shot",
-      value: formatBoolean(debugState.attack.horizontalShotOpportunity),
+      value: localizeBoolean(debugState.attack.horizontalShotOpportunity),
       devOnly: true,
     },
     {
       label: "vertical shot",
-      value: formatBoolean(debugState.attack.verticalShotOpportunity),
+      value: localizeBoolean(debugState.attack.verticalShotOpportunity),
       devOnly: true,
     },
     {
       label: "ceiling trap",
-      value: debugState.attack.ceilingTrapDirection ?? "--",
+      value: debugState.attack.ceilingTrapDirection
+        ? localizeDirection(debugState.attack.ceilingTrapDirection)
+        : "--",
       devOnly: true,
     },
     {
@@ -461,12 +488,16 @@ function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): 
     },
     {
       label: "fired weapon",
-      value: debugState.attack.firedWeapon ?? "--",
+      value: debugState.attack.firedWeapon
+        ? localizeHostileWeapon(debugState.attack.firedWeapon)
+        : "--",
       devOnly: true,
     },
     {
       label: "fired dir",
-      value: debugState.attack.firedDirection ?? "--",
+      value: debugState.attack.firedDirection
+        ? localizeDirection(debugState.attack.firedDirection)
+        : "--",
       devOnly: true,
     },
     {
@@ -476,7 +507,9 @@ function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): 
     },
     {
       label: "salvo dir",
-      value: debugState.attack.salvoStepDirection ?? "--",
+      value: debugState.attack.salvoStepDirection
+        ? localizeDirection(debugState.attack.salvoStepDirection)
+        : "--",
       devOnly: true,
     },
     {
@@ -491,32 +524,28 @@ function describeHostileDebugRows(debugState: HostileAiDebugState | undefined): 
 
 function describeKnowledgeSource(debugState: HostileAiDebugState): string {
   if (debugState.directDetection) {
-    return "visual"
+    return localizeKnowledgeSource("visual")
   }
 
   if (debugState.detectedByPlayerSonar) {
-    return "player sonar"
+    return localizeKnowledgeSource("player sonar")
   }
 
   if (debugState.receivedImmediateRelay) {
-    return "relay"
+    return localizeKnowledgeSource("relay")
   }
 
   if (debugState.alertedByCapsuleRecovery) {
-    return "capsule"
+    return localizeKnowledgeSource("capsule")
   }
 
   if (debugState.confirmedPlayerPosition) {
-    return "message"
+    return localizeKnowledgeSource("message")
   }
 
   if (debugState.cluePosition) {
-    return "clue"
+    return localizeKnowledgeSource("clue")
   }
 
-  return "none"
-}
-
-function formatBoolean(value: boolean): string {
-  return value ? "yes" : "no"
+  return localizeKnowledgeSource("none")
 }

@@ -33,7 +33,7 @@ Deno.test("inspector falls back to remembered coarse contact without exact entit
 
   withoutFish.entityMemory![index] = "non-hostile"
 
-  assertEquals(describeInspectorContact(withoutFish, { x: 4, y: 2 }), "non-hostile")
+  assertEquals(describeInspectorContact(withoutFish, { x: 4, y: 2 }), "non-hostile contact")
 })
 
 Deno.test("inspector renames remembered enemy contact to entity", () => {
