@@ -44,8 +44,7 @@ export function getExplosionVolume(distance: number): number {
     return 0
   }
 
-  const normalized = 1 - clampedDistance / MAX_AUDIBLE_DISTANCE
-  return Number((normalized ** 1.7 * MAX_EXPLOSION_VOLUME).toFixed(3))
+  return Number(MAX_EXPLOSION_VOLUME.toFixed(3))
 }
 
 export function createExplosionSfx(): ExplosionSfxController {

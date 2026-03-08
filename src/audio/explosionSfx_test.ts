@@ -20,9 +20,10 @@ Deno.test("getExplosionSampleChoices shifts to distant palette for remote blasts
   ])
 })
 
-Deno.test("getExplosionVolume falls off with distance and mutes beyond range", () => {
+Deno.test("getExplosionVolume keeps explosions equally loud within range", () => {
   assertEquals(getExplosionVolume(0), 1.38)
-  assertEquals(getExplosionVolume(8) < getExplosionVolume(2), true)
+  assertEquals(getExplosionVolume(2), 1.38)
+  assertEquals(getExplosionVolume(10), 1.38)
   assertEquals(getExplosionVolume(24), 0)
   assertEquals(getExplosionVolume(30), 0)
 })
