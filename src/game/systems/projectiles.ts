@@ -2,6 +2,7 @@ import type {
   CrackCell,
   DepthCharge,
   FadeCell,
+  Fish,
   FallingBoulder,
   HostileSubmarine,
   Shockwave,
@@ -16,6 +17,7 @@ import {
 } from "../effects.ts"
 import {
   chebyshevDistance,
+  cloneFish,
   cloneHostileSubmarine,
   deltaForDirection,
   indexForPoint,
@@ -34,6 +36,7 @@ interface ExplosionResolution {
   dust: FadeCell[]
   fallingBoulders: FallingBoulder[]
   shockwave: Shockwave
+  fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   playerDestroyed: boolean
   caveIns: number
@@ -46,6 +49,7 @@ export function stepTorpedoes(
   trails: FadeCell[],
   cracks: CrackCell[],
   dust: FadeCell[],
+  fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
   seed: string,
@@ -60,6 +64,7 @@ export function stepTorpedoes(
   caveIns: number
   screenShake: number
   shockwaves: Shockwave[]
+  fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   playerDestroyed: boolean
 } {
@@ -67,6 +72,7 @@ export function stepTorpedoes(
   let nextTrails = trails
   let nextCracks = cracks
   let nextDust = dust
+  const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
   const fallingBoulders: FallingBoulder[] = []
   const shockwaves: Shockwave[] = []
@@ -103,6 +109,7 @@ export function stepTorpedoes(
           nextTrails,
           nextCracks,
           nextDust,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -110,6 +117,7 @@ export function stepTorpedoes(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
+        nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
           0,
           nextHostileSubmarines.length,
@@ -130,6 +138,7 @@ export function stepTorpedoes(
           nextPoint,
           torpedo.senderId,
           torpedo.avoidFriendlyFire ?? true,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -143,6 +152,7 @@ export function stepTorpedoes(
           nextTrails,
           nextCracks,
           nextDust,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -150,6 +160,7 @@ export function stepTorpedoes(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
+        nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
           0,
           nextHostileSubmarines.length,
@@ -186,6 +197,7 @@ export function stepTorpedoes(
     caveIns,
     screenShake,
     shockwaves,
+    fish: nextFish,
     hostileSubmarines: nextHostileSubmarines,
     playerDestroyed,
   }
@@ -197,6 +209,7 @@ export function stepDepthCharges(
   trails: FadeCell[],
   cracks: CrackCell[],
   dust: FadeCell[],
+  fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
   seed: string,
@@ -211,6 +224,7 @@ export function stepDepthCharges(
   caveIns: number
   screenShake: number
   shockwaves: Shockwave[]
+  fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   playerDestroyed: boolean
 } {
@@ -218,6 +232,7 @@ export function stepDepthCharges(
   let nextTrails = trails
   let nextCracks = cracks
   let nextDust = dust
+  const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
   const fallingBoulders: FallingBoulder[] = []
   const shockwaves: Shockwave[] = []
@@ -247,6 +262,7 @@ export function stepDepthCharges(
           current,
           depthCharge.senderId,
           depthCharge.avoidFriendlyFire ?? true,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -259,6 +275,7 @@ export function stepDepthCharges(
           nextTrails,
           nextCracks,
           nextDust,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -266,6 +283,7 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
+        nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
           0,
           nextHostileSubmarines.length,
@@ -297,6 +315,7 @@ export function stepDepthCharges(
           nextTrails,
           nextCracks,
           nextDust,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -304,6 +323,7 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
+        nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
           0,
           nextHostileSubmarines.length,
@@ -327,6 +347,7 @@ export function stepDepthCharges(
           current,
           depthCharge.senderId,
           depthCharge.avoidFriendlyFire ?? true,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -339,6 +360,7 @@ export function stepDepthCharges(
           nextTrails,
           nextCracks,
           nextDust,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -346,6 +368,7 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
+        nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
           0,
           nextHostileSubmarines.length,
@@ -370,6 +393,7 @@ export function stepDepthCharges(
           nextTrails,
           nextCracks,
           nextDust,
+          nextFish,
           nextHostileSubmarines,
           player,
         )
@@ -377,6 +401,7 @@ export function stepDepthCharges(
         nextTrails = explosion.trails
         nextCracks = explosion.cracks
         nextDust = explosion.dust
+        nextFish.splice(0, nextFish.length, ...explosion.fish)
         nextHostileSubmarines.splice(
           0,
           nextHostileSubmarines.length,
@@ -412,6 +437,7 @@ export function stepDepthCharges(
     caveIns,
     screenShake,
     shockwaves,
+    fish: nextFish,
     hostileSubmarines: nextHostileSubmarines,
     playerDestroyed,
   }
@@ -425,6 +451,7 @@ function detonateProjectile(
   trails: FadeCell[],
   cracks: CrackCell[],
   dust: FadeCell[],
+  fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
 ): ExplosionResolution {
@@ -448,6 +475,7 @@ function detonateProjectile(
     dust: nextDust,
     fallingBoulders: explosion.fallingBoulders,
     shockwave: createExplosionShockwave(impactPoint, senderId),
+    fish: resolveFishBlastDamage(impactPoint, fish),
     hostileSubmarines: resolveHostileBlastDamage(
       impactPoint,
       senderId,
@@ -463,6 +491,7 @@ function hasProjectileTargetNearby(
   point: Point,
   senderId: string,
   avoidFriendlyFire: boolean,
+  fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
 ): boolean {
@@ -470,6 +499,8 @@ function hasProjectileTargetNearby(
     return hostileSubmarines.some((hostileSubmarine) =>
       chebyshevDistance(point, hostileSubmarine.position) <=
         PROJECTILE_PROXIMITY_RADIUS
+    ) || fish.some((candidate) =>
+      chebyshevDistance(point, candidate.position) <= PROJECTILE_PROXIMITY_RADIUS
     )
   }
 
@@ -497,6 +528,12 @@ function resolveHostileBlastDamage(
     hostileSubmarine.id === senderId ||
     chebyshevDistance(impactPoint, hostileSubmarine.position) >
       EXPLOSION_DAMAGE_RADIUS
+  )
+}
+
+function resolveFishBlastDamage(impactPoint: Point, fish: Fish[]): Fish[] {
+  return fish.filter((candidate) =>
+    chebyshevDistance(impactPoint, candidate.position) > EXPLOSION_DAMAGE_RADIUS
   )
 }
 
