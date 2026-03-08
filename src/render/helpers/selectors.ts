@@ -81,10 +81,22 @@ export function wallGlyphForMask(
   x: number,
   y: number,
 ): string {
-  const mask = Number(isKnownWall(game, x, y - 1)) |
-    (Number(isKnownWall(game, x + 1, y)) << 1) |
-    (Number(isKnownWall(game, x, y + 1)) << 2) |
-    (Number(isKnownWall(game, x - 1, y)) << 3)
+  const north = isKnownWall(game, x, y - 1)
+  const east = isKnownWall(game, x + 1, y)
+  const south = isKnownWall(game, x, y + 1)
+  const west = isKnownWall(game, x - 1, y)
+  const mask = Number(north) |
+    (Number(east) << 1) |
+    (Number(south) << 2) |
+    (Number(west) << 3)
+
+  if (north && !east && !south && !west) {
+    return "▼"
+  }
+
+  if (!north && !east && south && !west) {
+    return "▲"
+  }
 
   switch (mask) {
     case 0:

@@ -132,6 +132,11 @@ export function generateMap(options: MapGenOptions = {}): GeneratedMap {
   }
 
   addKelpOnRock(tiles, width, height, seed, [spawn, capsule])
+  addRockSpikes(tiles, width, height, seed, [spawn, capsule])
+
+  if (!hasPath(tiles, width, height, spawn, capsule)) {
+    carveFallbackRoute(tiles, width, height, spawn, capsule)
+  }
 
   const routeLength =
     computeRouteLength(tiles, width, height, spawn, capsule) ?? 0
@@ -337,7 +342,7 @@ function addKelpOnRock(
         continue
       }
 
-      if (isProtectedKelpPoint(x, y, protectedPoints)) {
+      if (isProtectedPoint(x, y, protectedPoints)) {
         continue
       }
 
@@ -354,7 +359,7 @@ function addKelpOnRock(
           break
         }
 
-        if (isProtectedKelpPoint(x, kelpY, protectedPoints)) {
+        if (isProtectedPoint(x, kelpY, protectedPoints)) {
           break
         }
 
@@ -367,6 +372,103 @@ function addKelpOnRock(
         tiles[kelpIndex] = "kelp"
       }
     }
+  }
+}
+
+function addRockSpikes(
+  tiles: TileKind[],
+  width: number,
+  height: number,
+  seed: string,
+  protectedPoints: Point[],
+): void {
+  for (let y = 1; y < height - 1; y += 1) {
+    for (let x = 2; x < width - 2; x += 1) {
+      maybeGrowStalactite(tiles, width, height, seed, x, y, protectedPoints)
+      maybeGrowStalagmite(tiles, width, height, seed, x, y, protectedPoints)
+    }
+  }
+}
+
+function maybeGrowStalactite(
+  tiles: TileKind[],
+  width: number,
+  height: number,
+  seed: string,
+  x: number,
+  y: number,
+  protectedPoints: Point[],
+): void {
+  if (
+    tiles[indexForTile(width, x, y)] !== "wall" ||
+    tiles[indexForTile(width, x, y + 1)] !== "water" ||
+    tiles[indexForTile(width, x - 1, y + 1)] !== "water" ||
+    tiles[indexForTile(width, x + 1, y + 1)] !== "water"
+  ) {
+    return
+  }
+
+  if (spikeHash(seed, "ceiling", x, y) > 0.02) {
+    return
+  }
+
+  const spikeLength = 1 + Math.floor(spikeHash(seed, "ceiling-length", x, y) * 2)
+
+  for (let offset = 1; offset <= spikeLength; offset += 1) {
+    const spikeY = y + offset
+
+    if (spikeY >= height - 1 || isProtectedPoint(x, spikeY, protectedPoints)) {
+      break
+    }
+
+    const spikeIndex = indexForTile(width, x, spikeY)
+
+    if (tiles[spikeIndex] !== "water") {
+      break
+    }
+
+    tiles[spikeIndex] = "wall"
+  }
+}
+
+function maybeGrowStalagmite(
+  tiles: TileKind[],
+  width: number,
+  height: number,
+  seed: string,
+  x: number,
+  y: number,
+  protectedPoints: Point[],
+): void {
+  if (
+    tiles[indexForTile(width, x, y)] !== "wall" ||
+    tiles[indexForTile(width, x, y - 1)] !== "water" ||
+    tiles[indexForTile(width, x - 1, y - 1)] !== "water" ||
+    tiles[indexForTile(width, x + 1, y - 1)] !== "water"
+  ) {
+    return
+  }
+
+  if (spikeHash(seed, "floor", x, y) > 0.02) {
+    return
+  }
+
+  const spikeLength = 1 + Math.floor(spikeHash(seed, "floor-length", x, y) * 2)
+
+  for (let offset = 1; offset <= spikeLength; offset += 1) {
+    const spikeY = y - offset
+
+    if (spikeY <= 0 || isProtectedPoint(x, spikeY, protectedPoints)) {
+      break
+    }
+
+    const spikeIndex = indexForTile(width, x, spikeY)
+
+    if (tiles[spikeIndex] !== "water") {
+      break
+    }
+
+    tiles[spikeIndex] = "wall"
   }
 }
 
@@ -459,7 +561,7 @@ function isSamePoint(a: Point, b: Point): boolean {
   return a.x === b.x && a.y === b.y
 }
 
-function isProtectedKelpPoint(x: number, y: number, protectedPoints: Point[]): boolean {
+function isProtectedPoint(x: number, y: number, protectedPoints: Point[]): boolean {
   return protectedPoints.some((point) => point.x === x && point.y === y)
 }
 
@@ -484,6 +586,10 @@ function hashSeed(seed: string): number {
 
 function kelpHash(seed: string, x: number, y: number): number {
   return hashSeed(`${seed}:kelp:${x}:${y}`) / 0xffffffff
+}
+
+function spikeHash(seed: string, axis: "ceiling" | "floor" | "ceiling-length" | "floor-length", x: number, y: number): number {
+  return hashSeed(`${seed}:spike:${axis}:${x}:${y}`) / 0xffffffff
 }
 
 function clamp(value: number, min: number, max: number): number {

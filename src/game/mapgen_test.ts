@@ -133,6 +133,40 @@ Deno.test("generateMap grows passable kelp strands from rock shelves", () => {
   assert(kelpCount > 0)
 })
 
+Deno.test("generateMap adds stalactites and stalagmites", () => {
+  const seeds = ["spikes-1", "spikes-2", "spikes-3", "spikes-4"]
+  let stalactiteCount = 0
+  let stalagmiteCount = 0
+
+  for (const seed of seeds) {
+    const map = generateMap({ width: 72, height: 30, seed })
+
+    for (let y = 1; y < map.height - 1; y += 1) {
+      for (let x = 1; x < map.width - 1; x += 1) {
+        if (tileAt(map, x, y) !== "wall") {
+          continue
+        }
+
+        const north = tileAt(map, x, y - 1)
+        const south = tileAt(map, x, y + 1)
+        const east = tileAt(map, x + 1, y)
+        const west = tileAt(map, x - 1, y)
+
+        if (north === "wall" && south === "water" && east !== "wall" && west !== "wall") {
+          stalactiteCount += 1
+        }
+
+        if (north === "water" && south === "wall" && east !== "wall" && west !== "wall") {
+          stalagmiteCount += 1
+        }
+      }
+    }
+  }
+
+  assert(stalactiteCount > 0)
+  assert(stalagmiteCount > 0)
+})
+
 function pathExists(map: GeneratedMap): boolean {
   const queue: Point[] = [{ ...map.spawn }]
   const seen = new Set<number>()
