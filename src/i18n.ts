@@ -1,6 +1,6 @@
 import { i18n } from "@lingui/core"
-import { messages as enMessages } from "./locales/en/messages.po"
-import { messages as koMessages } from "./locales/ko/messages.po"
+import { messages as enMessages } from "./locales/en/messages.ts"
+import { messages as koMessages } from "./locales/ko/messages.ts"
 
 export type LocaleId = "en" | "ko"
 
