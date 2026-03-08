@@ -18,6 +18,7 @@ import {
   keyForAutoMoveAnomaly,
   isPlayerSonarEnabled,
   movePlayer,
+  revealMap,
   shouldHaltAutoMoveForAnomaly,
   SONAR_INTERVAL,
   togglePlayerSonar,
@@ -33,6 +34,7 @@ import { createSonarContactSfx } from "./audio/sonarContactSfx.ts"
 import { createSonarLoop } from "./audio/sonarLoop.ts"
 import {
   type AudioSettings,
+  isDocumentAudioAllowed,
   levelToSliderPercent,
   readAudioSettings,
   sliderPercentToLevel,
@@ -79,6 +81,14 @@ export function App() {
   const playedSonarContactCueCountRef = useRef(0)
   const autoMoveSeenAnomaliesRef = useRef<Set<string>>(new Set())
   const autoMoveSeenTargetRef = useRef<Point | null>(null)
+  const audioSettingsRef = useRef(audioSettings)
+  const gameRef = useRef(game)
+  const pageAudioEnabledRef = useRef(
+    typeof document === "undefined" ? true : isDocumentAudioAllowed(document),
+  )
+
+  audioSettingsRef.current = audioSettings
+  gameRef.current = game
 
   const resetAutoMoveSeenAnomalies = () => {
     autoMoveSeenAnomaliesRef.current = new Set()
@@ -91,6 +101,34 @@ export function App() {
 
   const beginAutoMoveRoute = (point: Point) => {
     autoMoveSeenTargetRef.current = { ...point }
+  }
+
+  const syncAudioControllers = () => {
+    const currentAudioSettings = audioSettingsRef.current
+    const currentGame = gameRef.current
+    const pageAudioEnabled = pageAudioEnabledRef.current
+
+    backgroundMusicRef.current?.setVolume(currentAudioSettings.musicVolume)
+    backgroundMusicRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.musicEnabled,
+    )
+    movementLoopRef.current?.setVolume(currentAudioSettings.sfxVolume)
+    movementLoopRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.sfxEnabled,
+    )
+    sonarContactSfxRef.current?.setVolume(currentAudioSettings.sfxVolume)
+    sonarContactSfxRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.sfxEnabled,
+    )
+    sonarLoopRef.current?.setVolume(currentAudioSettings.sfxVolume)
+    sonarLoopRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.sfxEnabled &&
+        isPlayerSonarEnabled(currentGame) && currentGame.status === "playing",
+    )
+    explosionSfxRef.current?.setVolume(currentAudioSettings.sfxVolume)
+    explosionSfxRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.sfxEnabled,
+    )
   }
 
   useEffect(() => {
@@ -116,13 +154,25 @@ export function App() {
       void sonarContactSfx.ensureStarted()
       void sonarLoop.ensureStarted()
     }
+    const syncPageAudioEnabled = () => {
+      pageAudioEnabledRef.current = isDocumentAudioAllowed(document)
+      syncAudioControllers()
+    }
+
+    syncAudioControllers()
 
     window.addEventListener("keydown", startAudio, { passive: true })
     window.addEventListener("pointerdown", startAudio, { passive: true })
+    window.addEventListener("focus", syncPageAudioEnabled, { passive: true })
+    window.addEventListener("blur", syncPageAudioEnabled, { passive: true })
+    document.addEventListener("visibilitychange", syncPageAudioEnabled)
 
     return () => {
       window.removeEventListener("keydown", startAudio)
       window.removeEventListener("pointerdown", startAudio)
+      window.removeEventListener("focus", syncPageAudioEnabled)
+      window.removeEventListener("blur", syncPageAudioEnabled)
+      document.removeEventListener("visibilitychange", syncPageAudioEnabled)
       backgroundMusicRef.current = null
       explosionSfxRef.current = null
       movementLoopRef.current = null
@@ -175,19 +225,7 @@ export function App() {
   }, [game.playerSonarContactCueCount])
 
   useEffect(() => {
-    backgroundMusicRef.current?.setVolume(audioSettings.musicVolume)
-    backgroundMusicRef.current?.setEnabled(audioSettings.musicEnabled)
-    movementLoopRef.current?.setVolume(audioSettings.sfxVolume)
-    movementLoopRef.current?.setEnabled(audioSettings.sfxEnabled)
-    sonarContactSfxRef.current?.setVolume(audioSettings.sfxVolume)
-    sonarContactSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
-    sonarLoopRef.current?.setVolume(audioSettings.sfxVolume)
-    sonarLoopRef.current?.setEnabled(
-      audioSettings.sfxEnabled && isPlayerSonarEnabled(game) &&
-        game.status === "playing",
-    )
-    explosionSfxRef.current?.setVolume(audioSettings.sfxVolume)
-    explosionSfxRef.current?.setEnabled(audioSettings.sfxEnabled)
+    syncAudioControllers()
     writeAudioSettings(getBrowserStorage(), audioSettings)
   }, [audioSettings, game.playerSonarEnabled, game.status])
 
@@ -765,6 +803,19 @@ export function App() {
                 ? (
                   <>
                     <div class="sidebar-heading">dev</div>
+                    <div class="button-stack">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGame((current) =>
+                            withGameMessage(revealMap(current), "Dev reveal: full map charted.")
+                          )
+                          setIsOptionsOpen(false)
+                        }}
+                      >
+                        reveal map
+                      </button>
+                    </div>
                     <div class="audio-controls">
                       <div class="audio-setting">
                         <span>map overlay</span>

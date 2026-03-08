@@ -100,6 +100,18 @@ export function refreshPerception(
   }
 }
 
+export function revealMap(game: GameState): GameState {
+  return {
+    ...game,
+    capsuleKnown: true,
+    memory: game.map.tiles.slice(),
+    visibility: Array.from(
+      { length: game.map.tiles.length },
+      () => 1 as VisibilityLevel,
+    ),
+  }
+}
+
 function clearEntityMemory(
   entityMemory: Array<EntityMemoryKind | null>,
   index: number,
