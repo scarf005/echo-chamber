@@ -41,6 +41,7 @@ import {
   writeAudioSettings,
 } from "./audio/settings.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
+import { describeInspectorContact } from "./render/helpers/inspector.ts"
 import type { RenderOptions } from "./render/options.ts"
 
 const DEFAULT_SEED = "echo-chamber"
@@ -1012,7 +1013,7 @@ function describeHoveredTile(
     { label: "terrain", value: tileAt(game.map, point.x, point.y) ?? "void" },
     { label: "visibility", value: String(game.visibility[index] ?? 0) },
     { label: "memory", value: game.memory[index] ?? "unknown" },
-    { label: "entity memory", value: game.entityMemory?.[index] ?? "--" },
+    { label: "contact", value: describeInspectorContact(game, point) ?? "--" },
   ]
 
   if (point.x === game.player.x && point.y === game.player.y) {
@@ -1095,6 +1096,17 @@ function describeHoveredTile(
   if (pickup) {
     rows.push({ label: "entity", value: "item" })
     rows.push({ label: "item kind", value: pickup.kind })
+  }
+
+  const fish = (game.fish ?? []).find((candidate) =>
+    candidate.position.x === point.x && candidate.position.y === point.y
+  )
+
+  if (fish) {
+    rows.push({ label: "entity", value: "fish" })
+    rows.push({ label: "facing", value: fish.facing })
+    rows.push({ label: "mode", value: fish.mode })
+    rows.push({ label: "target", value: fish.target ? formatPoint(fish.target) : "--" })
   }
 
   const torpedo = game.torpedoes.find((candidate) =>
