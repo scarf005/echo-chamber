@@ -9,7 +9,6 @@ import { useEffect, useRef } from "preact/hooks"
 import {
   createGame,
   createLogMessage,
-  createRandomSeed,
   directionBetweenPoints,
   directionFromKey,
   dropDepthCharge,
@@ -51,7 +50,7 @@ import {
   writeAppSettings,
 } from "./settings.ts"
 import { shouldRestartFromKey } from "./input.ts"
-import { parseRunSeed, randomizeRunSeed } from "./runSeed.ts"
+import { createRandomSeed, parseRunSeed, randomizeRunSeed } from "./runSeed.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
   describeHoveredInspectorRows,
@@ -408,6 +407,10 @@ export function App() {
     gameSignal.value = createConfiguredGame(normalizedSeed, appSettingsSignal.peek())
   }
 
+  const startRandomizedRun = (rawSeed = runSeedSignal.peek()) => {
+    startRun(randomizeRunSeed(rawSeed, DEFAULT_SEED, createRandomSeed()))
+  }
+
   const setViewportModeWithMessage = (nextViewportMode: ViewportMode) => {
     if (viewportModeSignal.peek() === nextViewportMode) {
       return
@@ -681,6 +684,7 @@ export function App() {
       if (event.key === "Escape") {
         event.preventDefault()
         isOptionsOpenSignal.value = true
+        isOrdersModalOpenSignal.value = false
         return
       }
 
@@ -693,13 +697,7 @@ export function App() {
 
       if (shouldRestartFromKey(event.key, gameSignal.peek().status)) {
         event.preventDefault()
-        startRun(
-          randomizeRunSeed(
-            activeRunSeedSignal.peek(),
-            DEFAULT_SEED,
-            createRandomSeed(),
-          ),
-        )
+        startRandomizedRun()
         return
       }
 
@@ -1030,26 +1028,15 @@ export function App() {
                 </button>
               </div>
               <div class="seed-controls">
-                <input
-                  class="seed-input"
-                  type="text"
-                  value={runSeed}
-                  placeholder="seed"
-                  aria-label="run seed"
-                  onInput={handleRunSeedInput}
-                />
-                <div class="seed-button-row">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      startRun(
-                        randomizeRunSeed(runSeed, DEFAULT_SEED, createRandomSeed()),
-                      )
-                      isOptionsOpenSignal.value = false
-                    }}
-                  >
-                    random seed
-                  </button>
+                <div class="seed-entry-row">
+                  <input
+                    class="seed-input"
+                    type="text"
+                    value={runSeed}
+                    placeholder="seed"
+                    aria-label="run seed"
+                    onInput={handleRunSeedInput}
+                  />
                   <button
                     type="button"
                     onClick={() => {
