@@ -28,12 +28,13 @@ import {
   pointsEqual,
 } from "./helpers.ts"
 import { isPlayerSonarEnabled } from "./actions.ts"
-import { withGameMessage } from "./log.ts"
+import { createLogMessage, withGameMessage } from "./log.ts"
 import { collectPickups } from "./items.ts"
 import type {
   Fish,
   GameState,
   HorizontalDirection,
+  LogMessage,
   RevealableEntity,
   Shockwave,
   TurnAction,
@@ -54,7 +55,7 @@ export function advanceTurn(
   nextPlayer: Point,
   facing: HorizontalDirection,
   action: TurnAction | null,
-  fallbackMessage: string,
+  fallbackMessage: LogMessage | string,
 ): GameState {
   const nextTurn = game.turn + 1
   const map = cloneMap(game.map)
@@ -83,8 +84,11 @@ export function advanceTurn(
   let playerDestroyed = hostileSubmarines.some((hostileSubmarine) =>
     pointsEqual(hostileSubmarine.position, nextPlayer)
   )
-  let hostileMessage: string | null = playerDestroyed
-    ? "A hostile submarine rams your hull. Press R for a new run."
+  let hostileMessage: LogMessage | null = playerDestroyed
+    ? createLogMessage(
+      "A hostile submarine rams your hull. Press R for a new run.",
+      "negative",
+    )
     : null
 
   if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
@@ -135,8 +139,10 @@ export function advanceTurn(
   playerDestroyed = playerDestroyed || torpedoStep.playerDestroyed
 
   if (torpedoStep.playerDestroyed) {
-    hostileMessage =
-      "A hostile torpedo tears through your hull. Press R for a new run."
+    hostileMessage = createLogMessage(
+      "A hostile torpedo tears through your hull. Press R for a new run.",
+      "negative",
+    )
   }
 
   const depthChargeStep = stepDepthCharges(
@@ -162,8 +168,10 @@ export function advanceTurn(
   playerDestroyed = playerDestroyed || depthChargeStep.playerDestroyed
 
   if (depthChargeStep.playerDestroyed) {
-    hostileMessage =
-      "A hostile blast caves in your hull. Press R for a new run."
+    hostileMessage = createLogMessage(
+      "A hostile blast caves in your hull. Press R for a new run.",
+      "negative",
+    )
   }
 
   const boulderStep = stepFallingBoulders(
@@ -184,7 +192,10 @@ export function advanceTurn(
   playerDestroyed = playerDestroyed || boulderStep.playerDestroyed
 
   if (boulderStep.playerDestroyed) {
-    hostileMessage = "Cave-in debris crushes your hull. Press R for a new run."
+    hostileMessage = createLogMessage(
+      "Cave-in debris crushes your hull. Press R for a new run.",
+      "negative",
+    )
   }
 
   const capsuleRetrievedThisTurn = !hadCapsule && !playerDestroyed &&
@@ -197,7 +208,7 @@ export function advanceTurn(
     ...depthChargeStep.shockwaves,
     ...(shouldEmitSonar ? [createSonarShockwave(nextPlayer)] : []),
   ]
-  let hostileLaunchMessage: string | null = null
+  let hostileLaunchMessage: LogMessage | null = null
   const revealableEntitiesBeforeHostiles = collectRevealableEntities(
     nextPlayer,
     map.capsule,
@@ -271,10 +282,15 @@ export function advanceTurn(
     playerDestroyed = hostileStep.playerDestroyed
 
     if (hostileStep.playerDestroyed) {
-      hostileMessage =
-        "A hostile submarine rams your hull. Press R for a new run."
+      hostileMessage = createLogMessage(
+        "A hostile submarine rams your hull. Press R for a new run.",
+        "negative",
+      )
     } else if (hostileStep.launchedTorpedoes.length > 0) {
-      hostileLaunchMessage = "Hostile contact. Incoming torpedo."
+      hostileLaunchMessage = createLogMessage(
+        "Hostile contact. Incoming torpedo.",
+        "negative",
+      )
     }
   }
 
@@ -335,27 +351,30 @@ export function advanceTurn(
     boulderStep.landings,
   )
   const capsuleMessage = capsuleRetrievedThisTurn
-    ? "Capsule retrieved. Return to dock."
+    ? createLogMessage("Capsule retrieved. Return to dock.", "positive")
     : null
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
-      "Your submarine is destroyed. Press R for a new run."
+      createLogMessage("Your submarine is destroyed. Press R for a new run.", "negative")
     : won
-    ? "Capsule delivered to dock. Press R for a new run."
+    ? createLogMessage("Capsule delivered to dock. Press R for a new run.", "positive")
     : capsuleMessage !== null
     ? capsuleMessage
     : pickupStep.message !== null
     ? pickupStep.message
     : rammedFishCount > 0
-    ? rammedFishCount === 1
-      ? "You paste a fish against the bow."
-      : `You paste ${rammedFishCount} fish against the bow.`
+    ? createLogMessage(
+      rammedFishCount === 1
+        ? "You paste a fish against the bow."
+        : `You paste ${rammedFishCount} fish against the bow.`,
+    )
     : impactMessage !== null
     ? impactMessage
     : hostileLaunchMessage !== null
     ? hostileLaunchMessage
     : fallbackMessage
+  const nextMessageText = typeof nextMessage === "string" ? nextMessage : nextMessage.message
 
   return withGameMessage(
     refreshPerception(
@@ -398,7 +417,7 @@ export function advanceTurn(
         torpedoAmmo,
         depthChargeAmmo,
         screenShake,
-        message: nextMessage,
+        message: nextMessageText,
       },
       [...shockwaveStep.revealedTiles, ...pickupStep.tileReveals],
       shockwaveStep.revealedEntities,

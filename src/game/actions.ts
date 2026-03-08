@@ -3,7 +3,7 @@ import { Path } from "npm:rot-js@2.2.1"
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
 import { exactEntityNameAtPoint, inSightReasonForEntity } from "./entity_labels.ts"
 import { keyOfPoint, pointsEqual } from "./helpers.ts"
-import { withGameMessage } from "./log.ts"
+import { createLogMessage, withGameMessage } from "./log.ts"
 import type { Direction, GameState, HorizontalDirection } from "./model.ts"
 import { isPassableTile } from "./mapgen.ts"
 import { advanceTurn } from "./turn.ts"
@@ -277,7 +277,9 @@ export function togglePlayerSonar(game: GameState): GameState {
       ...game,
       playerSonarEnabled: enabled,
     },
-    enabled ? "Player sonar enabled." : "Player sonar disabled.",
+    enabled
+      ? createLogMessage("Player sonar enabled.", "positive")
+      : createLogMessage("Player sonar disabled.", "negative"),
   )
 }
 
@@ -296,7 +298,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     return withGameMessage({
       ...game,
       facing: horizontalFacingForMove(game.facing, direction),
-    }, "Hull blocked.")
+    }, createLogMessage("Hull blocked.", "warning"))
   }
 
   return advanceTurn(
@@ -304,7 +306,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     target,
     horizontalFacingForMove(game.facing, direction),
     null,
-    "Advance.",
+    createLogMessage("Advance."),
   )
 }
 
@@ -313,7 +315,13 @@ export function holdPosition(game: GameState): GameState {
     return game
   }
 
-  return advanceTurn(game, game.player, game.facing, null, "Holding position.")
+  return advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    createLogMessage("Holding position."),
+  )
 }
 
 export function fireTorpedo(
@@ -328,7 +336,7 @@ export function fireTorpedo(
     return withGameMessage({
       ...game,
       facing: direction,
-    }, "No torpedoes remaining.")
+    }, createLogMessage("No torpedoes remaining.", "negative"))
   }
 
   return advanceTurn(
@@ -336,7 +344,9 @@ export function fireTorpedo(
     game.player,
     direction,
     { kind: "torpedo", direction },
-    direction === "left" ? "Tube away to port." : "Tube away to starboard.",
+    createLogMessage(
+      direction === "left" ? "Tube away to port." : "Tube away to starboard.",
+    ),
   )
 }
 
@@ -348,7 +358,7 @@ export function dropDepthCharge(game: GameState): GameState {
   if (game.depthChargeAmmo <= 0) {
     return withGameMessage({
       ...game,
-    }, "No depth charges remaining.")
+    }, createLogMessage("No depth charges remaining.", "negative"))
   }
 
   return advanceTurn(
@@ -356,6 +366,6 @@ export function dropDepthCharge(game: GameState): GameState {
     game.player,
     game.facing,
     { kind: "depth-charge" },
-    "Depth charge away.",
+    createLogMessage("Depth charge away."),
   )
 }

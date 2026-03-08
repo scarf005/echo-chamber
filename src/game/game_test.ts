@@ -350,7 +350,10 @@ Deno.test("togglePlayerSonar flips the player sonar state without consuming a tu
   assertEquals(isPlayerSonarEnabled(toggled), false)
   assertEquals(toggled.turn, game.turn)
   assertEquals(toggled.message, "Player sonar disabled.")
-  assertEquals(toggled.logs.at(-1), "Player sonar disabled.")
+  assertEquals(toggled.logs.at(-1), {
+    message: "Player sonar disabled.",
+    type: "negative",
+  })
 
   const restored = togglePlayerSonar(toggled)
 
