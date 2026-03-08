@@ -2,8 +2,8 @@ import type {
   CrackCell,
   DepthCharge,
   FadeCell,
-  Fish,
   FallingBoulder,
+  Fish,
   HostileSubmarine,
   Shockwave,
   Torpedo,
@@ -38,6 +38,7 @@ interface ExplosionResolution {
   shockwave: Shockwave
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
+  entityHits: number
   playerDestroyed: boolean
   caveIns: number
   screenShake: number
@@ -66,6 +67,7 @@ export function stepTorpedoes(
   shockwaves: Shockwave[]
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
+  playerEntityHits: number
   playerDestroyed: boolean
 } {
   const nextTorpedoes: Torpedo[] = []
@@ -79,6 +81,7 @@ export function stepTorpedoes(
   let impacts = 0
   let caveIns = 0
   let screenShake = 0
+  let playerEntityHits = 0
   let playerDestroyed = false
 
   for (const torpedo of torpedoes) {
@@ -126,6 +129,9 @@ export function stepTorpedoes(
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        if (torpedo.senderId === "player") {
+          playerEntityHits += explosion.entityHits
+        }
         exploded = true
         impacts += 1
         caveIns += explosion.caveIns
@@ -169,6 +175,9 @@ export function stepTorpedoes(
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        if (torpedo.senderId === "player") {
+          playerEntityHits += explosion.entityHits
+        }
         exploded = true
         impacts += 1
         caveIns += explosion.caveIns
@@ -199,6 +208,7 @@ export function stepTorpedoes(
     shockwaves,
     fish: nextFish,
     hostileSubmarines: nextHostileSubmarines,
+    playerEntityHits,
     playerDestroyed,
   }
 }
@@ -226,6 +236,7 @@ export function stepDepthCharges(
   shockwaves: Shockwave[]
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
+  playerEntityHits: number
   playerDestroyed: boolean
 } {
   const nextDepthCharges: DepthCharge[] = []
@@ -239,6 +250,7 @@ export function stepDepthCharges(
   let impacts = 0
   let caveIns = 0
   let screenShake = 0
+  let playerEntityHits = 0
   let playerDestroyed = false
 
   for (const depthCharge of depthCharges) {
@@ -292,6 +304,9 @@ export function stepDepthCharges(
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        if (depthCharge.senderId === "player") {
+          playerEntityHits += explosion.entityHits
+        }
         exploded = true
         impacts += 1
         caveIns += explosion.caveIns
@@ -332,6 +347,9 @@ export function stepDepthCharges(
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        if (depthCharge.senderId === "player") {
+          playerEntityHits += explosion.entityHits
+        }
         exploded = true
         impacts += 1
         caveIns += explosion.caveIns
@@ -377,6 +395,9 @@ export function stepDepthCharges(
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        if (depthCharge.senderId === "player") {
+          playerEntityHits += explosion.entityHits
+        }
         exploded = true
         impacts += 1
         caveIns += explosion.caveIns
@@ -410,6 +431,9 @@ export function stepDepthCharges(
         fallingBoulders.push(...explosion.fallingBoulders)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        if (depthCharge.senderId === "player") {
+          playerEntityHits += explosion.entityHits
+        }
         exploded = true
         impacts += 1
         caveIns += explosion.caveIns
@@ -439,6 +463,7 @@ export function stepDepthCharges(
     shockwaves,
     fish: nextFish,
     hostileSubmarines: nextHostileSubmarines,
+    playerEntityHits,
     playerDestroyed,
   }
 }
@@ -456,6 +481,12 @@ function detonateProjectile(
   player: Point,
 ): ExplosionResolution {
   const explosion = detonateTorpedo(map, impactPoint, seedKey)
+  const nextFish = resolveFishBlastDamage(impactPoint, fish)
+  const nextHostileSubmarines = resolveHostileBlastDamage(
+    impactPoint,
+    senderId,
+    hostileSubmarines,
+  )
   const nextTrails = mergeTrailCell(
     trails,
     indexForPoint(map.width, impactPoint),
@@ -475,12 +506,10 @@ function detonateProjectile(
     dust: nextDust,
     fallingBoulders: explosion.fallingBoulders,
     shockwave: createExplosionShockwave(impactPoint, senderId),
-    fish: resolveFishBlastDamage(impactPoint, fish),
-    hostileSubmarines: resolveHostileBlastDamage(
-      impactPoint,
-      senderId,
-      hostileSubmarines,
-    ),
+    fish: nextFish,
+    hostileSubmarines: nextHostileSubmarines,
+    entityHits: (fish.length - nextFish.length) +
+      (hostileSubmarines.length - nextHostileSubmarines.length),
     playerDestroyed: doesExplosionDestroyPlayer(impactPoint, senderId, player),
     caveIns: explosion.fallingBoulders.length,
     screenShake: explosion.screenShake,
@@ -500,7 +529,8 @@ function hasProjectileTargetNearby(
       chebyshevDistance(point, hostileSubmarine.position) <=
         PROJECTILE_PROXIMITY_RADIUS
     ) || fish.some((candidate) =>
-      chebyshevDistance(point, candidate.position) <= PROJECTILE_PROXIMITY_RADIUS
+      chebyshevDistance(point, candidate.position) <=
+        PROJECTILE_PROXIMITY_RADIUS
     )
   }
 

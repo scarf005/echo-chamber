@@ -30,6 +30,7 @@ import type { GameState, HostileSubmarine } from "./game/game.ts"
 import { pointsEqual } from "./game/helpers.ts"
 import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
+import { createEntityHitSfx } from "./audio/entityHitSfx.ts"
 import { createExplosionSfx } from "./audio/explosionSfx.ts"
 import { createMovementLoop } from "./audio/movementLoop.ts"
 import { createSonarContactSfx } from "./audio/sonarContactSfx.ts"
@@ -73,6 +74,9 @@ export function App() {
   const backgroundMusicRef = useRef<
     ReturnType<typeof createBackgroundMusic> | null
   >(null)
+  const entityHitSfxRef = useRef<ReturnType<typeof createEntityHitSfx> | null>(
+    null,
+  )
   const explosionSfxRef = useRef<ReturnType<typeof createExplosionSfx> | null>(
     null,
   )
@@ -84,6 +88,7 @@ export function App() {
   >(null)
   const sonarLoopRef = useRef<ReturnType<typeof createSonarLoop> | null>(null)
   const playedExplosionCountsRef = useRef<Map<string, number>>(new Map())
+  const playedEntityHitCueCountRef = useRef(0)
   const playedSonarContactCueCountRef = useRef(0)
   const autoMoveSeenAnomaliesRef = useRef<Set<string>>(new Set())
   const autoMoveSeenTargetRef = useRef<Point | null>(null)
@@ -124,6 +129,10 @@ export function App() {
     backgroundMusicRef.current?.setEnabled(
       pageAudioEnabled && currentAudioSettings.musicEnabled,
     )
+    entityHitSfxRef.current?.setVolume(currentAudioSettings.sfxVolume)
+    entityHitSfxRef.current?.setEnabled(
+      pageAudioEnabled && currentAudioSettings.sfxEnabled,
+    )
     movementLoopRef.current?.setVolume(currentAudioSettings.sfxVolume)
     movementLoopRef.current?.setEnabled(
       pageAudioEnabled && currentAudioSettings.sfxEnabled,
@@ -149,11 +158,13 @@ export function App() {
 
   useEffect(() => {
     const backgroundMusic = createBackgroundMusic()
+    const entityHitSfx = createEntityHitSfx()
     const explosionSfx = createExplosionSfx()
     const movementLoop = createMovementLoop()
     const sonarContactSfx = createSonarContactSfx()
     const sonarLoop = createSonarLoop()
     backgroundMusicRef.current = backgroundMusic
+    entityHitSfxRef.current = entityHitSfx
     explosionSfxRef.current = explosionSfx
     movementLoopRef.current = movementLoop
     sonarContactSfxRef.current = sonarContactSfx
@@ -161,6 +172,7 @@ export function App() {
 
     const startAudio = () => {
       void backgroundMusic.ensureStarted()
+      void entityHitSfx.ensureStarted()
       void explosionSfx.ensureStarted()
       void movementLoop.ensureStarted()
       void sonarContactSfx.ensureStarted()
@@ -186,11 +198,13 @@ export function App() {
       window.removeEventListener("blur", syncPageAudioEnabled)
       document.removeEventListener("visibilitychange", syncPageAudioEnabled)
       backgroundMusicRef.current = null
+      entityHitSfxRef.current = null
       explosionSfxRef.current = null
       movementLoopRef.current = null
       sonarContactSfxRef.current = null
       sonarLoopRef.current = null
       backgroundMusic.dispose()
+      entityHitSfx.dispose()
       explosionSfx.dispose()
       movementLoop.dispose()
       sonarContactSfx.dispose()
@@ -244,6 +258,17 @@ export function App() {
   }, [game])
 
   useEffect(() => {
+    const cueCount = game.playerEntityHitCueCount ?? 0
+
+    if (cueCount <= playedEntityHitCueCountRef.current) {
+      return
+    }
+
+    playedEntityHitCueCountRef.current = cueCount
+    void entityHitSfxRef.current?.playHit()
+  }, [game.playerEntityHitCueCount])
+
+  useEffect(() => {
     const cueCount = game.playerSonarContactCueCount ?? 0
 
     if (cueCount <= playedSonarContactCueCountRef.current) {
@@ -260,10 +285,12 @@ export function App() {
 
   const startRun = (rawSeed = runSeedRef.current) => {
     void backgroundMusicRef.current?.ensureStarted()
+    void entityHitSfxRef.current?.ensureStarted()
     void explosionSfxRef.current?.ensureStarted()
     void movementLoopRef.current?.ensureStarted()
     void sonarContactSfxRef.current?.ensureStarted()
     void sonarLoopRef.current?.ensureStarted()
+    playedEntityHitCueCountRef.current = 0
     playedSonarContactCueCountRef.current = 0
     const normalizedSeed = rawSeed.trim() || DEFAULT_SEED
     runSeedRef.current = normalizedSeed
@@ -908,6 +935,14 @@ export function App() {
                   rel="noreferrer"
                 >
                   Underwater Deep Water Loop by Department64 (CC-BY-4.0)
+                </a>
+                <a
+                  class="credit-link"
+                  href="https://freesound.org/people/Department64/sounds/651744/"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Underwater Blub 03 by Department64 (CC-BY-4.0)
                 </a>
                 <a
                   class="credit-link"

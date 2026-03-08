@@ -259,6 +259,47 @@ Deno.test("player sonar contact cue fires when a hit hostile moves before reveal
   assertEquals(next.hostileSubmarines[0].lastKnownPlayerPosition, next.player)
 })
 
+Deno.test("player entity hit cue fires when the bow pulps a fish", () => {
+  const game = {
+    ...createFlatGame(),
+    fish: [{
+      id: "fish-1",
+      position: { x: 3, y: 2 },
+      facing: "right" as const,
+      mode: "idle" as const,
+      target: null,
+      idleTurnsRemaining: 0,
+      travelTurnsRemaining: 0,
+    }],
+    playerEntityHitCueCount: 0,
+  }
+  const next = movePlayer(game, "right")
+
+  assertEquals(next.playerEntityHitCueCount, 1)
+  assertEquals(next.fish, [])
+  assertEquals(next.message, "You paste a fish against the bow.")
+})
+
+Deno.test("player entity hit cue fires when a torpedo catches a fish", () => {
+  const game = {
+    ...createFlatGame(),
+    fish: [{
+      id: "fish-1",
+      position: { x: 4, y: 2 },
+      facing: "right" as const,
+      mode: "idle" as const,
+      target: null,
+      idleTurnsRemaining: 0,
+      travelTurnsRemaining: 0,
+    }],
+    playerEntityHitCueCount: 0,
+  }
+  const next = fireTorpedo(game, "right")
+
+  assertEquals(next.playerEntityHitCueCount, 1)
+  assertEquals(next.fish, [])
+})
+
 Deno.test("togglePlayerSonar flips the player sonar state without consuming a turn", () => {
   const game = createFlatGame()
   const toggled = togglePlayerSonar(game)

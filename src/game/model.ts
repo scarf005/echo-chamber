@@ -141,6 +141,7 @@ export interface GameState {
   visibility: VisibilityLevel[]
   lastSonarTurn: number
   playerSonarContactCueCount?: number
+  playerEntityHitCueCount?: number
   shockwaves: Shockwave[]
   shockwaveFront: FadeCell[]
   torpedoes: Torpedo[]

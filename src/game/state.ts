@@ -55,6 +55,7 @@ export function createGame(options: GameOptions = {}): GameState {
     ),
     lastSonarTurn: 0,
     playerSonarContactCueCount: 0,
+    playerEntityHitCueCount: 0,
     shockwaves: [],
     shockwaveFront: [],
     torpedoes: [],

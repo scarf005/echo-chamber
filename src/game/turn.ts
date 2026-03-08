@@ -285,6 +285,9 @@ export function advanceTurn(
       (reveal) =>
         reveal.sourceSenderId === "player" && reveal.kind !== "player",
     )
+  const playerEntityHitThisTurn = rammedFishCount > 0 ||
+    torpedoStep.playerEntityHits > 0 ||
+    depthChargeStep.playerEntityHits > 0
   const pickupStep = collectPickups(
     {
       ...game,
@@ -349,6 +352,9 @@ export function advanceTurn(
         playerSonarContactCueCount: playerSonarMadeContact
           ? (game.playerSonarContactCueCount ?? 0) + 1
           : (game.playerSonarContactCueCount ?? 0),
+        playerEntityHitCueCount: playerEntityHitThisTurn
+          ? (game.playerEntityHitCueCount ?? 0) + 1
+          : (game.playerEntityHitCueCount ?? 0),
         shockwaves: shockwaveStep.waves,
         shockwaveFront: shockwaveStep.front,
         torpedoes,

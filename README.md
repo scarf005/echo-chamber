@@ -28,6 +28,8 @@ $ deno task build
 
 - `public/audio/underwater-deep-water-loop.mp3`
 - [Underwater Deep Water Loop by Department64 (CC-BY-4.0)](https://freesound.org/people/Department64/sounds/651743/)
+- `public/audio/underwater-blub-03.mp3`
+- [Underwater Blub 03 by Department64 (CC-BY-4.0)](https://freesound.org/people/Department64/sounds/651744/)
 - `public/audio/underwater-explosion-1.mp3`
 - [UnderWater_Explosion1 by Akkaittou (CC-BY-4.0)](https://freesound.org/people/Akkaittou/sounds/819743/)
 - `public/audio/underwater-explosion-2.mp3`
