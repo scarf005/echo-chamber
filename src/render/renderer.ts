@@ -44,11 +44,16 @@ export function drawGame(
   const cssWidth = viewport.cssWidth
   const cssHeight = viewport.cssHeight
   const devicePixelRatio = window.devicePixelRatio || 1
+  const nextCanvasWidth = Math.max(1, Math.floor(cssWidth * devicePixelRatio))
+  const nextCanvasHeight = Math.max(1, Math.floor(cssHeight * devicePixelRatio))
 
   canvas.style.width = `${cssWidth}px`
   canvas.style.height = `${cssHeight}px`
-  canvas.width = Math.max(1, Math.floor(cssWidth * devicePixelRatio))
-  canvas.height = Math.max(1, Math.floor(cssHeight * devicePixelRatio))
+
+  if (canvas.width !== nextCanvasWidth || canvas.height !== nextCanvasHeight) {
+    canvas.width = nextCanvasWidth
+    canvas.height = nextCanvasHeight
+  }
 
   const shake = screenShakeOffset(game)
   context.setTransform(

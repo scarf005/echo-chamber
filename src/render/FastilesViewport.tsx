@@ -25,6 +25,7 @@ export function FastilesViewport(
   const previewPathRef = useRef<Point[]>(props.previewPath)
   const onTileClickRef = useRef(props.onTileClick)
   const onTileHoverRef = useRef(props.onTileHover)
+  const hoveredTileKeyRef = useRef<string | null>(null)
   const renderOptionsRef = useRef<RenderOptions | undefined>(
     props.renderOptions,
   )
@@ -90,17 +91,24 @@ export function FastilesViewport(
     }
 
     const onCanvasPointerMove = (event: PointerEvent) => {
-      onTileHoverRef.current(
-        pointFromMouseEvent(
-          canvas,
-          gameRef.current,
-          renderOptionsRef.current,
-          event,
-        ),
+      const point = pointFromMouseEvent(
+        canvas,
+        gameRef.current,
+        renderOptionsRef.current,
+        event,
       )
+      const nextHoveredTileKey = point ? `${point.x}:${point.y}` : null
+
+      if (nextHoveredTileKey === hoveredTileKeyRef.current) {
+        return
+      }
+
+      hoveredTileKeyRef.current = nextHoveredTileKey
+      onTileHoverRef.current(point)
     }
 
     const onCanvasPointerLeave = () => {
+      hoveredTileKeyRef.current = null
       onTileHoverRef.current(null)
     }
 
@@ -149,7 +157,16 @@ export function FastilesViewport(
       props.previewPath,
       props.renderOptions,
     )
-  }, [props.game, props.selectedTarget, props.previewPath, props.renderOptions])
+  }, [
+    props.game,
+    props.selectedTarget,
+    props.previewPath,
+    props.renderOptions?.debugEntityOverlay,
+    props.renderOptions?.debugPlannedPaths,
+    props.renderOptions?.viewportMode,
+    props.renderOptions?.cameraTileWidth,
+    props.renderOptions?.cameraTileHeight,
+  ])
 
   return <div class="viewport" ref={containerRef} />
 }
