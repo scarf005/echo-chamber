@@ -1,4 +1,5 @@
 import type { CrackCell, FadeCell, GameState } from "../../game/game.ts"
+import type { LightCell } from "../lighting.ts"
 import { COLORS } from "../colors.ts"
 import { drawGlyph, drawTileBackground } from "../helpers/draw.ts"
 
@@ -14,8 +15,22 @@ export function drawEffectsLayer(
     dust: Map<number, number>
     shockwaveFront: Map<number, FadeCell>
     cracks: Map<number, CrackCell>
+    ventLight: Map<number, LightCell>
   },
 ): void {
+  const ventLight = effectMaps.ventLight.get(index)
+
+  if (ventLight && shouldDrawVentLight(game, index)) {
+    drawTileBackground(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      ventLight.color,
+      ventLight.alpha,
+    )
+  }
+
   if (game.visibility[index] === 0) {
     return
   }
@@ -67,6 +82,10 @@ export function drawEffectsLayer(
       crack.alpha,
     )
   }
+}
+
+export function shouldDrawVentLight(game: GameState, index: number): boolean {
+  return game.visibility[index] > 0
 }
 
 export function drawShockwaveLayer(

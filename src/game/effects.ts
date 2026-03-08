@@ -144,16 +144,18 @@ export function mergeTrailCell(
   index: number,
   alpha: number,
   drift?: "up",
+  source?: FadeCell["source"],
 ): FadeCell[] {
   const existing = cells.find((cell) => cell.index === index)
 
   if (existing) {
     existing.alpha = Math.max(existing.alpha, alpha)
     existing.drift = drift ?? existing.drift
+    existing.source = source ?? existing.source
     return cells
   }
 
-  return [...cells, { index, alpha, ...(drift ? { drift } : {}) }]
+  return [...cells, { index, alpha, ...(drift ? { drift } : {}), ...(source ? { source } : {}) }]
 }
 
 export function createDustBurst(

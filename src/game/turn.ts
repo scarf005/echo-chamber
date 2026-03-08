@@ -33,6 +33,7 @@ import {
 import { isPlayerSonarEnabled } from "./actions.ts"
 import { createLogMessage, MAX_LOG_MESSAGES, withGameMessage } from "./log.ts"
 import { collectPickups } from "./items.ts"
+import { emitVentPlumes } from "./vents.ts"
 import type {
   EntityReveal,
   Fish,
@@ -104,6 +105,8 @@ export function advanceTurn(
   if (nextPlayer.x !== game.player.x || nextPlayer.y !== game.player.y) {
     trails = mergeTrailCell(trails, indexForPoint(map.width, game.player), 1)
   }
+
+  trails = emitVentPlumes(map, game.seed, nextTurn, trails)
 
   clearKelpStrandAt(map, nextPlayer)
 

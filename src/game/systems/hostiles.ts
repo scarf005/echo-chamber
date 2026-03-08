@@ -1058,6 +1058,10 @@ function findTrailClue(
   let bestDistance = Number.POSITIVE_INFINITY
 
   for (const trail of trails) {
+    if (trail.source === "vent") {
+      continue
+    }
+
     if (trail.alpha < 0.16) {
       continue
     }

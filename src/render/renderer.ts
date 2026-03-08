@@ -15,6 +15,7 @@ import {
   indexCrackMap,
   indexFadeMap,
 } from "./helpers/selectors.ts"
+import { buildVentLightMap, type LightCell } from "./lighting.ts"
 import {
   colorForHostileSubmarine,
   drawEntitiesLayer,
@@ -29,6 +30,7 @@ type EffectMaps = {
   dust: Map<number, number>
   shockwaveFront: Map<number, FadeCell>
   cracks: Map<number, CrackCell>
+  ventLight: Map<number, LightCell>
 }
 
 type EntityMaps = ReturnType<typeof buildEntityMaps>
@@ -262,6 +264,7 @@ function resolveEffectMaps(game: GameState): EffectMaps {
     trails: indexAlphaMap(game.trails),
     dust: indexAlphaMap(game.dust),
     cracks: indexCrackMap(game.cracks),
+    ventLight: buildVentLightMap(game),
   }
 
   effectMapsCache.set(game, nextMaps)

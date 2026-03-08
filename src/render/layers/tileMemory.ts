@@ -70,5 +70,23 @@ export function drawTileMemoryLayer(
       visibility >= 2 ? "#5fe08f" : "#2d7a52",
       visibility >= 2 ? 0.92 : 0.66,
     )
+  } else if (memory === "vent") {
+    drawTileBackground(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
+      visibility >= 2 ? 0.22 : 0.12,
+    )
+    drawGlyph(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      "!",
+      visibility >= 2 ? COLORS.vent : COLORS.ventDim,
+      visibility >= 2 ? 0.96 : 0.74,
+    )
   }
 }

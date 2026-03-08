@@ -259,6 +259,70 @@ Deno.test("scout retreat penalizes recently visited tiles", () => {
   assertEquals(next.hostileSubmarines[0].position, { x: 6, y: 2 })
 })
 
+Deno.test("hostiles ignore vent plumes when tracking bubble clues", () => {
+  const map = createMapFromRows(
+    [
+      "################",
+      "#..............#",
+      "#..............#",
+      "#..............#",
+      "#..............#",
+      "################",
+    ],
+    { x: 1, y: 3 },
+    { x: 14, y: 3 },
+  )
+  const hostile: HostileSubmarine = {
+    id: "hostile-1",
+    position: { x: 12, y: 3 },
+    facing: "left",
+    mode: "investigate",
+    target: null,
+    reload: 0,
+    archetype: "hunter",
+    initialPosition: { x: 12, y: 3 },
+    torpedoAmmo: 6,
+    vlsAmmo: 6,
+    depthChargeAmmo: 6,
+    lastSonarTurn: 0,
+    lastKnownPlayerPosition: null,
+    lastKnownPlayerVector: null,
+    lastKnownPlayerTurn: null,
+    plannedPath: [],
+    lastAiLog: null,
+  }
+  const baseContext = {
+    player: { x: 1, y: 1 },
+    previousPlayer: { x: 1, y: 1 },
+    shockwaves: [],
+    trails: [],
+    memory: Array.from({ length: map.tiles.length }, () => "water" as const),
+    playerSonarHitHostiles: new Set<string>(),
+    capsuleRetrievedThisTurn: false,
+  }
+
+  const baseline = stepHostileSubmarines(
+    map,
+    [hostile],
+    baseContext,
+    "hostile-vent-ignore-test",
+    1,
+  )
+  const withVentTrail = stepHostileSubmarines(
+    map,
+    [hostile],
+    {
+      ...baseContext,
+      trails: [{ index: 3 * map.width + 10, alpha: 1, source: "vent" }],
+    },
+    "hostile-vent-ignore-test",
+    1,
+  )
+
+  assertEquals(withVentTrail.hostileSubmarines[0].position, baseline.hostileSubmarines[0].position)
+  assertEquals(withVentTrail.hostileSubmarines[0].target, baseline.hostileSubmarines[0].target)
+})
+
 function createMapFromRows(
   rows: string[],
   spawn: Point,

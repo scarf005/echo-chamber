@@ -167,6 +167,29 @@ Deno.test("generateMap adds stalactites and stalagmites", () => {
   assert(stalagmiteCount > 0)
 })
 
+Deno.test("generateMap adds hydrothermal vents on the seafloor", () => {
+  const seeds = ["vents-1", "vents-2", "vents-3", "vents-4"]
+  let ventCount = 0
+
+  for (const seed of seeds) {
+    const map = generateMap({ width: 72, height: 30, seed })
+
+    for (let y = 1; y < map.height - 1; y += 1) {
+      for (let x = 1; x < map.width - 1; x += 1) {
+        if (tileAt(map, x, y) !== "vent") {
+          continue
+        }
+
+        ventCount += 1
+        assertEquals(tileAt(map, x, y + 1), "wall")
+        assertEquals(tileAt(map, x, y - 1) === "wall", false)
+      }
+    }
+  }
+
+  assert(ventCount > 0)
+})
+
 function pathExists(map: GeneratedMap): boolean {
   const queue: Point[] = [{ ...map.spawn }]
   const seen = new Set<number>()

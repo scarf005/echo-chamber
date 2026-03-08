@@ -1,6 +1,6 @@
 import { Map as RotMap, RNG } from "npm:rot-js@2.2.1"
 
-export type TileKind = "wall" | "water" | "kelp"
+export type TileKind = "wall" | "water" | "kelp" | "vent"
 export type BiomeKind = "vast" | "regular" | "tight" | "chaotic" | "wavy"
 
 export interface Point {
@@ -133,6 +133,7 @@ export function generateMap(options: MapGenOptions = {}): GeneratedMap {
 
   addKelpOnRock(tiles, width, height, seed, [spawn, capsule])
   addRockSpikes(tiles, width, height, seed, [spawn, capsule])
+  addHydrothermalVents(tiles, width, height, seed, [spawn, capsule])
 
   if (!hasPath(tiles, width, height, spawn, capsule)) {
     carveFallbackRoute(tiles, width, height, spawn, capsule)
@@ -176,7 +177,7 @@ export function tileAt(
 }
 
 export function isPassableTile(tile: TileKind | null): boolean {
-  return tile === "water" || tile === "kelp"
+  return tile === "water" || tile === "kelp" || tile === "vent"
 }
 
 export function isSonarBlockingTile(tile: TileKind | null): boolean {
@@ -220,7 +221,7 @@ export function mapToAscii(map: GeneratedMap): string {
       }
 
       const tile = tileAt(map, x, y)
-      row += tile === "wall" ? "#" : tile === "kelp" ? '"' : "."
+      row += tile === "wall" ? "#" : tile === "kelp" ? '"' : tile === "vent" ? "!" : "."
     }
 
     rows.push(row)
@@ -472,6 +473,37 @@ function maybeGrowStalagmite(
   }
 }
 
+function addHydrothermalVents(
+  tiles: TileKind[],
+  width: number,
+  height: number,
+  seed: string,
+  protectedPoints: Point[],
+): void {
+  for (let y = 2; y < height - 2; y += 1) {
+    for (let x = 2; x < width - 2; x += 1) {
+      const tileIndex = indexForTile(width, x, y)
+
+      if (
+        tiles[tileIndex] !== "water" ||
+        tiles[indexForTile(width, x, y + 1)] !== "wall" ||
+        tiles[indexForTile(width, x, y - 1)] === "wall" ||
+        tiles[indexForTile(width, x - 1, y)] === "wall" ||
+        tiles[indexForTile(width, x + 1, y)] === "wall" ||
+        isProtectedPoint(x, y, protectedPoints)
+      ) {
+        continue
+      }
+
+      if (ventHash(seed, x, y) > 0.012) {
+        continue
+      }
+
+      tiles[tileIndex] = "vent"
+    }
+  }
+}
+
 function enforceBorderWalls(
   tiles: TileKind[],
   width: number,
@@ -590,6 +622,10 @@ function kelpHash(seed: string, x: number, y: number): number {
 
 function spikeHash(seed: string, axis: "ceiling" | "floor" | "ceiling-length" | "floor-length", x: number, y: number): number {
   return hashSeed(`${seed}:spike:${axis}:${x}:${y}`) / 0xffffffff
+}
+
+function ventHash(seed: string, x: number, y: number): number {
+  return hashSeed(`${seed}:vent:${x}:${y}`) / 0xffffffff
 }
 
 function clamp(value: number, min: number, max: number): number {

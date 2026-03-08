@@ -77,6 +77,7 @@ export interface FadeCell {
   index: number
   alpha: number
   drift?: "up"
+  source?: "vent"
   requiresVisibility?: boolean
 }
 
