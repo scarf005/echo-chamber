@@ -1,19 +1,21 @@
-import { t } from "@lingui/core/macro"
+import { i18n } from "../i18n.ts"
 import type { GameState, LogMessage, LogMessageTone } from "./model.ts"
 
 const INITIAL_MISSION_MESSAGE = createLogMessage(
-  t`Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.`,
+  i18n._(
+    "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
+  ),
 )
 const HELP_LOG_MESSAGES = [
-  createLogMessage(t`Move with WASD or arrows.`),
-  createLogMessage(t`Click once to plot a course.`),
-  createLogMessage(t`Click the same tile again to engage auto-nav.`),
-  createLogMessage(t`Wait with .`),
-  createLogMessage(t`Launch torpedo with Z.`),
-  createLogMessage(t`Launch torpedo upwards with C.`),
-  createLogMessage(t`Drop depth charge with X.`),
-  createLogMessage(t`Toggle display with M.`),
-  createLogMessage(t`When sunk, press R to restart. Use Options for restart or random run anytime.`),
+  createLogMessage(i18n._("Move with WASD or arrows.")),
+  createLogMessage(i18n._("Click once to plot a course.")),
+  createLogMessage(i18n._("Click the same tile again to engage auto-nav.")),
+  createLogMessage(i18n._("Wait with .")),
+  createLogMessage(i18n._("Launch torpedo with Z.")),
+  createLogMessage(i18n._("Launch torpedo upwards with C.")),
+  createLogMessage(i18n._("Drop depth charge with X.")),
+  createLogMessage(i18n._("Toggle display with M.")),
+  createLogMessage(i18n._("When sunk, press R to restart. Use Options for restart or random run anytime.")),
 ]
 export const MAX_LOG_MESSAGES = 200
 
