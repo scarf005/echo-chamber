@@ -113,6 +113,14 @@ export function randomizeRunSeed(
   })
 }
 
+export function createRestartRunSeed(
+  rawSeed: string,
+  fallbackSeed: string,
+  nextSeedFactory: () => string = createRandomSeed,
+): string {
+  return randomizeRunSeed(rawSeed, fallbackSeed, nextSeedFactory())
+}
+
 export function createRandomSeed(): string {
   const tokens = Array.from(
     { length: RANDOM_SEED_TOKEN_COUNT },

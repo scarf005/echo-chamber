@@ -53,7 +53,7 @@ import {
   writeAppSettings,
 } from "./settings.ts"
 import { shouldRestartFromKey } from "./input.ts"
-import { createRandomSeed, parseRunSeed, randomizeRunSeed } from "./runSeed.ts"
+import { createRestartRunSeed, parseRunSeed } from "./runSeed.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
   describeHoveredInspectorRows,
@@ -402,7 +402,7 @@ export function App() {
     syncAudioControllers()
   }, [audioSettings, game.playerSonarEnabled, game.status])
 
-  const startRun = (rawSeed = runSeedSignal.peek()) => {
+  const startRunWithSeed = (rawSeed = runSeedSignal.peek()) => {
     void backgroundMusicRef.current?.ensureStarted()
     void deathSfxRef.current?.ensureStarted()
     void entityHitSfxRef.current?.ensureStarted()
@@ -425,6 +425,10 @@ export function App() {
     hoveredTileSignal.value = null
     resetAutoMoveSeenAnomalies()
     gameSignal.value = createConfiguredGame(normalizedSeed, appSettingsSignal.peek())
+  }
+
+  const restartRun = () => {
+    startRunWithSeed(createRestartRunSeed(runSeedSignal.peek(), DEFAULT_SEED))
   }
 
   const setViewportModeWithMessage = (nextViewportMode: ViewportMode) => {
@@ -716,11 +720,7 @@ export function App() {
 
       if (event.key === "Escape") {
         event.preventDefault()
-        runSeedSignal.value = randomizeRunSeed(
-          runSeedSignal.peek(),
-          DEFAULT_SEED,
-          createRandomSeed(),
-        )
+        runSeedSignal.value = createRestartRunSeed(runSeedSignal.peek(), DEFAULT_SEED)
         isOptionsOpenSignal.value = true
         isOrdersModalOpenSignal.value = false
         return
@@ -735,7 +735,7 @@ export function App() {
 
       if (shouldRestartFromKey(event.key, gameSignal.peek().status)) {
         event.preventDefault()
-        startRun()
+        restartRun()
         return
       }
 
@@ -1090,7 +1090,7 @@ export function App() {
                   <button
                     type="button"
                     onClick={() => {
-                      startRun()
+                      restartRun()
                       isOptionsOpenSignal.value = false
                     }}
                   >

@@ -82,7 +82,3 @@ export function createGame(options: GameOptions = {}): GameState {
 
   return refreshPerception(game, [], [])
 }
-
-export function createRandomSeed(): string {
-  return Math.random().toString(36).slice(2, 10)
-}

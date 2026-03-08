@@ -3,6 +3,7 @@
 import { assertEquals } from "jsr:@std/assert"
 
 import {
+  createRestartRunSeed,
   createRandomSeed,
   formatRunSeed,
   parseRunSeed,
@@ -55,6 +56,13 @@ Deno.test("formatRunSeed rebuilds a seed with mode prefixes", () => {
 Deno.test("randomizeRunSeed preserves active prefixes with a new base seed", () => {
   assertEquals(
     randomizeRunSeed("map:god:abyss", "fallback", "trench-42"),
+    "god:map:trench-42",
+  )
+})
+
+Deno.test("createRestartRunSeed rerolls the base seed while preserving prefixes", () => {
+  assertEquals(
+    createRestartRunSeed("map:god:abyss", "fallback", () => "trench-42"),
     "god:map:trench-42",
   )
 })
