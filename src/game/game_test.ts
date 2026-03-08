@@ -225,6 +225,14 @@ Deno.test("player sonar contact cue fires when the expanding wave hits the capsu
   assertEquals(contacted.playerSonarContactCueCount, 1)
 })
 
+Deno.test("player sonar contact cue fires when a hit hostile moves before reveals resolve", () => {
+  const game = createPlayerSonarCueHostileGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.playerSonarContactCueCount, 1)
+  assertEquals(next.hostileSubmarines[0].lastKnownPlayerPosition, next.player)
+})
+
 Deno.test("togglePlayerSonar flips the player sonar state without consuming a turn", () => {
   const game = createFlatGame()
   const toggled = togglePlayerSonar(game)
@@ -540,6 +548,30 @@ Deno.test("hostile submarines do not fire without a fresh player fix", () => {
 
   assertEquals(next.torpedoes.length, 0)
   assertEquals(next.depthCharges.length, 0)
+})
+
+Deno.test("hunters chase relayed sonar fixes instead of firing blind volleys", () => {
+  const game = createPlayerSonarAlertGame()
+  const next = holdPosition(game)
+  const trailingHunter = next.hostileSubmarines.find((hostile) =>
+    hostile.id === "hostile-2"
+  )
+
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.depthCharges.length, 0)
+  assertEquals(trailingHunter?.position, { x: 13, y: 2 })
+  assertEquals(trailingHunter?.torpedoAmmo, 6)
+  assertEquals(trailingHunter?.depthChargeAmmo, 6)
+})
+
+Deno.test("hunters keep closing the lane while reloading", () => {
+  const game = createHunterReloadPursuitGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.depthCharges.length, 0)
+  assertEquals(next.hostileSubmarines[0].position, { x: 6, y: 2 })
+  assertEquals(next.hostileSubmarines[0].reload, 1)
 })
 
 Deno.test("hostile submarines can ram the player to sink them", () => {
@@ -1492,16 +1524,64 @@ function createHostileAttackGame(): GameState {
 }
 
 function createHostileNoEvidenceGame(): GameState {
+  return {
+    map: createMapFromRows(
+      [
+        "##############",
+        "#............#",
+        "#............#",
+        "#............#",
+        "##############",
+      ],
+      { x: 1, y: 2 },
+      { x: 12, y: 2 },
+    ),
+    player: { x: 2, y: 2 },
+    seed: "hostile-no-evidence-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: 14 * 5 }, () => null),
+    entityMemory: Array.from({ length: 14 * 5 }, () => null),
+    visibility: Array.from({ length: 14 * 5 }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 11, y: 1 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createHunterReloadPursuitGame(): GameState {
   const game = createHostileAttackGame()
 
   return {
     ...game,
-    seed: "hostile-no-evidence-test",
-    hostileSubmarines: [createHostile({
-      id: "hostile-1",
-      position: { x: 7, y: 1 },
-      archetype: "hunter",
-    })],
+    seed: "hunter-reload-pursuit-test",
+    hostileSubmarines: [{
+      ...createHostile({
+        id: "hostile-1",
+        position: { x: 7, y: 2 },
+        archetype: "hunter",
+      }),
+      reload: 2,
+    }],
   }
 }
 
@@ -1890,6 +1970,63 @@ function createPlayerSonarAlertGame(): GameState {
         lastSonarTurn: 1,
       }),
     ],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createPlayerSonarCueHostileGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "####################",
+      "#..................#",
+      "#..................#",
+      "#..................#",
+      "####################",
+    ],
+    { x: 1, y: 2 },
+    { x: 18, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "player-sonar-cue-hostile-test",
+    turn: 1,
+    status: "playing",
+    playerSonarEnabled: true,
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    playerSonarContactCueCount: 0,
+    shockwaves: [{
+      origin: { x: 2, y: 2 },
+      radius: 8,
+      senderId: "player",
+      damaging: false,
+      revealTerrain: true,
+      revealEntities: true,
+    }],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 11, y: 2 },
+      archetype: "scout",
+      lastSonarTurn: 1,
+    })],
     trails: [],
     dust: [],
     cracks: [],

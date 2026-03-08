@@ -18,6 +18,7 @@ import {
   resolveImpactMessage,
 } from "./effects.ts"
 import {
+  cloneFish,
   cloneBoulder,
   cloneDepthCharge,
   cloneHostileSubmarine,
@@ -30,6 +31,7 @@ import { isPlayerSonarEnabled } from "./actions.ts"
 import { withGameMessage } from "./log.ts"
 import { collectPickups } from "./items.ts"
 import type {
+  Fish,
   GameState,
   HorizontalDirection,
   RevealableEntity,
@@ -39,6 +41,7 @@ import type {
 import { refreshPerception } from "./perception.ts"
 import type { Point } from "./mapgen.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
+import { stepFish } from "./systems/fish.ts"
 import { stepHostileSubmarines } from "./systems/hostiles.ts"
 import { stepDepthCharges, stepTorpedoes } from "./systems/projectiles.ts"
 import {
@@ -57,6 +60,7 @@ export function advanceTurn(
   const map = cloneMap(game.map)
   let torpedoes = game.torpedoes.map(cloneTorpedo)
   let depthCharges = game.depthCharges.map(cloneDepthCharge)
+  let fish = (game.fish ?? []).map(cloneFish)
   let hostileSubmarines = game.hostileSubmarines.map(cloneHostileSubmarine)
   let pickups = game.pickups.map((pickup) => ({
     ...pickup,
@@ -69,6 +73,9 @@ export function advanceTurn(
   let torpedoAmmo = game.torpedoAmmo
   let depthChargeAmmo = game.depthChargeAmmo
   let screenShake = decayShake(game.screenShake, SHAKE_DECAY)
+  let rammedFishCount = fish.filter((candidate) => pointsEqual(candidate.position, nextPlayer))
+    .length
+  fish = fish.filter((candidate) => !pointsEqual(candidate.position, nextPlayer))
   let playerDestroyed = hostileSubmarines.some((hostileSubmarine) =>
     pointsEqual(hostileSubmarine.position, nextPlayer)
   )
@@ -107,6 +114,7 @@ export function advanceTurn(
     trails,
     cracks,
     dust,
+    fish,
     hostileSubmarines,
     nextPlayer,
     game.seed,
@@ -116,6 +124,7 @@ export function advanceTurn(
   trails = torpedoStep.trails
   cracks = torpedoStep.cracks
   dust = torpedoStep.dust
+  fish = torpedoStep.fish
   hostileSubmarines = torpedoStep.hostileSubmarines
   fallingBoulders = [...fallingBoulders, ...torpedoStep.fallingBoulders]
   screenShake = Math.max(screenShake, torpedoStep.screenShake)
@@ -132,6 +141,7 @@ export function advanceTurn(
     trails,
     cracks,
     dust,
+    fish,
     hostileSubmarines,
     nextPlayer,
     game.seed,
@@ -141,6 +151,7 @@ export function advanceTurn(
   trails = depthChargeStep.trails
   cracks = depthChargeStep.cracks
   dust = depthChargeStep.dust
+  fish = depthChargeStep.fish
   hostileSubmarines = depthChargeStep.hostileSubmarines
   fallingBoulders = [...fallingBoulders, ...depthChargeStep.fallingBoulders]
   screenShake = Math.max(screenShake, depthChargeStep.screenShake)
@@ -172,6 +183,7 @@ export function advanceTurn(
     depthCharges,
     pickups,
     fallingBoulders,
+    fish,
     hostileSubmarines,
   )
   const preHostileEntityReveals = previewShockwaveEntityReveals(
@@ -181,6 +193,9 @@ export function advanceTurn(
     dust,
     trails,
     revealableEntitiesBeforeHostiles,
+  )
+  const playerSonarMadePreHostileContact = preHostileEntityReveals.some(
+    (reveal) => reveal.sourceSenderId === "player" && reveal.kind !== "player",
   )
   const playerSonarHitHostiles = new Set(
     hostileSubmarines
@@ -193,6 +208,21 @@ export function advanceTurn(
       )
       .map((hostileSubmarine) => hostileSubmarine.id),
   )
+
+  if (!playerDestroyed) {
+    const fishStep = stepFish(
+      map,
+      fish,
+      {
+        player: nextPlayer,
+        hostileSubmarines,
+      },
+      game.seed,
+      nextTurn,
+    )
+    fish = fishStep.fish
+    rammedFishCount += fishStep.rammedFishCount
+  }
 
   if (!playerDestroyed) {
     const hostileStep = stepHostileSubmarines(
@@ -237,12 +267,14 @@ export function advanceTurn(
       depthCharges,
       pickups,
       fallingBoulders,
+      fish,
       hostileSubmarines,
     ),
   )
-  const playerSonarMadeContact = shockwaveStep.revealedEntities.some(
-    (reveal) => reveal.sourceSenderId === "player" && reveal.kind !== "player",
-  )
+  const playerSonarMadeContact = playerSonarMadePreHostileContact ||
+    shockwaveStep.revealedEntities.some(
+      (reveal) => reveal.sourceSenderId === "player" && reveal.kind !== "player",
+    )
   const pickupStep = collectPickups(
     {
       ...game,
@@ -275,6 +307,10 @@ export function advanceTurn(
     ? "Capsule secured. Press R for a new run."
     : pickupStep.message !== null
     ? pickupStep.message
+    : rammedFishCount > 0
+    ? rammedFishCount === 1
+      ? "You paste a fish against the bow."
+      : `You paste ${rammedFishCount} fish against the bow.`
     : impactMessage !== null
     ? impactMessage
     : hostileLaunchMessage !== null
@@ -299,6 +335,7 @@ export function advanceTurn(
         torpedoes,
         depthCharges,
         pickups,
+        fish,
         trails,
         dust,
         cracks,
@@ -335,6 +372,7 @@ function collectRevealableEntities(
   depthCharges: GameState["depthCharges"],
   pickups: GameState["pickups"],
   fallingBoulders: GameState["fallingBoulders"],
+  fish: GameState["fish"],
   hostileSubmarines: GameState["hostileSubmarines"],
 ): RevealableEntity[] {
   return [
@@ -355,6 +393,10 @@ function collectRevealableEntities(
     ...fallingBoulders.map((boulder) => ({
       kind: "boulder" as const,
       position: { ...boulder.position },
+    })),
+    ...(fish ?? []).map((candidate) => ({
+      kind: "fish" as const,
+      position: { ...candidate.position },
     })),
     ...hostileSubmarines.map((hostileSubmarine) => ({
       kind: "hostile-submarine" as const,
