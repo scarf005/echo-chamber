@@ -73,6 +73,16 @@ Deno.test("sonar only identifies enemy and item contacts inside ten tiles", () =
   assertEquals(current.entityMemory?.[farItemIndex], null)
 })
 
+Deno.test("passive detection radius distinguishes fish as non-hostile", () => {
+  const game = createPassiveFishIdentificationGame()
+  const fishIndex = game.map.width * 2 + 4
+
+  const next = holdPosition(game)
+
+  assertEquals(next.visibility[fishIndex], 2)
+  assertEquals(next.entityMemory?.[fishIndex], "non-hostile")
+})
+
 function createSonarEntityMemoryGame(): GameState {
   const map = createMapFromRows(
     [
@@ -181,6 +191,58 @@ function createSonarIdentificationRangeGame(): GameState {
       lastKnownPlayerVector: null,
       lastKnownPlayerTurn: null,
     }],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+function createPassiveFishIdentificationGame(): GameState {
+  const map = createMapFromRows(
+    [
+      "########",
+      "#......#",
+      "#......#",
+      "#......#",
+      "########",
+    ],
+    { x: 2, y: 2 },
+    { x: 6, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "passive-fish-identification-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    fish: [{
+      id: "fish-1",
+      position: { x: 4, y: 2 },
+      facing: "right",
+      mode: "idle",
+      target: null,
+      idleTurnsRemaining: 2,
+      travelTurnsRemaining: 0,
+    }],
+    hostileSubmarines: [],
     trails: [],
     dust: [],
     cracks: [],

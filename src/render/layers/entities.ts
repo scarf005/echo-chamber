@@ -1,6 +1,7 @@
 import type {
   DepthCharge,
   EntityMemoryKind,
+  Fish,
   GameState,
   HostileSubmarine,
   PickupItem,
@@ -24,6 +25,7 @@ export function drawEntitiesLayer(
     torpedoes: Map<number, Torpedo>
     depthCharges: Map<number, DepthCharge>
     boulders: Map<number, { position: { x: number; y: number } }>
+    fish: Map<number, Fish>
     hostileSubmarines: Map<number, HostileSubmarine>
     pickups: Map<number, PickupItem>
   },
@@ -76,15 +78,19 @@ export function drawEntitiesLayer(
   const pickup = entityMaps.pickups.get(index)
   if (pickup) {
     const exact = visibility >= 3
-    drawGlyph(
-      context,
-      screenX,
-      screenY,
-      tileSize,
-      exact ? glyphForPickup(pickup) : "?",
-      exact ? colorForPickup(pickup) : COLORS.pickup,
-      1,
-    )
+    if (exact) {
+      drawGlyph(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        glyphForPickup(pickup),
+        colorForPickup(pickup),
+        1,
+      )
+    } else {
+      drawEntityMemory(context, screenX, screenY, tileSize, "item")
+    }
 
     if (!exact && debugOverlayAlpha > 0) {
       drawGlyph(
@@ -130,18 +136,52 @@ export function drawEntitiesLayer(
     drawGlyph(context, screenX, screenY, tileSize, "O", COLORS.boulder, 1)
   }
 
+  const fish = entityMaps.fish.get(index)
+  if (fish) {
+    const exact = visibility >= 3
+    if (exact) {
+      drawGlyph(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        fish.facing === "left" ? "<" : ">",
+        COLORS.sonar,
+        1,
+      )
+    } else {
+      drawEntityMemory(context, screenX, screenY, tileSize, "non-hostile")
+    }
+
+    if (!exact && debugOverlayAlpha > 0) {
+      drawGlyph(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        fish.facing === "left" ? "<" : ">",
+        COLORS.hostileSubmarine,
+        debugOverlayAlpha,
+      )
+    }
+  }
+
   const hostileSubmarine = entityMaps.hostileSubmarines.get(index)
   if (hostileSubmarine) {
     const exact = visibility >= 3
-    drawGlyph(
-      context,
-      screenX,
-      screenY,
-      tileSize,
-      exact ? hostileSubmarine.facing === "left" ? "◄" : "►" : "?",
-      exact ? COLORS.hostileSubmarine : COLORS.sonar,
-      1,
-    )
+    if (exact) {
+      drawGlyph(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        hostileSubmarine.facing === "left" ? "◄" : "►",
+        COLORS.hostileSubmarine,
+        1,
+      )
+    } else {
+      drawEntityMemory(context, screenX, screenY, tileSize, "enemy")
+    }
 
     if (!exact && debugOverlayAlpha > 0) {
       drawGlyph(
@@ -200,15 +240,30 @@ function drawEntityMemory(
   tileSize: number,
   kind: EntityMemoryKind,
 ): void {
+  const marker = markerForEntityMemory(kind)
+
   drawGlyph(
     context,
     screenX,
     screenY,
     tileSize,
-    "?",
-    kind === "item" ? COLORS.pickup : COLORS.sonar,
+    marker.glyph,
+    marker.color,
     1,
   )
+}
+
+export function markerForEntityMemory(
+  kind: EntityMemoryKind,
+): { glyph: string; color: string } {
+  switch (kind) {
+    case "item":
+      return { glyph: "?", color: COLORS.pickup }
+    case "enemy":
+      return { glyph: "!", color: COLORS.hostileSubmarine }
+    case "non-hostile":
+      return { glyph: "~", color: COLORS.sonar }
+  }
 }
 
 function drawExactEntityOverlay(
@@ -224,6 +279,7 @@ function drawExactEntityOverlay(
     torpedoes: Map<number, Torpedo>
     depthCharges: Map<number, DepthCharge>
     boulders: Map<number, { position: { x: number; y: number } }>
+    fish: Map<number, Fish>
     hostileSubmarines: Map<number, HostileSubmarine>
     pickups: Map<number, PickupItem>
   },
@@ -281,6 +337,20 @@ function drawExactEntityOverlay(
 
   if (entityMaps.boulders.has(index)) {
     drawGlyph(context, screenX, screenY, tileSize, "O", COLORS.boulder, alpha)
+  }
+
+  const fish = entityMaps.fish.get(index)
+
+  if (fish) {
+    drawGlyph(
+      context,
+      screenX,
+      screenY,
+      tileSize,
+      fish.facing === "left" ? "<" : ">",
+      COLORS.hostileSubmarine,
+      alpha,
+    )
   }
 
   const hostileSubmarine = entityMaps.hostileSubmarines.get(index)

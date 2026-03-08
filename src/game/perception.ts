@@ -81,6 +81,16 @@ export function refreshPerception(
     )
   }
 
+  for (const fish of game.fish ?? []) {
+    rememberVisibleEntity(
+      entityMemory,
+      visibility,
+      game.map.width,
+      fish.position,
+      "non-hostile",
+    )
+  }
+
   for (const hostileSubmarine of game.hostileSubmarines) {
     rememberVisibleEntity(
       entityMemory,
@@ -121,7 +131,7 @@ function clearEntityMemory(
 
 function isRememberedEntity(
   kind: EntityReveal["kind"],
-): kind is EntityMemoryKind {
+): kind is Extract<EntityMemoryKind, EntityReveal["kind"]> {
   return kind === "item" || kind === "enemy"
 }
 
