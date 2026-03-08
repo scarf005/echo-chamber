@@ -925,6 +925,7 @@ Deno.test("torpedo pickups add four ammo and respect the sixteen-round cap", () 
 
   assertEquals(next.torpedoAmmo, 16)
   assertEquals(next.pickups.length, 0)
+  assertEquals(next.playerPickupCueCount, 1)
   assertEquals(next.message, "Recovered 3 torpedoes.")
 })
 
@@ -937,6 +938,7 @@ Deno.test("depth charge pickups add four ammo and respect the sixteen-round cap"
 
   assertEquals(next.depthChargeAmmo, 16)
   assertEquals(next.pickups.length, 0)
+  assertEquals(next.playerPickupCueCount, 1)
   assertEquals(next.message, "Recovered 2 depth charges.")
 })
 
@@ -945,6 +947,7 @@ Deno.test("map pickups reveal an unexplored terrain sector", () => {
   const next = movePlayer(game, "right")
 
   assertEquals(next.pickups.length, 0)
+  assertEquals(next.playerPickupCueCount, 1)
   assertEquals(next.message, "Recovered a survey map.")
   assertEquals(hasKnownTileBeyondPassiveRange(game), false)
   assertEquals(hasKnownTileBeyondPassiveRange(next), true)
@@ -1004,6 +1007,7 @@ function createFlatGame(): GameState {
     entityMemory: Array.from({ length: map.tiles.length }, () => null),
     visibility: Array.from({ length: map.tiles.length }, () => 0),
     lastSonarTurn: 0,
+    playerPickupCueCount: 0,
     shockwaves: [],
     shockwaveFront: [],
     torpedoes: [],

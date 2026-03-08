@@ -301,6 +301,7 @@ export function advanceTurn(
     nextPlayer,
     pickups,
   )
+  const playerCollectedPickup = pickupStep.pickups.length !== pickups.length
   pickups = pickupStep.pickups
   torpedoAmmo = pickupStep.torpedoAmmo
   depthChargeAmmo = pickupStep.depthChargeAmmo
@@ -355,6 +356,9 @@ export function advanceTurn(
         playerEntityHitCueCount: playerEntityHitThisTurn
           ? (game.playerEntityHitCueCount ?? 0) + 1
           : (game.playerEntityHitCueCount ?? 0),
+        playerPickupCueCount: playerCollectedPickup
+          ? (game.playerPickupCueCount ?? 0) + 1
+          : (game.playerPickupCueCount ?? 0),
         shockwaves: shockwaveStep.waves,
         shockwaveFront: shockwaveStep.front,
         torpedoes,

@@ -142,6 +142,7 @@ export interface GameState {
   lastSonarTurn: number
   playerSonarContactCueCount?: number
   playerEntityHitCueCount?: number
+  playerPickupCueCount?: number
   shockwaves: Shockwave[]
   shockwaveFront: FadeCell[]
   torpedoes: Torpedo[]
