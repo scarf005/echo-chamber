@@ -1,4 +1,4 @@
-import { t } from "@lingui/core/macro"
+import { i18n } from "../i18n.ts"
 import {
   PASSIVE_EXACT_RADIUS,
   CRACK_DECAY,
@@ -100,7 +100,7 @@ export function advanceTurn(
   )
   let hostileMessage: LogMessage | null = playerDestroyed
     ? createLogMessage(
-      t`A hostile submarine rams your hull. Press R for a new run.`,
+      "A hostile submarine rams your hull. Press R for a new run.",
       "negative",
     )
     : null
@@ -161,7 +161,7 @@ export function advanceTurn(
 
   if (torpedoStep.playerDestroyed) {
     hostileMessage = createLogMessage(
-        t`A hostile torpedo tears through your hull. Press R for a new run.`,
+        "A hostile torpedo tears through your hull. Press R for a new run.",
       "negative",
     )
   }
@@ -192,7 +192,7 @@ export function advanceTurn(
 
   if (depthChargeStep.playerDestroyed) {
     hostileMessage = createLogMessage(
-        t`A hostile blast caves in your hull. Press R for a new run.`,
+        "A hostile blast caves in your hull. Press R for a new run.",
       "negative",
     )
   }
@@ -216,7 +216,7 @@ export function advanceTurn(
 
   if (boulderStep.playerDestroyed) {
     hostileMessage = createLogMessage(
-        t`Cave-in debris crushes your hull. Press R for a new run.`,
+        "Cave-in debris crushes your hull. Press R for a new run.",
       "negative",
     )
   }
@@ -309,7 +309,7 @@ export function advanceTurn(
 
     if (hostileStep.playerDestroyed) {
       hostileMessage = createLogMessage(
-        t`A hostile submarine rams your hull. Press R for a new run.`,
+        "A hostile submarine rams your hull. Press R for a new run.",
         "negative",
       )
     }
@@ -337,7 +337,10 @@ export function advanceTurn(
     nextPlayer,
   )
   const hostileSonarMessage = hostileSonarContact.direction !== null
-    ? createLogMessage(t`hostile sonar from ${hostileSonarContact.direction}`, "negative")
+    ? createLogMessage(
+      i18n._("hostile sonar from {direction}", { direction: hostileSonarContact.direction }),
+      "negative",
+    )
     : null
 
   const shockwaveStep = stepShockwaves(
@@ -413,14 +416,14 @@ export function advanceTurn(
   const kelpMessage = cutKelp ? createLogMessage("You cut kelps.") : null
   const latestDetectionMessage = detectionLogs.at(-1) ?? null
   const capsuleMessage = capsuleRetrievedThisTurn
-    ? createLogMessage(t`Capsule retrieved. Return to dock.`, "positive")
+    ? createLogMessage("Capsule retrieved. Return to dock.", "positive")
     : null
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
-      createLogMessage(t`Your submarine is destroyed. Press R for a new run.`, "negative")
+      createLogMessage("Your submarine is destroyed. Press R for a new run.", "negative")
     : won
-    ? createLogMessage(t`Capsule delivered to dock. Press R for a new run.`, "positive")
+    ? createLogMessage("Capsule delivered to dock. Press R for a new run.", "positive")
     : capsuleMessage !== null
     ? capsuleMessage
     : pickupStep.message !== null
@@ -428,8 +431,8 @@ export function advanceTurn(
     : rammedFishCount > 0
     ? createLogMessage(
       rammedFishCount === 1
-        ? t`You paste a fish against the bow.`
-        : t`You paste ${rammedFishCount} fish against the bow.`,
+        ? "You paste a fish against the bow."
+        : i18n._("You paste {rammedFishCount} fish against the bow.", { rammedFishCount }),
     )
     : kelpMessage !== null
     ? kelpMessage

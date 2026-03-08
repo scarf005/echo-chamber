@@ -1,4 +1,4 @@
-import { t } from "@lingui/core/macro"
+import { i18n } from "../i18n.ts"
 import {
   ITEM_AMMO_BUNDLE,
   MAP_REVEAL_RADIUS,
@@ -82,27 +82,27 @@ export function collectPickups(
 
   for (const pickup of collected) {
     if (pickup.kind === "torpedo-cache") {
-      const nextAmmo = Math.min(MAX_TORPEDOES, torpedoAmmo + randomIntegerBetween(1, ITEM_AMMO_BUNDLE))
+      const nextAmmo = Math.min(MAX_TORPEDOES, torpedoAmmo + ITEM_AMMO_BUNDLE)
       const recovered = nextAmmo - torpedoAmmo
       torpedoAmmo = nextAmmo
-      messages.push(recovered > 0 ? t`Recovered ${recovered} torpedoes.` : t`Torpedo tubes already full.`)
+      messages.push(recovered > 0 ? i18n._("Recovered {recovered} torpedoes.", { recovered }) : "Torpedo tubes already full.")
       continue
     }
 
     if (pickup.kind === "depth-charge-cache") {
-      const nextAmmo = Math.min(MAX_DEPTH_CHARGES, depthChargeAmmo + randomIntegerBetween(1, ITEM_AMMO_BUNDLE))
+      const nextAmmo = Math.min(MAX_DEPTH_CHARGES, depthChargeAmmo + ITEM_AMMO_BUNDLE)
       const recovered = nextAmmo - depthChargeAmmo
       depthChargeAmmo = nextAmmo
       messages.push(
         recovered > 0
-          ? t`Recovered ${recovered} depth charges.`
-          : t`Depth charge racks already full.`,
+          ? i18n._("Recovered {recovered} depth charges.", { recovered })
+          : "Depth charge racks already full.",
       )
       continue
     }
 
     tileReveals = mergeTileReveals(tileReveals, createMapReveal(game, pickup.position))
-    messages.push(t`Recovered a survey map.`)
+    messages.push("Recovered a survey map.")
   }
 
   return {

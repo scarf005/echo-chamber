@@ -1,3 +1,4 @@
+import { i18n } from "../i18n.ts"
 import { indexForPoint } from "./helpers.ts"
 import type { CrackCell, FadeCell } from "./model.ts"
 import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
