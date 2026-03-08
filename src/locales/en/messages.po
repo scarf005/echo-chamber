@@ -1,0 +1,458 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-03-08 21:19+0900\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+
+#: src/game/entity_labels.ts:57
+msgid "{name} in sight"
+msgstr "{name} in sight"
+
+#: src/game/turn.ts:192
+msgid "A hostile blast caves in your hull. Press R for a new run."
+msgstr "A hostile blast caves in your hull. Press R for a new run."
+
+#: src/game/turn.ts:101
+#: src/game/turn.ts:309
+msgid "A hostile submarine rams your hull. Press R for a new run."
+msgstr "A hostile submarine rams your hull. Press R for a new run."
+
+#: src/game/turn.ts:161
+msgid "A hostile torpedo tears through your hull. Press R for a new run."
+msgstr "A hostile torpedo tears through your hull. Press R for a new run."
+
+#: src/game/actions.ts:325
+msgid "Advance."
+msgstr "Advance."
+
+#: src/app.tsx:1009
+msgid "audio"
+msgstr "audio"
+
+#. placeholder {0}: formatPoint(point)
+#: src/app.tsx:620
+msgid "Auto-nav engaged to {0}."
+msgstr "Auto-nav engaged to {0}."
+
+#: src/render/helpers/inspector.ts:217
+msgid "bubble trail"
+msgstr "bubble trail"
+
+#: src/game/entity_labels.ts:14
+#: src/render/helpers/inspector.ts:55
+msgid "capsule"
+msgstr "capsule"
+
+#: src/game/turn.ts:404
+msgid "Capsule delivered to dock. Press R for a new run."
+msgstr "Capsule delivered to dock. Press R for a new run."
+
+#: src/game/actions.ts:225
+msgid "capsule in sight"
+msgstr "capsule in sight"
+
+#: src/render/helpers/inspector.ts:55
+msgid "capsule origin"
+msgstr "capsule origin"
+
+#: src/game/turn.ts:397
+msgid "Capsule retrieved. Return to dock."
+msgstr "Capsule retrieved. Return to dock."
+
+#: src/render/helpers/inspector.ts:44
+msgid "capsule secured"
+msgstr "capsule secured"
+
+#: src/game/turn.ts:216
+msgid "Cave-in debris crushes your hull. Press R for a new run."
+msgstr "Cave-in debris crushes your hull. Press R for a new run."
+
+#: src/game/log.ts:9
+msgid "Click once to plot a course."
+msgstr "Click once to plot a course."
+
+#: src/game/log.ts:10
+msgid "Click the same tile again to engage auto-nav."
+msgstr "Click the same tile again to engage auto-nav."
+
+#: src/app.tsx:995
+#: src/app.tsx:1226
+msgid "close"
+msgstr "close"
+
+#: src/render/helpers/inspector.ts:30
+msgid "contact"
+msgstr "contact"
+
+#. placeholder {0}: formatPoint(point)
+#: src/app.tsx:638
+msgid "Course plotted to {0}. Click again to engage."
+msgstr "Course plotted to {0}. Click again to engage."
+
+#: src/render/helpers/inspector.ts:225
+msgid "crack"
+msgstr "crack"
+
+#: src/app.tsx:1097
+msgid "credits"
+msgstr "credits"
+
+#: src/game/entity_labels.ts:44
+#: src/render/helpers/inspector.ts:194
+msgid "depth charge"
+msgstr "depth charge"
+
+#: src/game/actions.ts:385
+msgid "Depth charge away."
+msgstr "Depth charge away."
+
+#: src/game/actions.ts:205
+msgid "depth charge cache in sight"
+msgstr "depth charge cache in sight"
+
+#: src/game/actions.ts:175
+msgid "depth charge in sight"
+msgstr "depth charge in sight"
+
+#: src/game/items.ts:99
+msgid "Depth charge racks already full."
+msgstr "Depth charge racks already full."
+
+#: src/app.tsx:905
+msgid "depth charges"
+msgstr "depth charges"
+
+#: src/app.tsx:1061
+msgid "dev"
+msgstr "dev"
+
+#: src/render/helpers/inspector.ts:180
+msgid "direction"
+msgstr "direction"
+
+#: src/app.tsx:917
+msgid "display"
+msgstr "display"
+
+#: src/app.tsx:411
+msgid "Display set to full map."
+msgstr "Display set to full map."
+
+#: src/app.tsx:412
+msgid "Display set to tracking camera."
+msgstr "Display set to tracking camera."
+
+#: src/render/helpers/inspector.ts:49
+msgid "dock"
+msgstr "dock"
+
+#: src/game/log.ts:13
+msgid "Drop depth charge with X."
+msgstr "Drop depth charge with X."
+
+#: src/render/helpers/inspector.ts:221
+msgid "dust"
+msgstr "dust"
+
+#: src/render/helpers/inspector.ts:213
+#: src/render/helpers/inspector.ts:217
+#: src/render/helpers/inspector.ts:221
+#: src/render/helpers/inspector.ts:225
+msgid "effect"
+msgstr "effect"
+
+#: src/render/helpers/inspector.ts:44
+msgid "empty"
+msgstr "empty"
+
+#: src/app.tsx:1028
+msgid "enable music"
+msgstr "enable music"
+
+#: src/app.tsx:1051
+msgid "enable sfx"
+msgstr "enable sfx"
+
+#: src/render/helpers/inspector.ts:66
+msgid "enemy id"
+msgstr "enemy id"
+
+#: src/game/entity_labels.ts:20
+#: src/render/helpers/inspector.ts:64
+msgid "enemy submarine"
+msgstr "enemy submarine"
+
+#: src/render/helpers/inspector.ts:40
+#: src/render/helpers/inspector.ts:64
+#: src/render/helpers/inspector.ts:155
+#: src/render/helpers/inspector.ts:164
+#: src/render/helpers/inspector.ts:179
+#: src/render/helpers/inspector.ts:194
+#: src/render/helpers/inspector.ts:209
+msgid "entity"
+msgstr "entity"
+
+#: src/render/helpers/inspector.ts:41
+#: src/render/helpers/inspector.ts:65
+#: src/render/helpers/inspector.ts:165
+msgid "facing"
+msgstr "facing"
+
+#: src/game/entity_labels.ts:50
+#: src/render/helpers/inspector.ts:209
+msgid "falling boulder"
+msgstr "falling boulder"
+
+#: src/game/actions.ts:187
+msgid "falling boulder in sight"
+msgstr "falling boulder in sight"
+
+#: src/game/entity_labels.ts:26
+#: src/render/helpers/inspector.ts:164
+msgid "fish"
+msgstr "fish"
+
+#: src/app.tsx:1081
+#: src/app.tsx:1087
+msgid "god mode"
+msgstr "god mode"
+
+#: src/game/actions.ts:339
+msgid "Holding position."
+msgstr "Holding position."
+
+#. placeholder {0}: hostileSonarContact.direction
+#: src/game/turn.ts:337
+msgid "hostile sonar from {0}"
+msgstr "hostile sonar from {0}"
+
+#: src/app.tsx:972
+msgid "hover any tile to inspect terrain and contacts."
+msgstr "hover any tile to inspect terrain and contacts."
+
+#: src/app.tsx:953
+msgid "hover tile"
+msgstr "hover tile"
+
+#: src/game/actions.ts:317
+msgid "Hull blocked."
+msgstr "Hull blocked."
+
+#: src/app.tsx:951
+msgid "inspector"
+msgstr "inspector"
+
+#: src/game/entity_labels.ts:32
+#: src/render/helpers/inspector.ts:155
+msgid "item"
+msgstr "item"
+
+#: src/render/helpers/inspector.ts:156
+msgid "item kind"
+msgstr "item kind"
+
+#: src/game/log.ts:12
+msgid "Launch torpedo with Z."
+msgstr "Launch torpedo with Z."
+
+#: src/app.tsx:1078
+msgid "map overlay"
+msgstr "map overlay"
+
+#: src/app.tsx:1064
+msgid "map visibility"
+msgstr "map visibility"
+
+#: src/render/helpers/inspector.ts:36
+msgid "memory"
+msgstr "memory"
+
+#: src/app.tsx:875
+msgid "mission status"
+msgstr "mission status"
+
+#: src/game/log.ts:8
+msgid "Move with WASD or arrows."
+msgstr "Move with WASD or arrows."
+
+#: src/app.tsx:1012
+msgid "music"
+msgstr "music"
+
+#: src/app.tsx:1021
+msgid "music volume"
+msgstr "music volume"
+
+#: src/game/actions.ts:377
+msgid "No depth charges remaining."
+msgstr "No depth charges remaining."
+
+#: src/game/actions.ts:355
+msgid "No torpedoes remaining."
+msgstr "No torpedoes remaining."
+
+#: src/render/helpers/inspector.ts:49
+#: src/render/helpers/inspector.ts:54
+msgid "objective"
+msgstr "objective"
+
+#: src/render/helpers/inspector.ts:43
+msgid "objective load"
+msgstr "objective load"
+
+#: src/app.tsx:927
+msgid "open full order log"
+msgstr "open full order log"
+
+#: src/app.tsx:879
+msgid "open options"
+msgstr "open options"
+
+#: src/app.tsx:985
+#: src/app.tsx:989
+msgid "options"
+msgstr "options"
+
+#: src/app.tsx:935
+#: src/app.tsx:1216
+#: src/app.tsx:1220
+msgid "orders"
+msgstr "orders"
+
+#: src/game/actions.ts:298
+msgid "Player sonar disabled."
+msgstr "Player sonar disabled."
+
+#: src/game/actions.ts:297
+msgid "Player sonar enabled."
+msgstr "Player sonar enabled."
+
+#: src/game/entity_labels.ts:10
+#: src/render/helpers/inspector.ts:40
+msgid "player submarine"
+msgstr "player submarine"
+
+#: src/app.tsx:909
+msgid "position"
+msgstr "position"
+
+#: src/game/log.ts:5
+msgid "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns."
+msgstr "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns."
+
+#: src/game/items.ts:98
+msgid "Recovered {recovered} depth charges."
+msgstr "Recovered {recovered} depth charges."
+
+#: src/game/items.ts:88
+msgid "Recovered {recovered} torpedoes."
+msgstr "Recovered {recovered} torpedoes."
+
+#: src/game/items.ts:105
+msgid "Recovered a survey map."
+msgstr "Recovered a survey map."
+
+#: src/app.tsx:1006
+msgid "restart mission"
+msgstr "restart mission"
+
+#: src/app.tsx:1066
+#: src/app.tsx:1071
+msgid "reveal map"
+msgstr "reveal map"
+
+#: src/app.tsx:1035
+msgid "sfx"
+msgstr "sfx"
+
+#: src/app.tsx:1044
+msgid "sfx volume"
+msgstr "sfx volume"
+
+#: src/render/helpers/inspector.ts:213
+msgid "shockwave front"
+msgstr "shockwave front"
+
+#: src/app.tsx:897
+msgid "sonar in"
+msgstr "sonar in"
+
+#: src/game/actions.ts:206
+msgid "survey map in sight"
+msgstr "survey map in sight"
+
+#: src/app.tsx:913
+msgid "target"
+msgstr "target"
+
+#: src/render/helpers/inspector.ts:29
+msgid "terrain"
+msgstr "terrain"
+
+#: src/game/log.ts:14
+msgid "Toggle display with M."
+msgstr "Toggle display with M."
+
+#: src/game/entity_labels.ts:38
+#: src/render/helpers/inspector.ts:179
+msgid "torpedo"
+msgstr "torpedo"
+
+#: src/game/actions.ts:203
+msgid "torpedo cache in sight"
+msgstr "torpedo cache in sight"
+
+#: src/game/actions.ts:163
+msgid "torpedo in sight"
+msgstr "torpedo in sight"
+
+#: src/game/items.ts:88
+msgid "Torpedo tubes already full."
+msgstr "Torpedo tubes already full."
+
+#: src/app.tsx:901
+msgid "torpedoes"
+msgstr "torpedoes"
+
+#: src/game/actions.ts:364
+msgid "Tube away to port."
+msgstr "Tube away to port."
+
+#: src/game/actions.ts:364
+msgid "Tube away to starboard."
+msgstr "Tube away to starboard."
+
+#: src/app.tsx:893
+msgid "turn"
+msgstr "turn"
+
+#: src/render/helpers/inspector.ts:36
+msgid "unknown"
+msgstr "unknown"
+
+#: src/render/helpers/inspector.ts:32
+msgid "visibility"
+msgstr "visibility"
+
+#: src/game/log.ts:11
+msgid "Wait with ."
+msgstr "Wait with ."
+
+#: src/game/log.ts:15
+msgid "When sunk, press R to restart. Use Options for restart or random run anytime."
+msgstr "When sunk, press R to restart. Use Options for restart or random run anytime."
+
+#: src/game/turn.ts:413
+msgid "You paste {rammedFishCount} fish against the bow."
+msgstr "You paste {rammedFishCount} fish against the bow."
+
+#: src/game/turn.ts:412
+msgid "You paste a fish against the bow."
+msgstr "You paste a fish against the bow."
+
+#: src/game/turn.ts:402
+msgid "Your submarine is destroyed. Press R for a new run."
+msgstr "Your submarine is destroyed. Press R for a new run."
