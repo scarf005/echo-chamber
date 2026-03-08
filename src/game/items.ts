@@ -1,4 +1,5 @@
 import { i18n } from "../i18n.ts"
+import { createLogMessage, resolveLogMessageText } from "./log.ts"
 import {
   ITEM_AMMO_BUNDLE,
   MAP_REVEAL_RADIUS,
@@ -12,7 +13,7 @@ import {
   randomChoice,
   shufflePoints,
 } from "./helpers.ts"
-import type { GameState, PickupItem, PickupKind, TileReveal } from "./model.ts"
+import type { GameState, LogMessage, PickupItem, PickupKind, TileReveal } from "./model.ts"
 import { tileAt, type GeneratedMap, type Point } from "./mapgen.ts"
 import { randomIntegerBetween } from "@std/random"
 
@@ -61,7 +62,7 @@ export function collectPickups(
   torpedoAmmo: number
   depthChargeAmmo: number
   tileReveals: TileReveal[]
-  message: string | null
+  message: LogMessage | null
 } {
   const collected = pickups.filter((pickup) => isSamePoint(pickup.position, player))
 
@@ -78,7 +79,7 @@ export function collectPickups(
   let torpedoAmmo = game.torpedoAmmo
   let depthChargeAmmo = game.depthChargeAmmo
   let tileReveals: TileReveal[] = []
-  const messages: string[] = []
+  const messages: LogMessage[] = []
 
   for (const pickup of collected) {
     if (pickup.kind === "torpedo-cache") {
@@ -87,8 +88,12 @@ export function collectPickups(
       torpedoAmmo = nextAmmo
       messages.push(
         recovered > 0
-          ? i18n._("Recovered {recovered} torpedoes.", { recovered })
-          : i18n._("Torpedo tubes already full."),
+          ? createLogMessage(
+            i18n._("Recovered {recovered} torpedoes.", { recovered }),
+            "neutral",
+            () => i18n._("Recovered {recovered} torpedoes.", { recovered }),
+          )
+          : createLogMessage(i18n._("Torpedo tubes already full."), "neutral", () => i18n._("Torpedo tubes already full.")),
       )
       continue
     }
@@ -99,14 +104,18 @@ export function collectPickups(
       depthChargeAmmo = nextAmmo
       messages.push(
         recovered > 0
-          ? i18n._("Recovered {recovered} depth charges.", { recovered })
-          : i18n._("Depth charge racks already full."),
+          ? createLogMessage(
+            i18n._("Recovered {recovered} depth charges.", { recovered }),
+            "neutral",
+            () => i18n._("Recovered {recovered} depth charges.", { recovered }),
+          )
+          : createLogMessage(i18n._("Depth charge racks already full."), "neutral", () => i18n._("Depth charge racks already full.")),
       )
       continue
     }
 
     tileReveals = mergeTileReveals(tileReveals, createMapReveal(game, pickup.position))
-    messages.push(i18n._("Recovered a survey map."))
+    messages.push(createLogMessage(i18n._("Recovered a survey map."), "neutral", () => i18n._("Recovered a survey map.")))
   }
 
   return {
@@ -114,7 +123,13 @@ export function collectPickups(
     torpedoAmmo,
     depthChargeAmmo,
     tileReveals,
-    message: messages.join(" "),
+    message: messages.length === 1
+      ? messages[0]
+      : createLogMessage(
+        messages.map((entry) => resolveLogMessageText(entry)).join(" "),
+        "neutral",
+        () => messages.map((entry) => resolveLogMessageText(entry)).join(" "),
+      ),
   }
 }
 

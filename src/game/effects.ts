@@ -1,6 +1,7 @@
 import { i18n } from "../i18n.ts"
+import { createLogMessage } from "./log.ts"
 import { indexForPoint } from "./helpers.ts"
-import type { CrackCell, FadeCell } from "./model.ts"
+import type { CrackCell, FadeCell, LogMessage } from "./model.ts"
 import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 
 export function decayCracks(cracks: CrackCell[], amount: number): CrackCell[] {
@@ -58,21 +59,37 @@ export function resolveImpactMessage(
   depthChargeImpacts: number,
   caveIns: number,
   boulderLandings: number,
-): string | null {
+): LogMessage | null {
   if (caveIns > 0) {
-    return i18n._("Violent torpedo impact. Cracks race overhead.")
+    return createLogMessage(
+      i18n._("Violent torpedo impact. Cracks race overhead."),
+      "neutral",
+      () => i18n._("Violent torpedo impact. Cracks race overhead."),
+    )
   }
 
   if (boulderLandings > 0) {
-    return i18n._("Cave-in debris slams through the silt.")
+    return createLogMessage(
+      i18n._("Cave-in debris slams through the silt."),
+      "neutral",
+      () => i18n._("Cave-in debris slams through the silt."),
+    )
   }
 
   if (torpedoImpacts > 0) {
-    return i18n._("Violent torpedo impact.")
+    return createLogMessage(
+      i18n._("Violent torpedo impact."),
+      "neutral",
+      () => i18n._("Violent torpedo impact."),
+    )
   }
 
   if (depthChargeImpacts > 0) {
-    return i18n._("Depth charge detonates below.")
+    return createLogMessage(
+      i18n._("Depth charge detonates below."),
+      "neutral",
+      () => i18n._("Depth charge detonates below."),
+    )
   }
 
   return null
