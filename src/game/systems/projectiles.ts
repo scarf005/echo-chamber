@@ -31,6 +31,12 @@ import { detonateTorpedo } from "./destruction.ts"
 
 const EXPLOSION_DAMAGE_RADIUS = Math.max(2, TORPEDO_BLAST_RADIUS)
 
+function projectileTrailSource(
+  senderId: string,
+): "player-projectile" | "enemy-projectile" {
+  return senderId === "player" ? "player-projectile" : "enemy-projectile"
+}
+
 interface ExplosionResolution {
   impactPoint: Point
   trails: FadeCell[]
@@ -109,7 +115,7 @@ export function stepTorpedoes(
         indexForPoint(map.width, current),
         1,
         undefined,
-        undefined,
+        projectileTrailSource(torpedo.senderId),
         torpedo.senderId === "player",
       )
 
@@ -292,7 +298,7 @@ export function stepDepthCharges(
         indexForPoint(map.width, current),
         1,
         undefined,
-        undefined,
+        projectileTrailSource(depthCharge.senderId),
         depthCharge.senderId === "player",
       )
 
@@ -448,7 +454,7 @@ function detonateProjectile(
     indexForPoint(map.width, impactPoint),
     1,
     undefined,
-    undefined,
+    projectileTrailSource(senderId),
     senderId === "player",
   )
   let nextDust = mergeFadeCell(

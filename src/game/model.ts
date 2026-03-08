@@ -77,7 +77,7 @@ export interface FadeCell {
   index: number
   alpha: number
   drift?: "up"
-  source?: "vent"
+  source?: "vent" | "player-projectile" | "enemy-projectile"
   requiresVisibility?: boolean
   visibleToPlayer?: boolean
 }
