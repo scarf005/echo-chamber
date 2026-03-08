@@ -264,7 +264,7 @@ export function drawEntitiesLayer(
         screenX,
         screenY,
         tileSize,
-        fish.facing === "left" ? "<" : ">",
+        fish.facing === "left" ? "↢" : "↣",
         COLORS.fish,
         debugOverlayAlpha,
       )
@@ -514,12 +514,12 @@ function drawTorpedoGlyph(
     screenY,
     tileSize,
     torpedo.direction === "left"
-      ? "<"
+      ? "⇐"
       : torpedo.direction === "right"
-      ? ">"
+      ? "⇒"
       : torpedo.direction === "up"
-      ? "^"
-      : "v",
+      ? "⇑"
+      : "⇓",
     COLORS.torpedo,
     alpha,
   )
@@ -532,5 +532,5 @@ function drawDepthChargeGlyph(
   tileSize: number,
   alpha: number,
 ): void {
-  drawGlyph(context, screenX, screenY, tileSize, "v", COLORS.depthCharge, alpha)
+  drawGlyph(context, screenX, screenY, tileSize, "◉", COLORS.depthCharge, alpha)
 }
