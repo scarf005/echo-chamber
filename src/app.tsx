@@ -439,6 +439,11 @@ export function App() {
         nextViewportMode === "full"
           ? t`Display set to full map.`
           : t`Display set to tracking camera.`,
+        "neutral",
+        () =>
+          nextViewportMode === "full"
+            ? t`Display set to full map.`
+            : t`Display set to tracking camera.`,
       ),
     ))
   }
@@ -509,6 +514,7 @@ export function App() {
                 anomaly.point,
               ),
               "warning",
+              () => createAutoMoveStopMessage(anomaly.reason, current.player, anomaly.point),
             ),
           )
         }
@@ -529,6 +535,7 @@ export function App() {
                 autoMoveTarget,
               ),
               "warning",
+              () => createAutoMoveStopMessage("no plotted course", current.player, autoMoveTarget),
             ),
           )
         }
@@ -543,6 +550,7 @@ export function App() {
           }, createLogMessage(
             createAutoMoveStopMessage("wall ahead", current.player, nextPoint),
             "warning",
+            () => createAutoMoveStopMessage("wall ahead", current.player, nextPoint),
           ))
         }
 
@@ -587,6 +595,7 @@ export function App() {
                 nextAnomaly.point,
               ),
               "warning",
+              () => createAutoMoveStopMessage(nextAnomaly.reason, next.player, nextAnomaly.point),
             ),
           )
         }
@@ -631,6 +640,7 @@ export function App() {
               point,
             ),
             "warning",
+            () => createAutoMoveStopMessage("charted wall at destination", current.player, point),
           ),
         )
       )
@@ -646,7 +656,11 @@ export function App() {
       updateGame((current) =>
         withGameMessage({
           ...current,
-        }, createLogMessage(t`Auto-nav engaged to ${formatPoint(point)}.`))
+        }, createLogMessage(
+          t`Auto-nav engaged to ${formatPoint(point)}.`,
+          "neutral",
+          () => t`Auto-nav engaged to ${formatPoint(point)}.`,
+        ))
       )
       return
     }
@@ -664,6 +678,8 @@ export function App() {
         nextPreviewPath.length >= 2
           ? createLogMessage(
             t`Course plotted to ${formatPoint(point)}. Click again to engage.`,
+            "neutral",
+            () => t`Course plotted to ${formatPoint(point)}. Click again to engage.`,
           )
           : createLogMessage(
             createAutoMoveStopMessage(
@@ -672,6 +688,7 @@ export function App() {
               point,
             ),
             "warning",
+            () => createAutoMoveStopMessage("no plotted course", current.player, point),
           ),
       )
     )
@@ -1090,22 +1107,28 @@ export function App() {
                   )
                   : null}
               </div>
-              <div class="sidebar-heading">{t`language`}</div>
-              <div class="button-stack">
-                <button
-                  type="button"
-                  aria-pressed={locale === "en"}
-                  onClick={() => handleLanguageChange("en")}
-                >
-                  {t`English`}
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={locale === "ko"}
-                  onClick={() => handleLanguageChange("ko")}
-                >
-                  {t`Korean`}
-                </button>
+              <div class="language-switch-row">
+                <span class="sidebar-heading">{t`language`}</span>
+                <div class="language-switch" role="group" aria-label={t`language`}>
+                  <button
+                    type="button"
+                    class={`language-switch-button${locale === "en" ? " is-active" : ""}`}
+                    aria-pressed={locale === "en"}
+                    aria-label={t`English`}
+                    onClick={() => handleLanguageChange("en")}
+                  >
+                    English
+                  </button>
+                  <button
+                    type="button"
+                    class={`language-switch-button${locale === "ko" ? " is-active" : ""}`}
+                    aria-pressed={locale === "ko"}
+                    aria-label={t`Korean`}
+                    onClick={() => handleLanguageChange("ko")}
+                  >
+                    Korean
+                  </button>
+                </div>
               </div>
               <div class="sidebar-heading">{t`audio`}</div>
               <div class="audio-controls">
