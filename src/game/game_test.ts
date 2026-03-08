@@ -300,6 +300,48 @@ Deno.test("player entity hit cue fires when a torpedo catches a fish", () => {
   assertEquals(next.fish, [])
 })
 
+Deno.test("player death cue fires when a hostile torpedo sinks the sub", () => {
+  const game = createHostileAttackGame()
+  const launched = advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    "Hold position.",
+  )
+  const destroyed = advanceTurn(
+    launched,
+    launched.player,
+    launched.facing,
+    null,
+    "Hold position.",
+  )
+
+  assertEquals(launched.playerDeathCueCount, 0)
+  assertEquals(destroyed.playerDeathCueCount, 1)
+})
+
+Deno.test("player death cue fires when a hostile torpedo sinks the sub", () => {
+  const game = createHostileAttackGame()
+  const launched = advanceTurn(
+    game,
+    game.player,
+    game.facing,
+    null,
+    "Hold position.",
+  )
+  const destroyed = advanceTurn(
+    launched,
+    launched.player,
+    launched.facing,
+    null,
+    "Hold position.",
+  )
+
+  assertEquals(launched.playerDeathCueCount, 0)
+  assertEquals(destroyed.playerDeathCueCount, 1)
+})
+
 Deno.test("togglePlayerSonar flips the player sonar state without consuming a turn", () => {
   const game = createFlatGame()
   const toggled = togglePlayerSonar(game)

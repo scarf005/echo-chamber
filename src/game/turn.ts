@@ -304,6 +304,8 @@ export function advanceTurn(
   const playerEntityHitThisTurn = rammedFishCount > 0 ||
     torpedoStep.playerEntityHits > 0 ||
     depthChargeStep.playerEntityHits > 0
+  const playerDiedThisTurn = game.status !== "lost" && playerDestroyed
+  const playerDiedThisTurn = game.status !== "lost" && playerDestroyed
   const pickupStep = collectPickups(
     {
       ...game,
@@ -371,7 +373,13 @@ export function advanceTurn(
           : (game.playerSonarContactCueCount ?? 0),
         playerEntityHitCueCount: playerEntityHitThisTurn
           ? (game.playerEntityHitCueCount ?? 0) + 1
+        playerDeathCueCount: playerDiedThisTurn
+          ? (game.playerDeathCueCount ?? 0) + 1
+          : (game.playerDeathCueCount ?? 0),
           : (game.playerEntityHitCueCount ?? 0),
+        playerDeathCueCount: playerDiedThisTurn
+          ? (game.playerDeathCueCount ?? 0) + 1
+          : (game.playerDeathCueCount ?? 0),
         playerPickupCueCount: playerCollectedPickup
           ? (game.playerPickupCueCount ?? 0) + 1
           : (game.playerPickupCueCount ?? 0),

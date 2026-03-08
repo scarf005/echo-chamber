@@ -141,6 +141,8 @@ export interface GameState {
   visibility: VisibilityLevel[]
   lastSonarTurn: number
   playerSonarContactCueCount?: number
+  playerDeathCueCount?: number
+  playerDeathCueCount?: number
   playerEntityHitCueCount?: number
   playerPickupCueCount?: number
   shockwaves: Shockwave[]
