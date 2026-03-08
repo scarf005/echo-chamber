@@ -108,6 +108,9 @@ export function stepTorpedoes(
         nextTrails,
         indexForPoint(map.width, current),
         1,
+        undefined,
+        undefined,
+        torpedo.senderId === "player",
       )
 
       if (!tile || tile === "wall") {
@@ -288,6 +291,9 @@ export function stepDepthCharges(
         nextTrails,
         indexForPoint(map.width, current),
         1,
+        undefined,
+        undefined,
+        depthCharge.senderId === "player",
       )
 
       const nextPoint = {
@@ -441,6 +447,9 @@ function detonateProjectile(
     trails,
     indexForPoint(map.width, impactPoint),
     1,
+    undefined,
+    undefined,
+    senderId === "player",
   )
   let nextDust = mergeFadeCell(
     dust,

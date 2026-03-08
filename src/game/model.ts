@@ -79,6 +79,7 @@ export interface FadeCell {
   drift?: "up"
   source?: "vent"
   requiresVisibility?: boolean
+  visibleToPlayer?: boolean
 }
 
 export interface CrackCell {
