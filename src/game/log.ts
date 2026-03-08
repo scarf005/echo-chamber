@@ -1,18 +1,19 @@
+import { t } from "@lingui/core/macro"
 import type { GameState, LogMessage, LogMessageTone } from "./model.ts"
 
 const INITIAL_MISSION_MESSAGE = createLogMessage(
-  "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
+  t`Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.`,
 )
 const HELP_LOG_MESSAGES = [
-  createLogMessage("Move with WASD or arrows."),
-  createLogMessage("Click once to plot a course."),
-  createLogMessage("Click the same tile again to engage auto-nav."),
-  createLogMessage("Wait with ."),
-  createLogMessage("Launch torpedo with Z."),
-  createLogMessage("Launch torpedo upwards with C."),
-  createLogMessage("Drop depth charge with X."),
-  createLogMessage("Toggle display with M."),
-  createLogMessage("When sunk, press R to restart. Use Options for restart or random run anytime."),
+  createLogMessage(t`Move with WASD or arrows.`),
+  createLogMessage(t`Click once to plot a course.`),
+  createLogMessage(t`Click the same tile again to engage auto-nav.`),
+  createLogMessage(t`Wait with .`),
+  createLogMessage(t`Launch torpedo with Z.`),
+  createLogMessage(t`Launch torpedo upwards with C.`),
+  createLogMessage(t`Drop depth charge with X.`),
+  createLogMessage(t`Toggle display with M.`),
+  createLogMessage(t`When sunk, press R to restart. Use Options for restart or random run anytime.`),
 ]
 export const MAX_LOG_MESSAGES = 200
 
