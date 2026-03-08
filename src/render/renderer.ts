@@ -6,6 +6,7 @@ import { screenShakeOffset } from "./helpers/draw.ts"
 import {
   pointToViewport,
   resolveViewportMetrics,
+  type ViewportMetrics,
 } from "./helpers/viewport.ts"
 import type { RenderOptions } from "./options.ts"
 import {
@@ -29,6 +30,7 @@ type EntityMaps = ReturnType<typeof buildEntityMaps>
 
 const effectMapsCache = new WeakMap<GameState, EffectMaps>()
 const entityMapsCache = new WeakMap<GameState, EntityMaps>()
+const tileMemoryCanvasCache = new WeakMap<GameState, Map<string, HTMLCanvasElement>>()
 
 export function drawGame(
   canvas: HTMLCanvasElement,
@@ -95,6 +97,9 @@ export function drawGame(
 
   const effectMaps = resolveEffectMaps(game)
   const entityMaps = resolveEntityMaps(game)
+  const tileMemoryCanvas = resolveTileMemoryCanvas(game, viewport)
+
+  context.drawImage(tileMemoryCanvas, 0, 0)
 
   for (let y = viewport.top; y < viewport.top + viewport.height; y += 1) {
     for (let x = viewport.left; x < viewport.left + viewport.width; x += 1) {
@@ -102,7 +107,6 @@ export function drawGame(
       const screenX = (x - viewport.left) * tileSize
       const screenY = (y - viewport.top) * tileSize
 
-      drawTileMemoryLayer(context, game, index, screenX, screenY, x, y, tileSize)
       drawEffectsLayer(
         context,
         game,
@@ -179,6 +183,63 @@ function resolveEntityMaps(game: GameState): EntityMaps {
   entityMapsCache.set(game, nextMaps)
 
   return nextMaps
+}
+
+function resolveTileMemoryCanvas(
+  game: GameState,
+  viewport: ViewportMetrics,
+): HTMLCanvasElement {
+  const cacheKey = [
+    viewport.left,
+    viewport.top,
+    viewport.width,
+    viewport.height,
+    viewport.tileSize,
+  ].join(":")
+  const canvasesByViewport = tileMemoryCanvasCache.get(game)
+  const cachedCanvas = canvasesByViewport?.get(cacheKey)
+
+  if (cachedCanvas) {
+    return cachedCanvas
+  }
+
+  const canvas = document.createElement("canvas")
+  canvas.width = viewport.cssWidth
+  canvas.height = viewport.cssHeight
+  const context = canvas.getContext("2d")
+
+  if (!context) {
+    throw new Error("2D canvas not supported")
+  }
+
+  context.font = `${Math.max(8, viewport.tileSize - 2)}px ${TERMINAL_FONT_STACK}`
+  context.textAlign = "center"
+  context.textBaseline = "middle"
+
+  for (let y = viewport.top; y < viewport.top + viewport.height; y += 1) {
+    for (let x = viewport.left; x < viewport.left + viewport.width; x += 1) {
+      const index = y * game.map.width + x
+      const screenX = (x - viewport.left) * viewport.tileSize
+      const screenY = (y - viewport.top) * viewport.tileSize
+
+      drawTileMemoryLayer(
+        context,
+        game,
+        index,
+        screenX,
+        screenY,
+        x,
+        y,
+        viewport.tileSize,
+      )
+    }
+  }
+
+  const nextCanvasesByViewport = canvasesByViewport ?? new Map<string, HTMLCanvasElement>()
+  nextCanvasesByViewport.set(cacheKey, canvas)
+  tileMemoryCanvasCache.set(game, nextCanvasesByViewport)
+
+  return canvas
 }
 
 function drawPathPreview(
