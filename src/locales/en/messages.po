@@ -190,7 +190,7 @@ msgstr "You paste {rammedFishCount} fish against the bow."
 
 #. js-lingui-explicit-id
 #: src/game/actions.ts:354
-#: src/game/log_test.ts:95
+#: src/game/log_test.ts:101
 msgid "Holding position."
 msgstr "Holding position."
 

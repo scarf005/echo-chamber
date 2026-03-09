@@ -190,7 +190,7 @@ msgstr "선수로 물고기 {rammedFishCount}마리를 짓이겼다."
 
 #. js-lingui-explicit-id
 #: src/game/actions.ts:354
-#: src/game/log_test.ts:95
+#: src/game/log_test.ts:101
 msgid "Holding position."
 msgstr "위치 유지."
 
