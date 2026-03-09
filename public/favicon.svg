@@ -1,0 +1,22 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  role="img"
+  aria-label="Echo Chamber torpedo favicon"
+>
+  <rect width="64" height="64" rx="10" fill="#02070c" />
+  <path d="M10 32h22v-8l22 8-22 8v-8H10z" fill="#ffe28a" />
+  <path
+    d="M18 24l-6-6"
+    stroke="#ff6b6b"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <path
+    d="M18 40l-6 6"
+    stroke="#ff6b6b"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <circle cx="45" cy="32" r="3" fill="#132d47" />
+</svg>
