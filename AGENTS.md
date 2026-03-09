@@ -21,3 +21,6 @@
   - under format `{TITLE} by {ARTIST} ({LICENSE SPDX})` in clickable link
 - For Lingui in this repo, follow the reference project and use generated IDs
   only; do not add explicit message IDs.
+- When app/code edits cause Lingui `.po` catalogs to update, commit the updated
+  `.po` files together with the related source changes in the same atomic
+  commit.
