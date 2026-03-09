@@ -775,7 +775,7 @@ export const App = () => {
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,
-    hoveredTile: isGodMode ? hoveredTile : null,
+    hoveredTile: null,
     viewportMode,
     cameraTileWidth: 30,
     cameraTileHeight: 20,

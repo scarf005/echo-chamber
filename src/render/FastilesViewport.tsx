@@ -413,9 +413,70 @@ const setViewportContainer = (container: HTMLDivElement | null) => {
   detachViewport()
 }
 
+const pointsEqualOrNull = (left: Point | null, right: Point | null) => {
+  if (left === right) {
+    return true
+  }
+
+  if (!left || !right) {
+    return false
+  }
+
+  return left.x === right.x && left.y === right.y
+}
+
+const pathsEqual = (left: Point[], right: Point[]) => {
+  if (left === right) {
+    return true
+  }
+
+  if (left.length !== right.length) {
+    return false
+  }
+
+  return left.every((point, index) => {
+    const other = right[index]
+    return point.x === other.x && point.y === other.y
+  })
+}
+
+const renderOptionsEqual = (
+  left: RenderOptions | undefined,
+  right: RenderOptions | undefined,
+) => {
+  if (left === right) {
+    return true
+  }
+
+  if (!left || !right) {
+    return false
+  }
+
+  return left.debugEntityOverlay === right.debugEntityOverlay &&
+    left.debugPlannedPaths === right.debugPlannedPaths &&
+    left.viewportMode === right.viewportMode &&
+    left.cameraTileWidth === right.cameraTileWidth &&
+    left.cameraTileHeight === right.cameraTileHeight
+}
+
+const viewportInputsEqual = (
+  left: FastilesViewportProps,
+  right: FastilesViewportProps,
+) => {
+  return left.crtEnabled === right.crtEnabled &&
+    left.game === right.game &&
+    pointsEqualOrNull(left.selectedTarget, right.selectedTarget) &&
+    pathsEqual(left.previewPath, right.previewPath) &&
+    renderOptionsEqual(left.renderOptions, right.renderOptions)
+}
+
 export const FastilesViewport = (props: FastilesViewportProps) => {
+  const previousProps = fastilesViewportRuntime.props
   fastilesViewportRuntime.props = props
-  drawFastilesViewport()
+
+  if (!previousProps || !viewportInputsEqual(previousProps, props)) {
+    drawFastilesViewport()
+  }
 
   return <div class="viewport" ref={setViewportContainer} />
 }
