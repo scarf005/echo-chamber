@@ -11,18 +11,18 @@ export type DifficultySetting = "easy" | "medium" | "hard"
 
 export const DEFAULT_DIFFICULTY_SETTING: DifficultySetting = "easy"
 
-export function normalizeDifficultySetting(
+export const normalizeDifficultySetting = (
   value: unknown,
-): DifficultySetting {
+): DifficultySetting => {
   return value === "medium" || value === "hard"
     ? value
     : DEFAULT_DIFFICULTY_SETTING
 }
 
-export function difficultyToHostileSubmarineCount(
+export const difficultyToHostileSubmarineCount = (
   difficulty: DifficultySetting,
   hardCount = DEFAULT_HOSTILE_SUBMARINE_COUNT,
-): number {
+): number => {
   if (difficulty === "hard") {
     return hardCount
   }
@@ -38,10 +38,18 @@ export type AppSettings = {
   showDevEntityOverlay: boolean
 }
 
+interface AppSettingsOptions {
+  isDevBuild: boolean
+}
+
+interface WriteAppSettingsOptions extends AppSettingsOptions {
+  settings: AppSettings
+}
+
 export const APP_SETTINGS_STORAGE_KEY = "echo-chamber:settings"
 export const DEV_ENTITY_OVERLAY_STORAGE_KEY = "echo-chamber:dev-entity-overlay"
 
-export function defaultAppSettings(isDevBuild: boolean): AppSettings {
+export const defaultAppSettings = (isDevBuild: boolean): AppSettings => {
   return {
     audio: DEFAULT_AUDIO_SETTINGS,
     difficulty: DEFAULT_DIFFICULTY_SETTING,
@@ -50,10 +58,10 @@ export function defaultAppSettings(isDevBuild: boolean): AppSettings {
   }
 }
 
-export function normalizeAppSettings(
+export const normalizeAppSettings = (
   value: Partial<AppSettings> | null | undefined,
   isDevBuild: boolean,
-): AppSettings {
+): AppSettings => {
   return {
     audio: normalizeAudioSettings(value?.audio),
     difficulty: normalizeDifficultySetting(value?.difficulty),
@@ -62,11 +70,11 @@ export function normalizeAppSettings(
   }
 }
 
-export function readAppSettings(
+export const readAppSettings = (
   storage: Pick<Storage, "getItem"> | null,
-  isDevBuild: boolean,
-): AppSettings {
-  const defaults = defaultAppSettings(isDevBuild)
+  options: AppSettingsOptions,
+): AppSettings => {
+  const defaults = defaultAppSettings(options.isDevBuild)
 
   if (!storage) {
     return defaults
@@ -79,7 +87,10 @@ export function readAppSettings(
       const parsed = JSON.parse(raw)
 
       if (parsed && typeof parsed === "object") {
-        return normalizeAppSettings(parsed as Partial<AppSettings>, isDevBuild)
+        return normalizeAppSettings(
+          parsed as Partial<AppSettings>,
+          options.isDevBuild,
+        )
       }
     }
   } catch {
@@ -105,25 +116,24 @@ export function readAppSettings(
   }
 }
 
-export function writeAppSettings(
+export const writeAppSettings = (
   storage: Pick<Storage, "setItem"> | null,
-  settings: AppSettings,
-  isDevBuild: boolean,
-): void {
+  options: WriteAppSettingsOptions,
+): void => {
   if (!storage) {
     return
   }
 
   storage.setItem(
     APP_SETTINGS_STORAGE_KEY,
-    JSON.stringify(normalizeAppSettings(settings, isDevBuild)),
+    JSON.stringify(normalizeAppSettings(options.settings, options.isDevBuild)),
   )
 }
 
-function readLegacyDevEntityOverlaySetting(
+const readLegacyDevEntityOverlaySetting = (
   storage: Pick<Storage, "getItem">,
   defaultValue: boolean,
-): boolean {
+): boolean => {
   try {
     const raw = storage.getItem(DEV_ENTITY_OVERLAY_STORAGE_KEY)
 

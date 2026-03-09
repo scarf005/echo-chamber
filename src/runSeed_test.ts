@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import {
   createRandomSeed,
@@ -55,14 +55,20 @@ Deno.test("formatRunSeed rebuilds a seed with mode prefixes", () => {
 
 Deno.test("randomizeRunSeed preserves active prefixes with a new base seed", () => {
   assertEquals(
-    randomizeRunSeed("map:god:abyss", "fallback", "trench-42"),
+    randomizeRunSeed("map:god:abyss", {
+      fallbackSeed: "fallback",
+      nextGameSeed: "trench-42",
+    }),
     "god:map:trench-42",
   )
 })
 
 Deno.test("createRestartRunSeed rerolls the base seed while preserving prefixes", () => {
   assertEquals(
-    createRestartRunSeed("map:god:abyss", "fallback", () => "trench-42"),
+    createRestartRunSeed("map:god:abyss", {
+      fallbackSeed: "fallback",
+      nextSeedFactory: () => "trench-42",
+    }),
     "god:map:trench-42",
   )
 })

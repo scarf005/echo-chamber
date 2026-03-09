@@ -1,4 +1,4 @@
-import { StringGenerator } from "npm:rot-js@^2.2.1"
+import { StringGenerator } from "rot-js"
 
 export const WIN_SEED_MODE_HINT =
   "Win tip: in Options, prefix seeds with god: or map:. Combine both as god:map:your-seed."
@@ -44,8 +44,6 @@ const RANDOM_SEED_TRAINING_WORDS = [
 const RANDOM_SEED_TOKEN_COUNT = 2
 const FALLBACK_RANDOM_SEED = "depth-charge"
 
-const randomSeedGenerator = createRandomSeedGenerator()
-
 export interface RunSeedConfig {
   rawSeed: string
   gameSeed: string
@@ -58,13 +56,23 @@ interface RunSeedFlags {
   enableMapMode: boolean
 }
 
+interface RandomizeRunSeedOptions {
+  fallbackSeed: string
+  nextGameSeed: string
+}
+
+interface CreateRestartRunSeedOptions {
+  fallbackSeed: string
+  nextSeedFactory?: () => string
+}
+
 const GOD_MODE_PREFIX = "god:"
 const MAP_MODE_PREFIX = "map:"
 
-export function parseRunSeed(
+export const parseRunSeed = (
   rawSeed: string,
   fallbackSeed: string,
-): RunSeedConfig {
+): RunSeedConfig => {
   let remaining = rawSeed.trim()
   let enableGodMode = false
   let enableMapMode = false
@@ -100,33 +108,37 @@ export function parseRunSeed(
   }
 }
 
-export function formatRunSeed(gameSeed: string, flags: RunSeedFlags): string {
+export const formatRunSeed = (
+  gameSeed: string,
+  flags: RunSeedFlags,
+): string => {
   return `${flags.enableGodMode ? GOD_MODE_PREFIX : ""}${
     flags.enableMapMode ? MAP_MODE_PREFIX : ""
   }${gameSeed.trim()}`
 }
 
-export function randomizeRunSeed(
+export const randomizeRunSeed = (
   rawSeed: string,
-  fallbackSeed: string,
-  nextGameSeed: string,
-): string {
-  const parsedSeed = parseRunSeed(rawSeed, fallbackSeed)
-  return formatRunSeed(nextGameSeed, {
+  options: RandomizeRunSeedOptions,
+): string => {
+  const parsedSeed = parseRunSeed(rawSeed, options.fallbackSeed)
+  return formatRunSeed(options.nextGameSeed, {
     enableGodMode: parsedSeed.enableGodMode,
     enableMapMode: parsedSeed.enableMapMode,
   })
 }
 
-export function createRestartRunSeed(
+export const createRestartRunSeed = (
   rawSeed: string,
-  fallbackSeed: string,
-  nextSeedFactory: () => string = createRandomSeed,
-): string {
-  return randomizeRunSeed(rawSeed, fallbackSeed, nextSeedFactory())
+  options: CreateRestartRunSeedOptions,
+): string => {
+  return randomizeRunSeed(rawSeed, {
+    fallbackSeed: options.fallbackSeed,
+    nextGameSeed: (options.nextSeedFactory ?? createRandomSeed)(),
+  })
 }
 
-export function createRandomSeed(): string {
+export const createRandomSeed = (): string => {
   const tokens = Array.from(
     { length: RANDOM_SEED_TOKEN_COUNT },
     () => createRandomSeedToken(),
@@ -137,7 +149,7 @@ export function createRandomSeed(): string {
     : FALLBACK_RANDOM_SEED
 }
 
-function createRandomSeedGenerator(): StringGenerator {
+const createRandomSeedGenerator = (): StringGenerator => {
   const generator = new StringGenerator({ order: 3, prior: 0.01 })
 
   for (const word of RANDOM_SEED_TRAINING_WORDS) {
@@ -147,7 +159,7 @@ function createRandomSeedGenerator(): StringGenerator {
   return generator
 }
 
-function createRandomSeedToken(): string {
+const createRandomSeedToken = (): string => {
   for (let attempt = 0; attempt < 12; attempt++) {
     const candidate = sanitizeRandomSeedToken(randomSeedGenerator.generate())
 
@@ -159,6 +171,8 @@ function createRandomSeedToken(): string {
   return ""
 }
 
-function sanitizeRandomSeedToken(token: string): string {
+const sanitizeRandomSeedToken = (token: string): string => {
   return token.toLowerCase().replace(/[^a-z]/g, "")
 }
+
+const randomSeedGenerator = createRandomSeedGenerator()

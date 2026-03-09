@@ -1,8 +1,8 @@
 import type { GameState } from "./game/game.ts"
 
-export function shouldRestartFromKey(
+export const shouldRestartFromKey = (
   key: string,
   status: GameState["status"],
-): boolean {
+): boolean => {
   return (key === "r" || key === "R") && status !== "playing"
 }

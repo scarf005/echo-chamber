@@ -74,7 +74,7 @@ Deno.test("readAppSettings restores the unified payload", () => {
             })
             : null,
       },
-      true,
+      { isDevBuild: true },
     ),
     {
       audio: {
@@ -112,7 +112,7 @@ Deno.test("readAppSettings falls back to legacy storage keys", () => {
           }
         },
       },
-      true,
+      { isDevBuild: true },
     ),
     {
       audio: {
@@ -140,17 +140,19 @@ Deno.test("writeAppSettings stores a normalized unified payload", () => {
       },
     },
     {
-      audio: {
-        musicEnabled: true,
-        musicVolume: 9,
-        sfxEnabled: false,
-        sfxVolume: -1,
+      settings: {
+        audio: {
+          musicEnabled: true,
+          musicVolume: 9,
+          sfxEnabled: false,
+          sfxVolume: -1,
+        },
+        difficulty: "hard",
+        revealMap: true,
+        showDevEntityOverlay: false,
       },
-      difficulty: "hard",
-      revealMap: true,
-      showDevEntityOverlay: false,
+      isDevBuild: true,
     },
-    true,
   )
 
   assertEquals(capturedKey, APP_SETTINGS_STORAGE_KEY)
