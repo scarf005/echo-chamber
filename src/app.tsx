@@ -98,7 +98,7 @@ const getHasTouchLayout = (): boolean => {
   return false
 }
 const torpedoActionIcon = (direction: HorizontalDirection) => {
-  const rotation = direction === "left" ? "180deg" : "0deg"
+  const rotation = direction === "left" ? "0deg" : "180deg"
 
   return (
     <svg
@@ -115,7 +115,12 @@ const torpedoActionIcon = (direction: HorizontalDirection) => {
   )
 }
 const upwardTorpedoActionIcon = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    class="mobile-action-icon"
+    style={{ transform: "rotate(180deg)" }}
+  >
     <path d="M10 21V11L6 7V5l4 1 2-3 2 3 4-1v2l-4 4v10z" fill="currentColor" />
   </svg>
 )
