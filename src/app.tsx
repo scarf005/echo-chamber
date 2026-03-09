@@ -30,6 +30,7 @@ import {
   togglePlayerSonar,
   withGameMessage,
 } from "./game/game.ts"
+import type { HorizontalDirection } from "./game/model.ts"
 import { pointsEqual } from "./game/helpers.ts"
 import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
@@ -96,11 +97,23 @@ const getHasTouchLayout = (): boolean => {
 
   return false
 }
-const torpedoActionIcon = (
-  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
-    <path d="M3 10h10l4-4h2l-1 4 3 2-3 2 1 4h-2l-4-4H3z" fill="currentColor" />
-  </svg>
-)
+const torpedoActionIcon = (direction: HorizontalDirection) => {
+  const rotation = direction === "left" ? "180deg" : "0deg"
+
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      class="mobile-action-icon"
+      style={{ transform: `rotate(${rotation})` }}
+    >
+      <path
+        d="M3 10h10l4-4h2l-1 4 3 2-3 2 1 4h-2l-4-4H3z"
+        fill="currentColor"
+      />
+    </svg>
+  )
+}
 const upwardTorpedoActionIcon = (
   <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
     <path d="M10 21V11L6 7V5l4 1 2-3 2 3 4-1v2l-4 4v10z" fill="currentColor" />
@@ -927,7 +940,7 @@ export const App = () => {
         disabled={game.status !== "playing"}
         onClick={() => applyPlayerAction((current) => fireTorpedo(current))}
       >
-        {torpedoActionIcon}
+        {torpedoActionIcon(game.facing)}
       </button>
       <button
         type="button"

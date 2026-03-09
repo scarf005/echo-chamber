@@ -216,8 +216,8 @@
 }
 
 .mobile-action-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
 }
 
 .mobile-control-button {
@@ -230,6 +230,7 @@
   display: inline-grid;
   place-items: center;
   aspect-ratio: 1;
+  min-width: 0;
   min-height: 0;
   padding: 0;
   color: #f2fffd;
@@ -241,8 +242,8 @@
 }
 
 .mobile-action-icon {
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 1.6rem;
+  height: 1.6rem;
   display: block;
   color: currentColor;
 }
@@ -500,8 +501,8 @@
   }
 
   .mobile-action-icon {
-    width: 1.2rem;
-    height: 1.2rem;
+    width: 1.45rem;
+    height: 1.45rem;
   }
 }
 
