@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import { activateLocale, defaultLocale, i18n } from "../i18n.ts"
 import {
@@ -92,9 +92,8 @@ Deno.test("formatGroupedLogMessage re-translates existing messages after locale 
 
   try {
     const localizedEntry = createLogMessage(
-      i18n._("Holding position."),
-      "neutral",
       () => i18n._("Holding position."),
+      "neutral",
     )
     const [groupedEntry] = groupLogMessages([localizedEntry])
 
@@ -108,7 +107,7 @@ Deno.test("formatGroupedLogMessage re-translates existing messages after locale 
   }
 })
 
-function createGameStateForLogs(): GameState {
+const createGameStateForLogs = (): GameState => {
   return {
     map: {
       width: 1,

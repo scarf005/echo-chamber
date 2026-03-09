@@ -1,5 +1,5 @@
 import { i18n } from "../i18n.ts"
-import { Path } from "npm:rot-js@2.2.1"
+import { Path } from "rot-js"
 
 import { deltaForDirection, horizontalFacingForMove } from "./helpers.ts"
 import {
@@ -20,17 +20,17 @@ export interface AutoMoveAnomaly {
 
 const autoMovePathCache = new WeakMap<GameState, Map<string, Point[]>>()
 
-export function keyForAutoMoveAnomaly(anomaly: AutoMoveAnomaly): string {
+export const keyForAutoMoveAnomaly = (anomaly: AutoMoveAnomaly): string => {
   return `${keyOfPoint(anomaly.point)}:${anomaly.reason}`
 }
 
-export function findPath(
+export const findPath = (
   map: GeneratedMap,
   start: Point,
   destination: Point,
   isPassable: (point: Point) => boolean = (point) =>
     isPassableTile(tileAt(map, point.x, point.y)),
-): Point[] {
+): Point[] => {
   if (!isPassable(destination)) {
     return []
   }
@@ -50,10 +50,10 @@ export function findPath(
   return path
 }
 
-export function directionBetweenPoints(
+export const directionBetweenPoints = (
   from: Point,
   to: Point,
-): Direction | null {
+): Direction | null => {
   if (pointsEqual(from, to)) {
     return null
   }
@@ -77,7 +77,7 @@ export function directionBetweenPoints(
   return null
 }
 
-export function isAutoMoveNavigable(game: GameState, point: Point): boolean {
+export const isAutoMoveNavigable = (game: GameState, point: Point): boolean => {
   if (
     point.x < 0 || point.x >= game.map.width ||
     point.y < 0 || point.y >= game.map.height
@@ -94,7 +94,10 @@ export function isAutoMoveNavigable(game: GameState, point: Point): boolean {
   return game.memory[index] !== "wall"
 }
 
-export function findAutoMovePath(game: GameState, destination: Point): Point[] {
+export const findAutoMovePath = (
+  game: GameState,
+  destination: Point,
+): Point[] => {
   if (game.status !== "playing") {
     return []
   }
@@ -121,14 +124,16 @@ export function findAutoMovePath(game: GameState, destination: Point): Point[] {
   return path
 }
 
-export function shouldHaltAutoMoveForAnomaly(
+export const shouldHaltAutoMoveForAnomaly = (
   seenAnomalies: ReadonlySet<string>,
   anomaly: AutoMoveAnomaly | null,
-): anomaly is AutoMoveAnomaly {
+): anomaly is AutoMoveAnomaly => {
   return anomaly !== null && !seenAnomalies.has(keyForAutoMoveAnomaly(anomaly))
 }
 
-export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
+export const findAutoMoveAnomaly = (
+  game: GameState,
+): AutoMoveAnomaly | null => {
   const visibleHostile = firstVisiblePoint(
     game,
     [
@@ -233,10 +238,10 @@ export function findAutoMoveAnomaly(game: GameState): AutoMoveAnomaly | null {
   return null
 }
 
-function firstVisiblePoint(
+const firstVisiblePoint = (
   game: GameState,
   entries: AutoMoveAnomaly[],
-): AutoMoveAnomaly | null {
+): AutoMoveAnomaly | null => {
   return entries.find((entry) => {
     if (pointsEqual(entry.point, game.player)) {
       return false
@@ -247,16 +252,16 @@ function firstVisiblePoint(
   }) ?? null
 }
 
-function reasonForVisibility(
+const reasonForVisibility = (
   game: GameState,
   point: Point,
   exactReason: string,
-): string {
+): string => {
   const index = point.y * game.map.width + point.x
   return game.visibility[index] >= 3 ? exactReason : "sonar"
 }
 
-export function directionFromKey(key: string): Direction | null {
+export const directionFromKey = (key: string): Direction | null => {
   switch (key) {
     case "ArrowUp":
     case "w":
@@ -279,13 +284,13 @@ export function directionFromKey(key: string): Direction | null {
   }
 }
 
-export function isPlayerSonarEnabled(
+export const isPlayerSonarEnabled = (
   game: Pick<GameState, "playerSonarEnabled">,
-): boolean {
+): boolean => {
   return game.playerSonarEnabled ?? true
 }
 
-export function togglePlayerSonar(game: GameState): GameState {
+export const togglePlayerSonar = (game: GameState): GameState => {
   if (game.status !== "playing") {
     return game
   }
@@ -298,20 +303,15 @@ export function togglePlayerSonar(game: GameState): GameState {
       playerSonarEnabled: enabled,
     },
     enabled
-      ? createLogMessage(
-        i18n._("Player sonar enabled."),
-        "positive",
-        () => i18n._("Player sonar enabled."),
-      )
-      : createLogMessage(
-        i18n._("Player sonar disabled."),
-        "negative",
-        () => i18n._("Player sonar disabled."),
-      ),
+      ? createLogMessage(() => i18n._("Player sonar enabled."), "positive")
+      : createLogMessage(() => i18n._("Player sonar disabled."), "negative"),
   )
 }
 
-export function movePlayer(game: GameState, direction: Direction): GameState {
+export const movePlayer = (
+  game: GameState,
+  direction: Direction,
+): GameState => {
   if (game.status !== "playing") {
     return game
   }
@@ -328,11 +328,7 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
         ...game,
         facing: horizontalFacingForMove(game.facing, direction),
       },
-      createLogMessage(
-        i18n._("Hull blocked."),
-        "warning",
-        () => i18n._("Hull blocked."),
-      ),
+      createLogMessage(() => i18n._("Hull blocked."), "warning"),
     )
   }
 
@@ -341,11 +337,11 @@ export function movePlayer(game: GameState, direction: Direction): GameState {
     target,
     horizontalFacingForMove(game.facing, direction),
     null,
-    createLogMessage(i18n._("Advance."), "neutral", () => i18n._("Advance.")),
+    createLogMessage(() => i18n._("Advance."), "neutral"),
   )
 }
 
-export function holdPosition(game: GameState): GameState {
+export const holdPosition = (game: GameState): GameState => {
   if (game.status !== "playing") {
     return game
   }
@@ -355,18 +351,14 @@ export function holdPosition(game: GameState): GameState {
     game.player,
     game.facing,
     null,
-    createLogMessage(
-      i18n._("Holding position."),
-      "neutral",
-      () => i18n._("Holding position."),
-    ),
+    createLogMessage(() => i18n._("Holding position."), "neutral"),
   )
 }
 
-export function fireTorpedo(
+export const fireTorpedo = (
   game: GameState,
   direction: Direction = game.facing,
-): GameState {
+): GameState => {
   if (game.status !== "playing") {
     return game
   }
@@ -380,11 +372,7 @@ export function fireTorpedo(
         ...game,
         facing: nextFacing,
       },
-      createLogMessage(
-        i18n._("No torpedoes remaining."),
-        "negative",
-        () => i18n._("No torpedoes remaining."),
-      ),
+      createLogMessage(() => i18n._("No torpedoes remaining."), "negative"),
     )
   }
 
@@ -394,23 +382,18 @@ export function fireTorpedo(
     nextFacing,
     { kind: "torpedo", direction },
     createLogMessage(
-      direction === "left"
-        ? i18n._("Tube away to port.")
-        : direction === "right"
-        ? i18n._("Tube away to starboard.")
-        : i18n._("VLS launch upward."),
-      "neutral",
       () =>
         direction === "left"
           ? i18n._("Tube away to port.")
           : direction === "right"
           ? i18n._("Tube away to starboard.")
           : i18n._("VLS launch upward."),
+      "neutral",
     ),
   )
 }
 
-export function dropDepthCharge(game: GameState): GameState {
+export const dropDepthCharge = (game: GameState): GameState => {
   if (game.status !== "playing") {
     return game
   }
@@ -420,11 +403,7 @@ export function dropDepthCharge(game: GameState): GameState {
       {
         ...game,
       },
-      createLogMessage(
-        i18n._("No depth charges remaining."),
-        "negative",
-        () => i18n._("No depth charges remaining."),
-      ),
+      createLogMessage(() => i18n._("No depth charges remaining."), "negative"),
     )
   }
 
@@ -433,10 +412,6 @@ export function dropDepthCharge(game: GameState): GameState {
     game.player,
     game.facing,
     { kind: "depth-charge" },
-    createLogMessage(
-      i18n._("Depth charge away."),
-      "neutral",
-      () => i18n._("Depth charge away."),
-    ),
+    createLogMessage(() => i18n._("Depth charge away."), "neutral"),
   )
 }

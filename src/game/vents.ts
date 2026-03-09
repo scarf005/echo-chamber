@@ -3,7 +3,7 @@ import { hashSeed, indexForPoint } from "./helpers.ts"
 import type { FadeCell } from "./model.ts"
 import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 
-export function collectVentPoints(map: GeneratedMap): Point[] {
+export const collectVentPoints = (map: GeneratedMap): Point[] => {
   const vents: Point[] = []
 
   for (let y = 1; y < map.height - 1; y += 1) {
@@ -17,21 +17,21 @@ export function collectVentPoints(map: GeneratedMap): Point[] {
   return vents
 }
 
-export function ventPlumeLength(
+export const ventPlumeLength = (
   seed: string,
   vent: Point,
   turn: number,
-): number {
+): number => {
   const hash = hashSeed(`${seed}:vent-plume:${vent.x}:${vent.y}:${turn}`)
   return 3 + (hash % 6)
 }
 
-export function ventPlumePoints(
+export const ventPlumePoints = (
   map: GeneratedMap,
   seed: string,
   turn: number,
   vent: Point,
-): Point[] {
+): Point[] => {
   const plume: Point[] = []
   const length = ventPlumeLength(seed, vent, turn)
 
@@ -49,12 +49,12 @@ export function ventPlumePoints(
   return plume
 }
 
-export function emitVentPlumes(
+export const emitVentPlumes = (
   map: GeneratedMap,
   seed: string,
   turn: number,
   trails: FadeCell[],
-): FadeCell[] {
+): FadeCell[] => {
   let nextTrails = trails.filter((cell) => cell.source !== "vent")
 
   for (const vent of collectVentPoints(map)) {

@@ -25,10 +25,9 @@ import {
   HOSTILE_TURTLE_VISUAL_RADIUS,
   PROJECTILE_PROXIMITY_RADIUS,
   SONAR_ENTITY_IDENTIFY_RADIUS,
-  SONAR_SPEED,
   TORPEDO_SPEED,
 } from "../constants.ts"
-import { FOV } from "npm:rot-js@2.2.1"
+import { FOV } from "rot-js"
 
 import {
   chebyshevDistance,
@@ -157,11 +156,11 @@ const TURTLE_LOADOUT: Loadout = {
   depthChargeAmmo: 4,
 }
 
-export function spawnHostileSubmarines(
+export const spawnHostileSubmarines = (
   map: GeneratedMap,
   seed: string,
   count: number,
-): HostileSubmarine[] {
+): HostileSubmarine[] => {
   if (count <= 0) {
     return []
   }
@@ -235,7 +234,7 @@ export function spawnHostileSubmarines(
   return hostileSubmarines
 }
 
-export function stepHostileSubmarines(
+export const stepHostileSubmarines = (
   map: GeneratedMap,
   hostileSubmarines: HostileSubmarine[],
   context: HostileTurnContext,
@@ -248,7 +247,7 @@ export function stepHostileSubmarines(
   spawnedShockwaves: Shockwave[]
   aiDecisionLogs: string[]
   playerDestroyed: boolean
-} {
+} => {
   const currentHostiles = hostileSubmarines.map(hydrateHostileSubmarine)
   const availableShockwaves = context.shockwaves.map((shockwave) => ({
     ...shockwave,
@@ -301,7 +300,7 @@ export function stepHostileSubmarines(
   const enemiesKnowFullMap = context.memory.every((tile) => tile !== null)
   let playerDestroyed = false
 
-  currentHostiles.forEach((hostileSubmarine, index) => {
+  currentHostiles.forEach((hostileSubmarine, _index) => {
     occupied.delete(keyOfPoint(hostileSubmarine.position))
 
     const random = createDeterministicRandom(
@@ -788,26 +787,26 @@ export function stepHostileSubmarines(
   }
 }
 
-function describeHostileAiDecision(
+const describeHostileAiDecision = (
   id: string,
   mode: HostileSubmarineMode,
   target: Point | null,
-): string {
+): string => {
   const suffix = target ? ` ${formatPoint(target)}` : ""
 
   return `${id}: will ${mode}${suffix}`
 }
 
-function matchesDecision(
+const matchesDecision = (
   previousMode: HostileSubmarineMode,
   previousTarget: Point | null,
   nextMode: HostileSubmarineMode,
   nextTarget: Point | null,
-): boolean {
+): boolean => {
   return previousMode === nextMode && pointsMatch(previousTarget, nextTarget)
 }
 
-function pointsMatch(left: Point | null, right: Point | null): boolean {
+const pointsMatch = (left: Point | null, right: Point | null): boolean => {
   if (left === null || right === null) {
     return left === right
   }
@@ -815,56 +814,56 @@ function pointsMatch(left: Point | null, right: Point | null): boolean {
   return pointsEqual(left, right)
 }
 
-function formatPoint(point: Point): string {
+const formatPoint = (point: Point): string => {
   return `${point.x},${point.y}`
 }
 
-function maxEvidenceAgeForArchetype(
+const maxEvidenceAgeForArchetype = (
   archetype: HostileSubmarineArchetype,
-): number {
+): number => {
   return archetype === "hunter" || archetype === "scout" ? 2 : 1
 }
 
-function shouldForgetPlayerFix(
+const shouldForgetPlayerFix = (
   archetype: HostileSubmarineArchetype,
   lastKnownPlayerTurn: number | null,
   turn: number,
-): boolean {
+): boolean => {
   return lastKnownPlayerTurn !== null &&
     turn - lastKnownPlayerTurn > maxEvidenceAgeForArchetype(archetype)
 }
 
-function shouldScoutRetreat(
+const shouldScoutRetreat = (
   position: Point,
   lastKnownPlayerPosition: Point,
   lastKnownPlayerTurn: number | null,
   turn: number,
-): boolean {
+): boolean => {
   return lastKnownPlayerTurn !== null &&
     turn - lastKnownPlayerTurn <= 1 &&
     chebyshevDistance(position, lastKnownPlayerPosition) <=
       SCOUT_RETREAT_TRIGGER_DISTANCE
 }
 
-function canPursuePlayerFix(
+const canPursuePlayerFix = (
   archetype: HostileSubmarineArchetype,
   capsule: Point,
   lastKnownPlayerPosition: Point,
   directDetection: boolean,
-): boolean {
+): boolean => {
   return archetype !== "guard" || directDetection ||
     chebyshevDistance(lastKnownPlayerPosition, capsule) <=
       GUARD_CAPSULE_RESPONSE_RADIUS
 }
 
-function shouldUseExactAttackTarget(
+const shouldUseExactAttackTarget = (
   map: GeneratedMap,
   position: Point,
   lastKnownPlayerPosition: Point,
   directDetection: boolean,
   lastKnownPlayerTurn: number | null,
   turn: number,
-): boolean {
+): boolean => {
   return directDetection ||
     (lastKnownPlayerTurn !== null && turn - lastKnownPlayerTurn <= 1 && (
       hasHorizontalShotOpportunity(map, position, lastKnownPlayerPosition) ||
@@ -874,7 +873,7 @@ function shouldUseExactAttackTarget(
     ))
 }
 
-function allWaterTiles(map: GeneratedMap): Point[] {
+const allWaterTiles = (map: GeneratedMap): Point[] => {
   const points: Point[] = []
 
   for (let y = 1; y < map.height - 1; y += 1) {
@@ -888,12 +887,12 @@ function allWaterTiles(map: GeneratedMap): Point[] {
   return points
 }
 
-function canSpawnHostileAt(
+const canSpawnHostileAt = (
   map: GeneratedMap,
   point: Point,
   archetype: HostileSubmarineArchetype,
   hostileSubmarines: HostileSubmarine[],
-): boolean {
+): boolean => {
   if (chebyshevDistance(point, map.spawn) < HOSTILE_MIN_SPAWN_DISTANCE) {
     return false
   }
@@ -919,7 +918,7 @@ function canSpawnHostileAt(
   )
 }
 
-function chooseArchetype(random: () => number): HostileSubmarineArchetype {
+const chooseArchetype = (random: () => number): HostileSubmarineArchetype => {
   const roll = random()
 
   if (roll < 0.12) {
@@ -933,7 +932,7 @@ function chooseArchetype(random: () => number): HostileSubmarineArchetype {
   return "hunter"
 }
 
-function loadoutForArchetype(archetype: HostileSubmarineArchetype): Loadout {
+const loadoutForArchetype = (archetype: HostileSubmarineArchetype): Loadout => {
   switch (archetype) {
     case "scout":
       return { ...SCOUT_LOADOUT }
@@ -946,9 +945,9 @@ function loadoutForArchetype(archetype: HostileSubmarineArchetype): Loadout {
   }
 }
 
-function hydrateHostileSubmarine(
+const hydrateHostileSubmarine = (
   hostileSubmarine: HostileSubmarine,
-): ResolvedHostileSubmarine {
+): ResolvedHostileSubmarine => {
   const archetype = hostileSubmarine.archetype ?? "hunter"
   const loadout = loadoutForArchetype(archetype)
 
@@ -989,12 +988,12 @@ function hydrateHostileSubmarine(
   }
 }
 
-function gatherKnowledge(
+const gatherKnowledge = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
   context: HostileTurnContext,
-): HostileKnowledge {
+): HostileKnowledge => {
   const playerVector = createPlayerVector(
     context.previousPlayer,
     context.player,
@@ -1093,10 +1092,10 @@ function gatherKnowledge(
   }
 }
 
-function propagateImmediatePlayerFixes(
+const propagateImmediatePlayerFixes = (
   hostileSubmarines: ResolvedHostileSubmarine[],
   knowledges: ReadonlyMap<string, HostileKnowledge>,
-): Map<string, Point> {
+): Map<string, Point> => {
   const hostileById = new Map(
     hostileSubmarines.map((
       hostileSubmarine,
@@ -1147,11 +1146,11 @@ function propagateImmediatePlayerFixes(
   return relayedFixes
 }
 
-function canDirectlyDetectPlayer(
+const canDirectlyDetectPlayer = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   player: Point,
-): boolean {
+): boolean => {
   const radius = hostileSubmarine.archetype === "turtle"
     ? HOSTILE_TURTLE_VISUAL_RADIUS
     : HOSTILE_PLAYER_DETECTION_RADIUS
@@ -1160,10 +1159,10 @@ function canDirectlyDetectPlayer(
     hasClearCardinalPath(map, hostileSubmarine.position, player)
 }
 
-function findPlayerMessage(
+const findPlayerMessage = (
   hostileSubmarine: ResolvedHostileSubmarine,
   shockwaves: Shockwave[],
-): Point | null {
+): Point | null => {
   for (const shockwave of shockwaves) {
     if (
       !shockwave.message ||
@@ -1180,11 +1179,11 @@ function findPlayerMessage(
   return null
 }
 
-function findTrailClue(
+const findTrailClue = (
   position: Point,
   trails: FadeCell[],
   width: number,
-): Point | null {
+): Point | null => {
   let bestPoint: Point | null = null
   let bestDistance = Number.POSITIVE_INFINITY
 
@@ -1214,11 +1213,11 @@ function findTrailClue(
   return bestPoint
 }
 
-function findPingClue(
+const findPingClue = (
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
   shockwaves: Shockwave[],
-): Point | null {
+): Point | null => {
   let bestPoint: Point | null = null
   let bestDistance = Number.POSITIVE_INFINITY
   const initialPositions = hostileSubmarines
@@ -1261,10 +1260,10 @@ function findPingClue(
   return bestPoint
 }
 
-function createPlayerVector(
+const createPlayerVector = (
   previousPlayer: Point,
   player: Point,
-): Point | null {
+): Point | null => {
   const vector = {
     x: player.x - previousPlayer.x,
     y: player.y - previousPlayer.y,
@@ -1273,11 +1272,11 @@ function createPlayerVector(
   return vector.x === 0 && vector.y === 0 ? null : vector
 }
 
-function chooseScoutRetreatTarget(
+const chooseScoutRetreatTarget = (
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
   player: Point,
-): Point {
+): Point => {
   const candidates = hostileSubmarines
     .filter((candidate) => candidate.id !== hostileSubmarine.id)
     .map((candidate) => candidate.initialPosition)
@@ -1293,7 +1292,7 @@ function chooseScoutRetreatTarget(
   }, candidates[0])
 }
 
-function chooseAttackTarget(
+const chooseAttackTarget = (
   map: GeneratedMap,
   position: Point,
   lastKnownPlayerPosition: Point,
@@ -1302,7 +1301,7 @@ function chooseAttackTarget(
   directDetection: boolean,
   lastKnownPlayerTurn: number | null,
   turn: number,
-): Point {
+): Point => {
   return shouldUseExactAttackTarget(
       map,
       position,
@@ -1320,12 +1319,12 @@ function chooseAttackTarget(
     )
 }
 
-function predictPlayerPosition(
+const predictPlayerPosition = (
   map: GeneratedMap,
   lastKnownPlayerPosition: Point,
   lastKnownPlayerVector: Point | null,
   archetype: HostileSubmarineArchetype,
-): Point {
+): Point => {
   if (!lastKnownPlayerVector) {
     return { ...lastKnownPlayerPosition }
   }
@@ -1341,19 +1340,19 @@ function predictPlayerPosition(
     : { ...lastKnownPlayerPosition }
 }
 
-function createHorizontalShotTarget(position: Point, target: Point): Point {
+const createHorizontalShotTarget = (position: Point, target: Point): Point => {
   return { x: target.x, y: position.y }
 }
 
-function createVerticalShotTarget(position: Point, target: Point): Point {
+const createVerticalShotTarget = (position: Point, target: Point): Point => {
   return { x: position.x, y: target.y }
 }
 
-function hasHorizontalShotOpportunity(
+const hasHorizontalShotOpportunity = (
   map: GeneratedMap,
   position: Point,
   target: Point,
-): boolean {
+): boolean => {
   return target.x !== position.x &&
     Math.abs(target.y - position.y) <= PROJECTILE_PROXIMITY_RADIUS &&
     hasClearCardinalPath(
@@ -1363,11 +1362,11 @@ function hasHorizontalShotOpportunity(
     )
 }
 
-function hasVerticalShotOpportunity(
+const hasVerticalShotOpportunity = (
   map: GeneratedMap,
   position: Point,
   target: Point,
-): boolean {
+): boolean => {
   return target.y < position.y &&
     Math.abs(target.x - position.x) <= PROJECTILE_PROXIMITY_RADIUS &&
     hasClearCardinalPath(
@@ -1377,21 +1376,21 @@ function hasVerticalShotOpportunity(
     )
 }
 
-function hasDepthChargeOpportunity(
+const hasDepthChargeOpportunity = (
   map: GeneratedMap,
   position: Point,
   target: Point,
-): boolean {
+): boolean => {
   return target.y > position.y + 1 &&
     Math.abs(target.x - position.x) <= PROJECTILE_PROXIMITY_RADIUS &&
     hasClearCardinalPath(map, position, { x: position.x, y: target.y })
 }
 
-function findCeilingTrapShot(
+const findCeilingTrapShot = (
   map: GeneratedMap,
   position: Point,
   target: Point,
-): { direction: Direction; impactPoint: Point } | null {
+): { direction: Direction; impactPoint: Point } | null => {
   for (let y = target.y - 1; y > 0; y -= 1) {
     const ceilingPoint = { x: target.x, y }
     const tile = tileAt(map, ceilingPoint.x, ceilingPoint.y)
@@ -1430,7 +1429,7 @@ function findCeilingTrapShot(
   return null
 }
 
-function chooseNextStep(
+const _chooseNextStep = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
@@ -1447,7 +1446,7 @@ function chooseNextStep(
   directDetection: boolean,
   repositioningForSalvo: boolean,
   turn: number,
-): Point | null {
+): Point | null => {
   if (archetype === "turtle") {
     return null
   }
@@ -1507,7 +1506,7 @@ function chooseNextStep(
   return findNextStepToward(map, position, target, occupied)
 }
 
-function describePlannedPath(
+const describePlannedPath = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
@@ -1524,7 +1523,7 @@ function describePlannedPath(
   directDetection: boolean,
   repositioningForSalvo: boolean,
   turn: number,
-): Point[] {
+): Point[] => {
   if (archetype === "turtle") {
     return [{ ...position }]
   }
@@ -1585,14 +1584,14 @@ function describePlannedPath(
   return findPathToward(map, position, target, occupied)
 }
 
-function chooseRetreatStep(
+const chooseRetreatStep = (
   map: GeneratedMap,
   position: Point,
   retreatTarget: Point,
   occupied: Set<string>,
   player: Point,
   recentPositions: readonly Point[],
-): Point | null {
+): Point | null => {
   const options = orderedNeighbors(position, retreatTarget)
     .filter((point) =>
       isPassableTile(tileAt(map, point.x, point.y)) &&
@@ -1614,15 +1613,15 @@ function chooseRetreatStep(
   })[0]
 }
 
-function scoutKiteScore(point: Point, player: Point): number {
+const scoutKiteScore = (point: Point, player: Point): number => {
   const distance = chebyshevDistance(point, player)
   return distance * 2 - Math.abs(distance - SCOUT_KITE_DISTANCE) * 8
 }
 
-function retreatLoopPenalty(
+const retreatLoopPenalty = (
   point: Point,
   recentPositions: readonly Point[],
-): number {
+): number => {
   const recentIndex = recentPositions.findIndex((recentPoint) =>
     pointsEqual(recentPoint, point)
   )
@@ -1632,7 +1631,7 @@ function retreatLoopPenalty(
     : (HOSTILE_POSITION_MEMORY_LIMIT - recentIndex) * 12
 }
 
-function shouldHoldAttackPosition(
+const shouldHoldAttackPosition = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   archetype: HostileSubmarineArchetype,
@@ -1646,7 +1645,7 @@ function shouldHoldAttackPosition(
   reload: number,
   directDetection: boolean,
   turn: number,
-): boolean {
+): boolean => {
   if (
     !target ||
     archetype === "scout" ||
@@ -1708,7 +1707,7 @@ function shouldHoldAttackPosition(
     depthChargeOpportunity || safeCeilingTrap !== null
 }
 
-function hasFreshPursuitWeaponOpportunity(
+const hasFreshPursuitWeaponOpportunity = (
   map: GeneratedMap,
   position: Point,
   target: Point,
@@ -1719,7 +1718,7 @@ function hasFreshPursuitWeaponOpportunity(
   lastKnownPlayerTurn: number | null,
   lastKnownPlayerFromDirectDetection: boolean,
   turn: number,
-): boolean {
+): boolean => {
   if (
     lastKnownPlayerVector === null ||
     lastKnownPlayerTurn === null ||
@@ -1749,7 +1748,7 @@ function hasFreshPursuitWeaponOpportunity(
   return horizontalEscapeShot || ascendingEscapeShot || descendingEscapeDrop
 }
 
-function shouldScoutHoldForEstimatedShot(
+const shouldScoutHoldForEstimatedShot = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
@@ -1759,7 +1758,7 @@ function shouldScoutHoldForEstimatedShot(
   occupied: ReadonlySet<string>,
   reload: number,
   turn: number,
-): boolean {
+): boolean => {
   if (reload > 0 || !target || !hasRangedAmmo(hostileSubmarine)) {
     return false
   }
@@ -1808,18 +1807,18 @@ function shouldScoutHoldForEstimatedShot(
     isAttackLaneSafe(attackTarget, hostileSubmarine, hostileSubmarines)
 }
 
-function hasRangedAmmo(hostileSubmarine: ResolvedHostileSubmarine): boolean {
+const hasRangedAmmo = (hostileSubmarine: ResolvedHostileSubmarine): boolean => {
   return hostileSubmarine.torpedoAmmo > 0 || hostileSubmarine.vlsAmmo > 0 ||
     hostileSubmarine.depthChargeAmmo > 0
 }
 
-function resolveAttack(
+const resolveAttack = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
   archetype: HostileSubmarineArchetype,
   position: Point,
-  facing: HostileSubmarine["facing"],
+  _facing: HostileSubmarine["facing"],
   reload: number,
   torpedoAmmo: number,
   vlsAmmo: number,
@@ -1834,7 +1833,7 @@ function resolveAttack(
   salvoShotsRemaining: number,
   salvoStepDirection: Direction | null,
   salvoMoveTarget: Point | null,
-): AttackResolution {
+): AttackResolution => {
   const createDebugState = (
     overrides: Partial<HostileAttackDebugState>,
   ): HostileAttackDebugState => ({
@@ -2198,13 +2197,13 @@ function resolveAttack(
   }
 }
 
-function chooseSalvoStepDirection(
+const chooseSalvoStepDirection = (
   map: GeneratedMap,
   position: Point,
   orientation: "horizontal" | "vertical",
   occupied: ReadonlySet<string>,
   random: () => number,
-): Direction | null {
+): Direction | null => {
   const directions = orientation === "horizontal"
     ? (random() < 0.5 ? ["up", "down"] as const : ["down", "up"] as const)
     : (random() < 0.5 ? ["left", "right"] as const : ["right", "left"] as const)
@@ -2218,12 +2217,12 @@ function chooseSalvoStepDirection(
   return null
 }
 
-function createNextSalvoMoveTarget(
+const createNextSalvoMoveTarget = (
   map: GeneratedMap,
   position: Point,
   direction: Direction,
   occupied?: ReadonlySet<string>,
-): Point | null {
+): Point | null => {
   const delta = deltaForDirection(direction)
   const lane = Array.from(
     { length: HOSTILE_SALVO_OFFSET },
@@ -2244,21 +2243,21 @@ function createNextSalvoMoveTarget(
   return null
 }
 
-function isAttackLaneSafe(
+const isAttackLaneSafe = (
   guessedTarget: Point,
   hostileSubmarine: ResolvedHostileSubmarine,
   hostileSubmarines: ResolvedHostileSubmarine[],
-): boolean {
+): boolean => {
   return hostileSubmarines.every((candidate) =>
     candidate.id === hostileSubmarine.id ||
     chebyshevDistance(candidate.initialPosition, guessedTarget) > 3
   )
 }
 
-function sonarIntervalForHostile(
+const sonarIntervalForHostile = (
   archetype: HostileSubmarineArchetype,
   hasPlayerFix: boolean,
-): number | null {
+): number | null => {
   switch (archetype) {
     case "turtle":
       return null
@@ -2273,10 +2272,10 @@ function sonarIntervalForHostile(
   }
 }
 
-function rememberRecentPosition(
+const rememberRecentPosition = (
   recentPositions: readonly Point[],
   previousPosition: Point | null,
-): Point[] {
+): Point[] => {
   if (!previousPosition) {
     return recentPositions.map((point) => ({ ...point }))
   }
@@ -2289,12 +2288,12 @@ function rememberRecentPosition(
   return nextRecentPositions.slice(0, HOSTILE_POSITION_MEMORY_LIMIT)
 }
 
-function canEscapeVerticalCaveIn(
+const canEscapeVerticalCaveIn = (
   map: GeneratedMap,
   position: Point,
   impactPoint: Point,
   occupied: ReadonlySet<string>,
-): boolean {
+): boolean => {
   if (impactPoint.x !== position.x || impactPoint.y >= position.y) {
     return true
   }
@@ -2312,10 +2311,10 @@ function canEscapeVerticalCaveIn(
   )
 }
 
-function shouldBroadcastPlayerPosition(
+const _shouldBroadcastPlayerPosition = (
   archetype: HostileSubmarineArchetype,
   random: () => number,
-): boolean {
+): boolean => {
   if (archetype === "scout") {
     return true
   }
@@ -2323,11 +2322,11 @@ function shouldBroadcastPlayerPosition(
   return random() >= 0.35
 }
 
-function hasClearCardinalPath(
+const hasClearCardinalPath = (
   map: GeneratedMap,
   from: Point,
   to: Point,
-): boolean {
+): boolean => {
   if (from.x !== to.x && from.y !== to.y) {
     return false
   }
@@ -2354,28 +2353,33 @@ function hasClearCardinalPath(
   return true
 }
 
-function hasLineOfSight(map: GeneratedMap, from: Point, to: Point): boolean {
-  const fov = new FOV.PreciseShadowcasting((x, y) =>
+const hasLineOfSight = (map: GeneratedMap, from: Point, to: Point): boolean => {
+  const fov = new FOV.PreciseShadowcasting((x: number, y: number) =>
     tileAt(map, x, y) === "water"
   )
   let visible = false
 
-  fov.compute(from.x, from.y, Math.max(map.width, map.height), (x, y) => {
-    if (x === to.x && y === to.y) {
-      visible = true
-    }
-  })
+  fov.compute(
+    from.x,
+    from.y,
+    Math.max(map.width, map.height),
+    (x: number, y: number) => {
+      if (x === to.x && y === to.y) {
+        visible = true
+      }
+    },
+  )
 
   return visible
 }
 
-function choosePatrolStep(
+const choosePatrolStep = (
   map: GeneratedMap,
   position: Point,
   occupied: Set<string>,
   random: () => number,
   previousPosition: Point | null,
-): Point | null {
+): Point | null => {
   const options = shufflePoints(
     CARDINAL_STEPS.map((step) => ({
       x: position.x + step.x,
@@ -2394,13 +2398,13 @@ function choosePatrolStep(
   return nonBacktrackingOptions[0] ?? options[0] ?? null
 }
 
-function keepPatrolPath(
+const keepPatrolPath = (
   map: GeneratedMap,
   start: Point,
   target: Point,
   occupied: Set<string>,
   plannedPath: readonly Point[],
-): Point[] | null {
+): Point[] | null => {
   if (
     pointsEqual(start, target) ||
     !isPassableTile(tileAt(map, target.x, target.y)) ||
@@ -2417,14 +2421,14 @@ function keepPatrolPath(
   return nextPath.length > 1 ? nextPath : null
 }
 
-function keepInvestigationPath(
+const keepInvestigationPath = (
   map: GeneratedMap,
   start: Point,
   target: Point,
   cluePosition: Point,
   occupied: Set<string>,
   plannedPath: readonly Point[],
-): Point[] | null {
+): Point[] | null => {
   if (chebyshevDistance(target, cluePosition) > HOSTILE_PLAYER_CLUE_RADIUS) {
     return null
   }
@@ -2432,13 +2436,13 @@ function keepInvestigationPath(
   return keepPatrolPath(map, start, target, occupied, plannedPath)
 }
 
-function isReusablePlannedPath(
+const isReusablePlannedPath = (
   map: GeneratedMap,
   start: Point,
   target: Point,
   occupied: ReadonlySet<string>,
   plannedPath: readonly Point[],
-): boolean {
+): boolean => {
   if (plannedPath.length <= 1) {
     return false
   }
@@ -2472,24 +2476,24 @@ function isReusablePlannedPath(
   return true
 }
 
-function canAdvancePlannedPath(
+const canAdvancePlannedPath = (
   plannedPath: readonly Point[],
   movementTarget: Point | null,
   finalTarget: Point | null,
-): boolean {
+): boolean => {
   return movementTarget !== null && finalTarget !== null &&
     pointsEqual(movementTarget, finalTarget) && plannedPath.length > 0 &&
     pointsEqual(plannedPath[plannedPath.length - 1], movementTarget)
 }
 
-function canReuseCurrentPlannedPath(
+const canReuseCurrentPlannedPath = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   archetype: HostileSubmarineArchetype,
   position: Point,
   movementTarget: Point | null,
   occupied: ReadonlySet<string>,
-  player: Point,
+  _player: Point,
   lastKnownPlayerPosition: Point | null,
   lastKnownPlayerVector: Point | null,
   lastKnownPlayerTurn: number | null,
@@ -2498,7 +2502,7 @@ function canReuseCurrentPlannedPath(
   directDetection: boolean,
   repositioningForSalvo: boolean,
   turn: number,
-): boolean {
+): boolean => {
   if (
     movementTarget === null ||
     repositioningForSalvo ||
@@ -2537,7 +2541,7 @@ function canReuseCurrentPlannedPath(
   )
 }
 
-function canUsePlannedPathForMovement(
+const canUsePlannedPathForMovement = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
   archetype: HostileSubmarineArchetype,
@@ -2545,7 +2549,7 @@ function canUsePlannedPathForMovement(
   target: Point | null,
   movementTarget: Point | null,
   occupied: ReadonlySet<string>,
-  player: Point,
+  _player: Point,
   lastKnownPlayerPosition: Point | null,
   lastKnownPlayerVector: Point | null,
   lastKnownPlayerTurn: number | null,
@@ -2555,7 +2559,7 @@ function canUsePlannedPathForMovement(
   repositioningForSalvo: boolean,
   turn: number,
   plannedPath: readonly Point[] | null,
-): plannedPath is Point[] {
+): plannedPath is Point[] => {
   if (plannedPath === null || target === null || movementTarget === null) {
     return false
   }
@@ -2601,23 +2605,23 @@ function canUsePlannedPathForMovement(
   )
 }
 
-function advancePlannedPath(plannedPath: readonly Point[]): Point[] {
+const advancePlannedPath = (plannedPath: readonly Point[]): Point[] => {
   const nextPath = plannedPath.length > 1 ? plannedPath.slice(1) : plannedPath
   return nextPath.map((point) => ({ ...point }))
 }
 
-function areCardinalNeighbors(left: Point, right: Point): boolean {
+const areCardinalNeighbors = (left: Point, right: Point): boolean => {
   return Math.abs(left.x - right.x) + Math.abs(left.y - right.y) === 1
 }
 
-function chooseCoordinatedClueTarget(
+const chooseCoordinatedClueTarget = (
   map: GeneratedMap,
   position: Point,
   cluePosition: Point,
   occupied: Set<string>,
   reservedTargets: ReadonlySet<string>,
   random: () => number,
-): Point {
+): Point => {
   const reservedPoints = pointsFromReservedTargets(reservedTargets)
 
   return findBestReachableTarget(
@@ -2632,14 +2636,14 @@ function chooseCoordinatedClueTarget(
   ) ?? { ...cluePosition }
 }
 
-function chooseCoordinatedSearchTarget(
+const chooseCoordinatedSearchTarget = (
   map: GeneratedMap,
   position: Point,
   occupied: Set<string>,
   reservedTargets: ReadonlySet<string>,
   random: () => number,
   previousPosition: Point | null,
-): Point | null {
+): Point | null => {
   const reservedPoints = pointsFromReservedTargets(reservedTargets)
 
   return findBestReachableTarget(
@@ -2652,30 +2656,30 @@ function chooseCoordinatedSearchTarget(
   )
 }
 
-function scoreInvestigationTarget(
+const scoreInvestigationTarget = (
   point: Point,
   cluePosition: Point,
   start: Point,
   reservedPoints: readonly Point[],
-): number {
+): number => {
   return reservationSeparationScore(point, reservedPoints) * 18 -
     chebyshevDistance(point, cluePosition) * 9 -
     chebyshevDistance(point, start)
 }
 
-function scoreSearchTarget(
+const scoreSearchTarget = (
   point: Point,
   start: Point,
   reservedPoints: readonly Point[],
-): number {
+): number => {
   return reservationSeparationScore(point, reservedPoints) * 16 +
     chebyshevDistance(point, start) * 2
 }
 
-function reservationSeparationScore(
+const reservationSeparationScore = (
   point: Point,
   reservedPoints: readonly Point[],
-): number {
+): number => {
   let bestDistance = HOSTILE_COMMUNICATION_RADIUS
 
   for (const reservedTarget of reservedPoints) {
@@ -2686,9 +2690,9 @@ function reservationSeparationScore(
   return bestDistance
 }
 
-function pointsFromReservedTargets(
+const pointsFromReservedTargets = (
   reservedTargets: ReadonlySet<string>,
-): Point[] {
+): Point[] => {
   return Array.from(reservedTargets, (reservedTarget) => {
     const [xText, yText] = reservedTarget.split(":")
     return {
@@ -2698,14 +2702,14 @@ function pointsFromReservedTargets(
   })
 }
 
-function findBestReachableTarget(
+const findBestReachableTarget = (
   map: GeneratedMap,
   start: Point,
   occupied: ReadonlySet<string>,
   random: () => number,
   isCandidate: (point: Point) => boolean,
   scoreCandidate: (point: Point) => number,
-): Point | null {
+): Point | null => {
   const width = map.width
   const totalTiles = map.tiles.length
   const queue = new Int32Array(totalTiles)
@@ -2768,7 +2772,7 @@ function findBestReachableTarget(
   return bestIndex >= 0 ? pointFromIndex(width, bestIndex) : null
 }
 
-function chooseGuardPatrolTarget(
+const chooseGuardPatrolTarget = (
   map: GeneratedMap,
   capsule: Point,
   guardPost: Point,
@@ -2776,7 +2780,7 @@ function chooseGuardPatrolTarget(
   occupied: Set<string>,
   random: () => number,
   previousPosition: Point | null,
-): Point | null {
+): Point | null => {
   const candidates: Point[] = []
 
   for (
@@ -2829,13 +2833,13 @@ function chooseGuardPatrolTarget(
     choosePatrolStep(map, position, occupied, random, previousPosition)
 }
 
-function findScoutExplorationTarget(
+const findScoutExplorationTarget = (
   map: GeneratedMap,
   memory: Array<TileKind | null>,
   start: Point,
   occupied: Set<string>,
   random: () => number,
-): Point | null {
+): Point | null => {
   const queue: Point[] = [{ ...start }]
   let queueIndex = 0
   const parents = new Map<string, Point | null>()
@@ -2900,13 +2904,13 @@ function findScoutExplorationTarget(
   return fallback
 }
 
-function shouldKeepScoutExplorationTarget(
+const _shouldKeepScoutExplorationTarget = (
   map: GeneratedMap,
   memory: Array<TileKind | null>,
   start: Point,
   target: Point,
   occupied: Set<string>,
-): boolean {
+): boolean => {
   if (
     pointsEqual(start, target) ||
     !isPassableTile(tileAt(map, target.x, target.y))
@@ -2932,11 +2936,11 @@ function shouldKeepScoutExplorationTarget(
   return false
 }
 
-function countScoutUnseenNeighbors(
+const countScoutUnseenNeighbors = (
   map: GeneratedMap,
   memory: Array<TileKind | null>,
   point: Point,
-): number {
+): number => {
   return CARDINAL_STEPS.reduce((count, step) => {
     const neighbor = { x: point.x + step.x, y: point.y + step.y }
 
@@ -2950,22 +2954,22 @@ function countScoutUnseenNeighbors(
   }, 0)
 }
 
-function findNextStepToward(
+const findNextStepToward = (
   map: GeneratedMap,
   start: Point,
   goal: Point,
   occupied: Set<string>,
-): Point | null {
+): Point | null => {
   const path = findPathToward(map, start, goal, occupied)
   return path.length > 1 ? path[1] : null
 }
 
-function findPathToward(
+const findPathToward = (
   map: GeneratedMap,
   start: Point,
   goal: Point,
   occupied: Set<string>,
-): Point[] {
+): Point[] => {
   const width = map.width
   const totalTiles = map.tiles.length
   const startIndex = indexForPoint(width, start)
@@ -3037,10 +3041,10 @@ function findPathToward(
   return path
 }
 
-function occupiedIndexesForPath(
+const occupiedIndexesForPath = (
   width: number,
   occupied: ReadonlySet<string>,
-): Set<number> {
+): Set<number> => {
   const indexes = new Set<number>()
 
   for (const pointKey of occupied) {
@@ -3050,7 +3054,7 @@ function occupiedIndexesForPath(
   return indexes
 }
 
-function pointFromKey(pointKey: string): Point {
+const pointFromKey = (pointKey: string): Point => {
   const separatorIndex = pointKey.indexOf(":")
   return {
     x: Number(pointKey.slice(0, separatorIndex)),
@@ -3058,21 +3062,21 @@ function pointFromKey(pointKey: string): Point {
   }
 }
 
-function pointFromIndex(width: number, index: number): Point {
+const pointFromIndex = (width: number, index: number): Point => {
   return {
     x: index % width,
     y: Math.floor(index / width),
   }
 }
 
-function fillOrderedNeighborIndexes(
+const fillOrderedNeighborIndexes = (
   width: number,
   height: number,
   pointIndex: number,
   goal: Point,
   neighborIndexes: Int32Array,
   neighborScores: Int32Array,
-): number {
+): number => {
   const x = pointIndex % width
   const y = Math.floor(pointIndex / width)
   let neighborCount = 0
@@ -3111,7 +3115,7 @@ function fillOrderedNeighborIndexes(
   return neighborCount
 }
 
-function orderedNeighbors(point: Point, goal: Point): Point[] {
+const orderedNeighbors = (point: Point, goal: Point): Point[] => {
   const neighbors = CARDINAL_STEPS.map((step) => ({
     x: point.x + step.x,
     y: point.y + step.y,
@@ -3136,6 +3140,6 @@ function orderedNeighbors(point: Point, goal: Point): Point[] {
   return neighbors
 }
 
-function distanceScore(point: Point, goal: Point): number {
+const distanceScore = (point: Point, goal: Point): number => {
   return Math.abs(point.x - goal.x) + Math.abs(point.y - goal.y)
 }

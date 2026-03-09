@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assert, assertEquals } from "jsr:@std/assert"
+import { assert, assertEquals } from "@std/assert"
 
 import { type GameState, holdPosition } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
@@ -82,9 +82,9 @@ Deno.test("falling boulders crush hostile submarines in their path", () => {
   assertEquals(next.message, "loud falling rocks detected at ↘")
 })
 
-function createBoulderLandingGame(
+const createBoulderLandingGame = (
   overrides: Partial<GameState> = {},
-): GameState {
+): GameState => {
   const map = createMapFromRows(
     [
       "#######",
@@ -148,11 +148,11 @@ function createBoulderLandingGame(
   }
 }
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GeneratedMap {
+): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

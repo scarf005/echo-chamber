@@ -31,7 +31,7 @@ Deno.bench("auto-move path cached lookup", () => {
   findAutoMovePath(game, destination)
 })
 
-function pickDestination() {
+const pickDestination = () => {
   for (let y = game.map.height - 1; y >= 0; y -= 1) {
     for (let x = game.map.width - 1; x >= 0; x -= 1) {
       const point = { x, y }

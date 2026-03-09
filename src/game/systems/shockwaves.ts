@@ -23,7 +23,7 @@ import {
   type TileKind,
 } from "../mapgen.ts"
 
-export function stepShockwaves(
+export const stepShockwaves = (
   map: GeneratedMap,
   waves: Shockwave[],
   spawnedWaves: Shockwave[],
@@ -35,7 +35,7 @@ export function stepShockwaves(
   front: FadeCell[]
   revealedTiles: TileReveal[]
   revealedEntities: EntityReveal[]
-} {
+} => {
   const front = new Map<number, FadeCell>()
   const revealedTiles = new Map<number, TileKind>()
   const revealedEntities = new Map<string, EntityReveal>()
@@ -98,14 +98,14 @@ export function stepShockwaves(
   }
 }
 
-export function previewShockwaveEntityReveals(
+export const previewShockwaveEntityReveals = (
   map: GeneratedMap,
   waves: Shockwave[],
   spawnedWaves: Shockwave[],
   dust: FadeCell[],
   trails: FadeCell[],
   revealableEntities: RevealableEntity[],
-): EntityReveal[] {
+): EntityReveal[] => {
   const revealedEntities = new Map<string, EntityReveal>()
   const dustByIndex = indexAlphaLookup(dust)
   const entitiesByIndex = buildEntitiesByIndex(map.width, revealableEntities)
@@ -153,7 +153,7 @@ export function previewShockwaveEntityReveals(
   return Array.from(revealedEntities.values())
 }
 
-export function didShockwaveReachPointThisTurn(
+export const didShockwaveReachPointThisTurn = (
   map: GeneratedMap,
   wave: Shockwave,
   dust: FadeCell[],
@@ -161,7 +161,7 @@ export function didShockwaveReachPointThisTurn(
   revealableEntities: RevealableEntity[],
   point: Point,
   spawnedThisTurn: boolean,
-): boolean {
+): boolean => {
   const pointIndex = indexForPoint(map.width, point)
   const dustByIndex = indexAlphaLookup(dust)
   const entitiesByIndex = buildEntitiesByIndex(map.width, revealableEntities)
@@ -183,7 +183,7 @@ export function didShockwaveReachPointThisTurn(
   return trace.front.has(pointIndex)
 }
 
-function advanceShockwave(
+const advanceShockwave = (
   map: GeneratedMap,
   wave: Shockwave,
   dustByIndex: Map<number, number>,
@@ -195,7 +195,7 @@ function advanceShockwave(
   nextWaves: Shockwave[],
   senderId: string,
   spawnedThisTurn: boolean,
-): void {
+): void => {
   const nextRadius = Math.min(MAX_SONAR_RADIUS, wave.radius + SONAR_SPEED)
   const trace = traceWaveBand(
     map,
@@ -227,7 +227,7 @@ function advanceShockwave(
   }
 }
 
-function traceWaveBand(
+const traceWaveBand = (
   map: GeneratedMap,
   wave: Shockwave,
   previousRadius: number,
@@ -239,7 +239,7 @@ function traceWaveBand(
   front: Map<number, number>
   revealedTiles: Map<number, TileKind>
   revealedEntities: Map<string, EntityRevealKind>
-} {
+} => {
   const front = new Map<number, number>()
   const revealedTiles = new Map<number, TileKind>()
   const revealedEntities = new Map<string, EntityRevealKind>()
@@ -328,11 +328,11 @@ function traceWaveBand(
   return { front, revealedTiles, revealedEntities }
 }
 
-function buildBlockerIndexes(
+const buildBlockerIndexes = (
   width: number,
   revealableEntities: RevealableEntity[],
   trails: FadeCell[],
-): Set<number> {
+): Set<number> => {
   const blockerIndexes = new Set<number>()
 
   for (const entity of revealableEntities) {
@@ -350,10 +350,10 @@ function buildBlockerIndexes(
   return blockerIndexes
 }
 
-function buildEntitiesByIndex(
+const buildEntitiesByIndex = (
   width: number,
   revealableEntities: RevealableEntity[],
-): Map<number, RevealableEntityKind[]> {
+): Map<number, RevealableEntityKind[]> => {
   return revealableEntities.reduce((lookup, entity) => {
     const index = indexForPoint(width, entity.position)
     const current = lookup.get(index) ?? []
@@ -362,12 +362,12 @@ function buildEntitiesByIndex(
   }, new Map<number, RevealableEntityKind[]>())
 }
 
-function revealEntitiesAtIndex(
+const revealEntitiesAtIndex = (
   reveals: Map<string, EntityRevealKind>,
   kinds: RevealableEntityKind[] | undefined,
   index: number,
   distance: number,
-): void {
+): void => {
   if (!kinds || distance >= SONAR_ENTITY_IDENTIFY_RADIUS) {
     return
   }
@@ -383,9 +383,9 @@ function revealEntitiesAtIndex(
   }
 }
 
-function toEntityRevealKind(
+const toEntityRevealKind = (
   kind: RevealableEntityKind,
-): EntityRevealKind | null {
+): EntityRevealKind | null => {
   switch (kind) {
     case "player":
       return "player"
@@ -402,19 +402,19 @@ function toEntityRevealKind(
   }
 }
 
-function waveAlpha(distance: number): number {
+const waveAlpha = (distance: number): number => {
   return Math.max(
     0.18,
     Number((1 - distance / (MAX_SONAR_RADIUS + 1)).toFixed(3)),
   )
 }
 
-function mergeFrontCell(
+const mergeFrontCell = (
   front: Map<number, FadeCell>,
   index: number,
   alpha: number,
   requiresVisibility: boolean,
-): void {
+): void => {
   const current = front.get(index)
 
   if (!current) {

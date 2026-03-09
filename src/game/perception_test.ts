@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assert, assertEquals } from "jsr:@std/assert"
+import { assert, assertEquals } from "@std/assert"
 
 import { type GameState, revealMap } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
@@ -17,7 +17,7 @@ Deno.test("revealMap remembers the full terrain layout as fog-of-war", () => {
   assertEquals(game.memory.some((tile) => tile === null), true)
 })
 
-function createPerceptionTestGame(): GameState {
+const createPerceptionTestGame = (): GameState => {
   const map = createMapFromRows(
     [
       "#####",
@@ -61,11 +61,11 @@ function createPerceptionTestGame(): GameState {
   }
 }
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GeneratedMap {
+): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

@@ -24,16 +24,15 @@ import {
   cloneHostileSubmarine,
   deltaForDirection,
   indexForPoint,
-  pointsEqual,
 } from "../helpers.ts"
 import { type GeneratedMap, type Point, tileAt } from "../mapgen.ts"
 import { detonateTorpedo } from "./destruction.ts"
 
 const EXPLOSION_DAMAGE_RADIUS = Math.max(2, TORPEDO_BLAST_RADIUS)
 
-function projectileTrailSource(
+const projectileTrailSource = (
   senderId: string,
-): "player-projectile" | "enemy-projectile" {
+): "player-projectile" | "enemy-projectile" => {
   return senderId === "player" ? "player-projectile" : "enemy-projectile"
 }
 
@@ -53,7 +52,7 @@ interface ExplosionResolution {
   screenShake: number
 }
 
-export function stepTorpedoes(
+export const stepTorpedoes = (
   map: GeneratedMap,
   torpedoes: Torpedo[],
   trails: FadeCell[],
@@ -81,7 +80,7 @@ export function stepTorpedoes(
   hostileSubmarines: HostileSubmarine[]
   playerEntityHits: number
   playerDestroyed: boolean
-} {
+} => {
   const nextTorpedoes: Torpedo[] = []
   let nextTrails = trails
   let nextCracks = cracks
@@ -238,7 +237,7 @@ export function stepTorpedoes(
   }
 }
 
-export function stepDepthCharges(
+export const stepDepthCharges = (
   map: GeneratedMap,
   depthCharges: DepthCharge[],
   trails: FadeCell[],
@@ -266,7 +265,7 @@ export function stepDepthCharges(
   hostileSubmarines: HostileSubmarine[]
   playerEntityHits: number
   playerDestroyed: boolean
-} {
+} => {
   const nextDepthCharges: DepthCharge[] = []
   let nextTrails = trails
   let nextCracks = cracks
@@ -428,7 +427,7 @@ export function stepDepthCharges(
   }
 }
 
-function detonateProjectile(
+const detonateProjectile = (
   map: GeneratedMap,
   impactPoint: Point,
   seedKey: string,
@@ -440,7 +439,7 @@ function detonateProjectile(
   fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
-): ExplosionResolution {
+): ExplosionResolution => {
   const explosion = detonateTorpedo(map, impactPoint, seedKey, structuralDamage)
   const nextFish = resolveFishBlastDamage(impactPoint, fish)
   const nextHostileSubmarines = resolveHostileBlastDamage(
@@ -482,14 +481,14 @@ function detonateProjectile(
   }
 }
 
-function hasProjectileTargetNearby(
+const hasProjectileTargetNearby = (
   point: Point,
   senderId: string,
   avoidFriendlyFire: boolean,
   fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
-): boolean {
+): boolean => {
   if (senderId === "player") {
     return hostileSubmarines.some((hostileSubmarine) =>
       chebyshevDistance(point, hostileSubmarine.position) <=
@@ -515,11 +514,11 @@ function hasProjectileTargetNearby(
   )
 }
 
-function resolveHostileBlastDamage(
+const resolveHostileBlastDamage = (
   impactPoint: Point,
   senderId: string,
   hostileSubmarines: HostileSubmarine[],
-): HostileSubmarine[] {
+): HostileSubmarine[] => {
   return hostileSubmarines.filter((hostileSubmarine) =>
     hostileSubmarine.id === senderId ||
     chebyshevDistance(impactPoint, hostileSubmarine.position) >
@@ -527,22 +526,25 @@ function resolveHostileBlastDamage(
   )
 }
 
-function resolveFishBlastDamage(impactPoint: Point, fish: Fish[]): Fish[] {
+const resolveFishBlastDamage = (impactPoint: Point, fish: Fish[]): Fish[] => {
   return fish.filter((candidate) =>
     chebyshevDistance(impactPoint, candidate.position) > EXPLOSION_DAMAGE_RADIUS
   )
 }
 
-function doesExplosionDestroyPlayer(
+const doesExplosionDestroyPlayer = (
   impactPoint: Point,
   senderId: string,
   player: Point,
-): boolean {
+): boolean => {
   return senderId !== "player" &&
     chebyshevDistance(impactPoint, player) <= EXPLOSION_DAMAGE_RADIUS
 }
 
-function createExplosionShockwave(origin: Point, senderId: string): Shockwave {
+const createExplosionShockwave = (
+  origin: Point,
+  senderId: string,
+): Shockwave => {
   return {
     origin: { ...origin },
     radius: 0,

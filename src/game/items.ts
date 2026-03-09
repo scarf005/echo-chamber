@@ -21,7 +21,6 @@ import type {
   TileReveal,
 } from "./model.ts"
 import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
-import { randomIntegerBetween } from "@std/random"
 
 const PICKUP_KINDS: PickupKind[] = [
   "torpedo-cache",
@@ -31,10 +30,10 @@ const PICKUP_KINDS: PickupKind[] = [
 const MIN_PICKUP_ANCHOR_DISTANCE = 5
 const MIN_PICKUP_SPACING = 6
 
-export function createCornerPickups(
+export const createCornerPickups = (
   map: GeneratedMap,
   seed: string,
-): PickupItem[] {
+): PickupItem[] => {
   const random = createDeterministicRandom(`${seed}:corner-pickups`)
   const candidates = shufflePoints(findCornerCandidates(map), random)
     .filter((point) => {
@@ -70,7 +69,7 @@ export function createCornerPickups(
   }))
 }
 
-export function collectPickups(
+export const collectPickups = (
   game: GameState,
   player: Point,
   pickups: PickupItem[],
@@ -80,7 +79,7 @@ export function collectPickups(
   depthChargeAmmo: number
   tileReveals: TileReveal[]
   message: LogMessage | null
-} {
+} => {
   const collected = pickups.filter((pickup) =>
     isSamePoint(pickup.position, player)
   )
@@ -108,14 +107,12 @@ export function collectPickups(
       messages.push(
         recovered > 0
           ? createLogMessage(
-            i18n._("Recovered {recovered} torpedoes.", { recovered }),
-            "neutral",
             () => i18n._("Recovered {recovered} torpedoes.", { recovered }),
+            "neutral",
           )
           : createLogMessage(
-            i18n._("Torpedo tubes already full."),
-            "neutral",
             () => i18n._("Torpedo tubes already full."),
+            "neutral",
           ),
       )
       continue
@@ -131,14 +128,12 @@ export function collectPickups(
       messages.push(
         recovered > 0
           ? createLogMessage(
-            i18n._("Recovered {recovered} depth charges.", { recovered }),
-            "neutral",
             () => i18n._("Recovered {recovered} depth charges.", { recovered }),
+            "neutral",
           )
           : createLogMessage(
-            i18n._("Depth charge racks already full."),
-            "neutral",
             () => i18n._("Depth charge racks already full."),
+            "neutral",
           ),
       )
       continue
@@ -149,11 +144,7 @@ export function collectPickups(
       createMapReveal(game, pickup.position),
     )
     messages.push(
-      createLogMessage(
-        i18n._("Recovered a survey map."),
-        "neutral",
-        () => i18n._("Recovered a survey map."),
-      ),
+      createLogMessage(() => i18n._("Recovered a survey map."), "neutral"),
     )
   }
 
@@ -163,14 +154,16 @@ export function collectPickups(
     depthChargeAmmo,
     tileReveals,
     message: messages.length === 1 ? messages[0] : createLogMessage(
-      messages.map((entry) => resolveLogMessageText(entry)).join(" "),
-      "neutral",
       () => messages.map((entry) => resolveLogMessageText(entry)).join(" "),
+      "neutral",
     ),
   }
 }
 
-function createMapReveal(game: GameState, pickupPosition: Point): TileReveal[] {
+const createMapReveal = (
+  game: GameState,
+  pickupPosition: Point,
+): TileReveal[] => {
   const random = createDeterministicRandom(
     `${game.seed}:map:${game.turn}:${pickupPosition.x}:${pickupPosition.y}`,
   )
@@ -235,7 +228,7 @@ function createMapReveal(game: GameState, pickupPosition: Point): TileReveal[] {
   return reveals
 }
 
-function findCornerCandidates(map: GeneratedMap): Point[] {
+const findCornerCandidates = (map: GeneratedMap): Point[] => {
   const candidates: Point[] = []
 
   for (let y = 1; y < map.height - 1; y += 1) {
@@ -268,10 +261,10 @@ function findCornerCandidates(map: GeneratedMap): Point[] {
   return candidates
 }
 
-function mergeTileReveals(
+const mergeTileReveals = (
   current: TileReveal[],
   next: TileReveal[],
-): TileReveal[] {
+): TileReveal[] => {
   const merged = new Map<number, TileReveal>()
 
   for (const reveal of [...current, ...next]) {
@@ -281,6 +274,6 @@ function mergeTileReveals(
   return Array.from(merged.values())
 }
 
-function isSamePoint(a: Point, b: Point): boolean {
+const isSamePoint = (a: Point, b: Point): boolean => {
   return a.x === b.x && a.y === b.y
 }

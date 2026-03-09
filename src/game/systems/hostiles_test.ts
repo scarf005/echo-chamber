@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import { stepHostileSubmarines } from "./hostiles.ts"
 import type { HostileSubmarine } from "../model.ts"
@@ -396,11 +396,11 @@ Deno.test("hunters hold position and drop depth charges on fresh deeper pursuit 
   assertEquals(next.hostileSubmarines[0].depthChargeAmmo, 5)
 })
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GeneratedMap {
+): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

@@ -11,7 +11,7 @@ import { generateMap } from "./mapgen.ts"
 import { spawnFish } from "./systems/fish.ts"
 import { spawnHostileSubmarines } from "./systems/hostiles.ts"
 
-export function createGame(options: GameOptions = {}): GameState {
+export const createGame = (options: GameOptions = {}): GameState => {
   const map = generateMap({
     width: options.width ?? 144,
     height: options.height ?? 84,

@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assert, assertEquals, assertNotEquals } from "jsr:@std/assert"
+import { assert, assertEquals, assertNotEquals } from "@std/assert"
 
 import {
   type GeneratedMap,
@@ -199,7 +199,7 @@ Deno.test("generateMap adds hydrothermal vents on the seafloor", () => {
   assert(ventCount > 0)
 })
 
-function pathExists(map: GeneratedMap): boolean {
+const pathExists = (map: GeneratedMap): boolean => {
   const queue: Point[] = [{ ...map.spawn }]
   const seen = new Set<number>()
   const directions: Point[] = [
@@ -250,7 +250,7 @@ function pathExists(map: GeneratedMap): boolean {
   return false
 }
 
-function countPassableTilesInRow(map: GeneratedMap, y: number): number {
+const countPassableTilesInRow = (map: GeneratedMap, y: number): number => {
   let count = 0
 
   for (let x = 1; x < map.width - 1; x += 1) {

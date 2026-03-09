@@ -2,10 +2,10 @@ import { i18n } from "../i18n.ts"
 import type { GameState } from "./game.ts"
 import type { Point } from "./mapgen.ts"
 
-export function exactEntityNameAtPoint(
+export const exactEntityNameAtPoint = (
   game: GameState,
   point: Point,
-): string | null {
+): string | null => {
   if (point.x === game.player.x && point.y === game.player.y) {
     return i18n._("player submarine")
   }
@@ -65,6 +65,6 @@ export function exactEntityNameAtPoint(
   return null
 }
 
-export function inSightReasonForEntity(name: string): string {
+export const inSightReasonForEntity = (name: string): string => {
   return i18n._("{name} in sight", { name })
 }

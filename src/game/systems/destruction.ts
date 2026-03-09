@@ -18,7 +18,7 @@ import { carveDisc, type GeneratedMap, type Point, tileAt } from "../mapgen.ts"
 const MAX_FLOATING_COMPONENT_TILES = 35
 const FLOATING_COMPONENT_RELEASE_DISTANCE = 4
 
-export function detonateTorpedo(
+export const detonateTorpedo = (
   map: GeneratedMap,
   impactPoint: Point,
   seedKey: string,
@@ -29,7 +29,7 @@ export function detonateTorpedo(
   fallingBoulders: FallingBoulder[]
   screenShake: number
   structuralDamage: number[]
-} {
+} => {
   const random = createDeterministicRandom(seedKey)
   const cracks: CrackCell[] = []
   const collapseSeeds: Point[] = [{ ...impactPoint }]
@@ -117,7 +117,7 @@ export function detonateTorpedo(
   }
 }
 
-function canDislodgeBoulder(map: GeneratedMap, point: Point): boolean {
+const canDislodgeBoulder = (map: GeneratedMap, point: Point): boolean => {
   if (
     point.x <= 0 || point.x >= map.width - 1 || point.y <= 0 ||
     point.y >= map.height - 2
@@ -129,7 +129,7 @@ function canDislodgeBoulder(map: GeneratedMap, point: Point): boolean {
     tileAt(map, point.x, point.y + 1) === "water"
 }
 
-function crackDirections(random: () => number): Point[] {
+const crackDirections = (random: () => number): Point[] => {
   const extras = shufflePoints([
     { x: -1, y: -1 },
     { x: 1, y: -1 },
@@ -142,7 +142,7 @@ function crackDirections(random: () => number): Point[] {
   return [{ x: 0, y: -1 }, { x: 0, y: 1 }, ...extras.slice(0, 2)]
 }
 
-function crackGlyphForDirection(direction: Point): string {
+const crackGlyphForDirection = (direction: Point): string => {
   if (direction.x === 0) {
     return "|"
   }
@@ -154,7 +154,7 @@ function crackGlyphForDirection(direction: Point): string {
   return direction.x === direction.y ? "\\" : "/"
 }
 
-function baseCrackDirections(): Point[] {
+const baseCrackDirections = (): Point[] => {
   return [
     { x: 0, y: -1 },
     { x: 0, y: 1 },
@@ -167,11 +167,11 @@ function baseCrackDirections(): Point[] {
   ]
 }
 
-function releaseFloatingTerrain(
+const releaseFloatingTerrain = (
   map: GeneratedMap,
   seeds: Point[],
   structuralDamage: number[],
-): FallingBoulder[] {
+): FallingBoulder[] => {
   const connected = new Set<number>()
   const visited = new Set<number>()
   const queue: Point[] = []
@@ -260,11 +260,11 @@ function releaseFloatingTerrain(
   return fallingBoulders
 }
 
-function applyStructuralDamageSeed(
+const applyStructuralDamageSeed = (
   map: GeneratedMap,
   structuralDamage: number[],
   seeds: Point[],
-): void {
+): void => {
   for (const seed of seeds) {
     for (const point of [seed, ...wallNeighbors(seed)]) {
       if (
@@ -284,10 +284,10 @@ function applyStructuralDamageSeed(
   }
 }
 
-function canReleaseWallComponent(
+const canReleaseWallComponent = (
   component: number[],
   structuralDamage: number[],
-): boolean {
+): boolean => {
   if (component.length <= MAX_FLOATING_COMPONENT_TILES) {
     return true
   }
@@ -301,11 +301,11 @@ function canReleaseWallComponent(
     STRUCTURAL_DAMAGE_COLLAPSE_FACTOR * damage > component.length
 }
 
-function collectWallComponent(
+const collectWallComponent = (
   map: GeneratedMap,
   start: Point,
   connected: Set<number>,
-): number[] {
+): number[] => {
   const component: number[] = []
   const queue = [{ ...start }]
   const seen = new Set<number>()
@@ -346,11 +346,11 @@ function collectWallComponent(
   return component
 }
 
-function componentTouchesSeedArea(
+const componentTouchesSeedArea = (
   component: number[],
   width: number,
   seeds: Point[],
-): boolean {
+): boolean => {
   return component.some((cellIndex) => {
     const point = {
       x: cellIndex % width,
@@ -364,12 +364,12 @@ function componentTouchesSeedArea(
   })
 }
 
-function pushBorderWall(
+const pushBorderWall = (
   map: GeneratedMap,
   connected: Set<number>,
   queue: Point[],
   point: Point,
-): void {
+): void => {
   if (tileAt(map, point.x, point.y) !== "wall") {
     return
   }
@@ -384,7 +384,7 @@ function pushBorderWall(
   queue.push(point)
 }
 
-function wallNeighbors(point: Point): Point[] {
+const wallNeighbors = (point: Point): Point[] => {
   return [
     { x: point.x - 1, y: point.y - 1 },
     { x: point.x, y: point.y - 1 },

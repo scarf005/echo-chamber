@@ -1,4 +1,4 @@
-import { Map as RotMap, RNG } from "npm:rot-js@2.2.1"
+import { Map as RotMap, RNG } from "rot-js"
 
 export type TileKind = "wall" | "water" | "kelp" | "vent"
 export type BiomeKind = "vast" | "regular" | "tight" | "chaotic" | "wavy"
@@ -52,7 +52,7 @@ const DIRECTIONS: Point[] = [
   { x: 0, y: -1 },
 ]
 
-export function generateMap(options: MapGenOptions = {}): GeneratedMap {
+export const generateMap = (options: MapGenOptions = {}): GeneratedMap => {
   const width = clampInteger(options.width ?? DEFAULT_WIDTH, MIN_WIDTH, 160)
   const height = clampInteger(options.height ?? DEFAULT_HEIGHT, MIN_HEIGHT, 96)
   const seed = normalizeSeed(options.seed)
@@ -164,11 +164,11 @@ export function generateMap(options: MapGenOptions = {}): GeneratedMap {
   }
 }
 
-export function tileAt(
+export const tileAt = (
   map: GeneratedMap,
   x: number,
   y: number,
-): TileKind | null {
+): TileKind | null => {
   if (x < 0 || x >= map.width || y < 0 || y >= map.height) {
     return null
   }
@@ -176,15 +176,15 @@ export function tileAt(
   return map.tiles[indexForTile(map.width, x, y)]
 }
 
-export function isPassableTile(tile: TileKind | null): boolean {
+export const isPassableTile = (tile: TileKind | null): boolean => {
   return tile === "water" || tile === "kelp" || tile === "vent"
 }
 
-export function isSonarBlockingTile(tile: TileKind | null): boolean {
+export const isSonarBlockingTile = (tile: TileKind | null): boolean => {
   return tile === "wall" || tile === "kelp"
 }
 
-export function clearKelpStrandAt(map: GeneratedMap, point: Point): boolean {
+export const clearKelpStrandAt = (map: GeneratedMap, point: Point): boolean => {
   if (tileAt(map, point.x, point.y) !== "kelp") {
     return false
   }
@@ -203,7 +203,7 @@ export function clearKelpStrandAt(map: GeneratedMap, point: Point): boolean {
   return cleared
 }
 
-export function mapToAscii(map: GeneratedMap): string {
+export const mapToAscii = (map: GeneratedMap): string => {
   const rows: string[] = []
 
   for (let y = 0; y < map.height; y += 1) {
@@ -236,13 +236,13 @@ export function mapToAscii(map: GeneratedMap): string {
   return rows.join("\n")
 }
 
-export function carveDisc(
+export const carveDisc = (
   tiles: TileKind[],
   width: number,
   height: number,
   center: Point,
   radius: number,
-): void {
+): void => {
   const radiusSquared = radius * radius
 
   for (let y = center.y - radius; y <= center.y + radius; y += 1) {
@@ -260,14 +260,14 @@ export function carveDisc(
   }
 }
 
-export function carveLine(
+export const carveLine = (
   tiles: TileKind[],
   width: number,
   height: number,
   start: Point,
   end: Point,
   radius: number,
-): void {
+): void => {
   const steps = Math.max(
     Math.abs(end.x - start.x),
     Math.abs(end.y - start.y),
@@ -289,12 +289,12 @@ export function carveLine(
   }
 }
 
-function findEdgeAnchor(
+const findEdgeAnchor = (
   tiles: TileKind[],
   width: number,
   height: number,
   side: "left" | "right",
-): Point | null {
+): Point | null => {
   let bestPoint: Point | null = null
   let bestScore = Number.POSITIVE_INFINITY
   const midpoint = Math.floor(height / 2)
@@ -318,25 +318,25 @@ function findEdgeAnchor(
   return bestPoint
 }
 
-function carveFallbackRoute(
+const carveFallbackRoute = (
   tiles: TileKind[],
   width: number,
   height: number,
   start: Point,
   end: Point,
-): void {
+): void => {
   carveLine(tiles, width, height, start, end, 1)
   carveDisc(tiles, width, height, start, 1)
   carveDisc(tiles, width, height, end, 1)
 }
 
-function addKelpOnRock(
+const addKelpOnRock = (
   tiles: TileKind[],
   width: number,
   height: number,
   seed: string,
   protectedPoints: Point[],
-): void {
+): void => {
   for (let y = 2; y < height - 1; y += 1) {
     for (let x = 1; x < width - 1; x += 1) {
       const anchorIndex = indexForTile(width, x, y)
@@ -383,13 +383,13 @@ function addKelpOnRock(
   }
 }
 
-function addRockSpikes(
+const addRockSpikes = (
   tiles: TileKind[],
   width: number,
   height: number,
   seed: string,
   protectedPoints: Point[],
-): void {
+): void => {
   for (let y = 1; y < height - 1; y += 1) {
     for (let x = 2; x < width - 2; x += 1) {
       maybeGrowStalactite(tiles, width, height, seed, x, y, protectedPoints)
@@ -398,7 +398,7 @@ function addRockSpikes(
   }
 }
 
-function maybeGrowStalactite(
+const maybeGrowStalactite = (
   tiles: TileKind[],
   width: number,
   height: number,
@@ -406,7 +406,7 @@ function maybeGrowStalactite(
   x: number,
   y: number,
   protectedPoints: Point[],
-): void {
+): void => {
   if (
     tiles[indexForTile(width, x, y)] !== "wall" ||
     tiles[indexForTile(width, x, y + 1)] !== "water" ||
@@ -440,15 +440,15 @@ function maybeGrowStalactite(
   }
 }
 
-function maybeGrowStalagmite(
+const maybeGrowStalagmite = (
   tiles: TileKind[],
   width: number,
-  height: number,
+  _height: number,
   seed: string,
   x: number,
   y: number,
   protectedPoints: Point[],
-): void {
+): void => {
   if (
     tiles[indexForTile(width, x, y)] !== "wall" ||
     tiles[indexForTile(width, x, y - 1)] !== "water" ||
@@ -481,13 +481,13 @@ function maybeGrowStalagmite(
   }
 }
 
-function addHydrothermalVents(
+const addHydrothermalVents = (
   tiles: TileKind[],
   width: number,
   height: number,
   seed: string,
   protectedPoints: Point[],
-): void {
+): void => {
   for (let y = 2; y < height - 2; y += 1) {
     for (let x = 2; x < width - 2; x += 1) {
       const tileIndex = indexForTile(width, x, y)
@@ -512,11 +512,11 @@ function addHydrothermalVents(
   }
 }
 
-function enforceBorderWalls(
+const enforceBorderWalls = (
   tiles: TileKind[],
   width: number,
   height: number,
-): void {
+): void => {
   for (let x = 0; x < width; x += 1) {
     tiles[indexForTile(width, x, 0)] = "wall"
     tiles[indexForTile(width, x, height - 1)] = "wall"
@@ -528,23 +528,23 @@ function enforceBorderWalls(
   }
 }
 
-function hasPath(
+const hasPath = (
   tiles: TileKind[],
   width: number,
   height: number,
   start: Point,
   end: Point,
-): boolean {
+): boolean => {
   return computeRouteLength(tiles, width, height, start, end) !== null
 }
 
-function computeRouteLength(
+const computeRouteLength = (
   tiles: TileKind[],
   width: number,
   height: number,
   start: Point,
   end: Point,
-): number | null {
+): number | null => {
   const queue: Array<{ point: Point; distance: number }> = [{
     point: { ...start },
     distance: 0,
@@ -589,32 +589,32 @@ function computeRouteLength(
   return null
 }
 
-function indexForTile(width: number, x: number, y: number): number {
+const indexForTile = (width: number, x: number, y: number): number => {
   return y * width + x
 }
 
-function isInterior(
+const isInterior = (
   width: number,
   height: number,
   x: number,
   y: number,
-): boolean {
+): boolean => {
   return x > 0 && x < width - 1 && y > 0 && y < height - 1
 }
 
-function isSamePoint(a: Point, b: Point): boolean {
+const isSamePoint = (a: Point, b: Point): boolean => {
   return a.x === b.x && a.y === b.y
 }
 
-function isProtectedPoint(
+const isProtectedPoint = (
   x: number,
   y: number,
   protectedPoints: Point[],
-): boolean {
+): boolean => {
   return protectedPoints.some((point) => point.x === x && point.y === y)
 }
 
-function normalizeSeed(seed: number | string | undefined): string {
+const normalizeSeed = (seed: number | string | undefined): string => {
   if (seed === undefined) {
     return DEFAULT_SEED
   }
@@ -622,7 +622,7 @@ function normalizeSeed(seed: number | string | undefined): string {
   return String(seed)
 }
 
-function hashSeed(seed: string): number {
+const hashSeed = (seed: string): number => {
   let hash = 2166136261
 
   for (const character of seed) {
@@ -633,31 +633,31 @@ function hashSeed(seed: string): number {
   return hash >>> 0
 }
 
-function kelpHash(seed: string, x: number, y: number): number {
+const kelpHash = (seed: string, x: number, y: number): number => {
   return hashSeed(`${seed}:kelp:${x}:${y}`) / 0xffffffff
 }
 
-function spikeHash(
+const spikeHash = (
   seed: string,
   axis: "ceiling" | "floor" | "ceiling-length" | "floor-length",
   x: number,
   y: number,
-): number {
+): number => {
   return hashSeed(`${seed}:spike:${axis}:${x}:${y}`) / 0xffffffff
 }
 
-function ventHash(seed: string, x: number, y: number): number {
+const ventHash = (seed: string, x: number, y: number): number => {
   return hashSeed(`${seed}:vent:${x}:${y}`) / 0xffffffff
 }
 
-function clamp(value: number, min: number, max: number): number {
+const clamp = (value: number, min: number, max: number): number => {
   return Math.min(Math.max(value, min), max)
 }
 
-function clampInteger(value: number, min: number, max: number): number {
+const clampInteger = (value: number, min: number, max: number): number => {
   return Math.round(clamp(value, min, max))
 }
 
-function lerp(start: number, end: number, amount: number): number {
+const lerp = (start: number, end: number, amount: number): number => {
   return start + (end - start) * amount
 }

@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assert, assertEquals } from "jsr:@std/assert"
+import { assert, assertEquals } from "@std/assert"
 
 import { type GameState, holdPosition } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
@@ -69,7 +69,7 @@ Deno.test("vent plumes drop stale sonar blockers when the plume shortens", () =>
   assertEquals(second.trails.some((cell) => cell.index === staleIndex), false)
 })
 
-function createBubbleBlockingSonarGame(): GameState {
+const createBubbleBlockingSonarGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -112,7 +112,7 @@ function createBubbleBlockingSonarGame(): GameState {
   }
 }
 
-function createKelpBlockingSonarGame(): GameState {
+const createKelpBlockingSonarGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -155,7 +155,7 @@ function createKelpBlockingSonarGame(): GameState {
   }
 }
 
-function createVentBlockingSonarGame(): GameState {
+const createVentBlockingSonarGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -198,7 +198,7 @@ function createVentBlockingSonarGame(): GameState {
   }
 }
 
-function createTallVentBlockingSonarGame(seed: string): GameState {
+const createTallVentBlockingSonarGame = (seed: string): GameState => {
   const map = createMapFromRows(
     [
       "#########",
@@ -247,7 +247,7 @@ function createTallVentBlockingSonarGame(seed: string): GameState {
   }
 }
 
-function findShrinkingVentSeed(vent: Point): string {
+const findShrinkingVentSeed = (vent: Point): string => {
   for (let attempt = 0; attempt < 256; attempt += 1) {
     const seed = `vent-plume-${attempt}`
 
@@ -259,11 +259,11 @@ function findShrinkingVentSeed(vent: Point): string {
   throw new Error("Expected to find a shrinking vent plume seed")
 }
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GeneratedMap {
+): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

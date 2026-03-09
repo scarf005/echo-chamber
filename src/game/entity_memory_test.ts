@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import { type GameState, holdPosition } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
@@ -83,7 +83,7 @@ Deno.test("passive detection radius distinguishes fish as non-hostile", () => {
   assertEquals(next.entityMemory?.[fishIndex], "non-hostile")
 })
 
-function createSonarEntityMemoryGame(): GameState {
+const createSonarEntityMemoryGame = (): GameState => {
   const map = createMapFromRows(
     [
       "############",
@@ -142,7 +142,7 @@ function createSonarEntityMemoryGame(): GameState {
   }
 }
 
-function createSonarIdentificationRangeGame(): GameState {
+const createSonarIdentificationRangeGame = (): GameState => {
   const map = createMapFromRows(
     [
       "################",
@@ -204,7 +204,7 @@ function createSonarIdentificationRangeGame(): GameState {
   }
 }
 
-function createPassiveFishIdentificationGame(): GameState {
+const createPassiveFishIdentificationGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -256,11 +256,11 @@ function createPassiveFishIdentificationGame(): GameState {
   }
 }
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GeneratedMap {
+): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

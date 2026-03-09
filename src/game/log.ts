@@ -1,69 +1,46 @@
 import { i18n } from "../i18n.ts"
+import { partition } from "@std/collections"
 import type { GameState, LogMessage, LogMessageTone } from "./model.ts"
 
 const logMessageResolvers = new WeakMap<LogMessage, () => string>()
+type LogMessageSource = string | (() => string)
 
-const INITIAL_MISSION_MESSAGE = createLogMessage(
+export const createLogMessage = (
+  messageSource: LogMessageSource,
+  type: LogMessageTone = "neutral",
+): LogMessage => {
+  const message = typeof messageSource === "function"
+    ? messageSource()
+    : messageSource
+  const entry: LogMessage = { message, type }
+
+  if (typeof messageSource === "function") {
+    logMessageResolvers.set(entry, messageSource)
+  }
+
+  return entry
+}
+
+const INITIAL_MISSION_MESSAGE = createLogMessage(() =>
   i18n._(
     "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
-  ),
-  "neutral",
-  () =>
-    i18n._(
-      "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
-    ),
-)
+  ), "neutral")
 const HELP_LOG_MESSAGES = [
+  createLogMessage(() => i18n._("Move with WASD or arrows."), "neutral"),
+  createLogMessage(() => i18n._("Click once to plot a course."), "neutral"),
   createLogMessage(
-    i18n._("Move with WASD or arrows."),
-    "neutral",
-    () => i18n._("Move with WASD or arrows."),
-  ),
-  createLogMessage(
-    i18n._("Click once to plot a course."),
-    "neutral",
-    () => i18n._("Click once to plot a course."),
-  ),
-  createLogMessage(
-    i18n._("Click the same tile again to engage auto-nav."),
-    "neutral",
     () => i18n._("Click the same tile again to engage auto-nav."),
-  ),
-  createLogMessage(
-    i18n._("Wait with ."),
     "neutral",
-    () => i18n._("Wait with ."),
   ),
-  createLogMessage(
-    i18n._("Launch torpedo with Z."),
-    "neutral",
-    () => i18n._("Launch torpedo with Z."),
-  ),
-  createLogMessage(
-    i18n._("Launch torpedo upwards with C."),
-    "neutral",
-    () => i18n._("Launch torpedo upwards with C."),
-  ),
-  createLogMessage(
-    i18n._("Drop depth charge with X."),
-    "neutral",
-    () => i18n._("Drop depth charge with X."),
-  ),
-  createLogMessage(
-    i18n._("Toggle display with M."),
-    "neutral",
-    () => i18n._("Toggle display with M."),
-  ),
-  createLogMessage(
+  createLogMessage(() => i18n._("Wait with ."), "neutral"),
+  createLogMessage(() => i18n._("Launch torpedo with Z."), "neutral"),
+  createLogMessage(() => i18n._("Launch torpedo upwards with C."), "neutral"),
+  createLogMessage(() => i18n._("Drop depth charge with X."), "neutral"),
+  createLogMessage(() => i18n._("Toggle display with M."), "neutral"),
+  createLogMessage(() =>
     i18n._(
       "When sunk, press R to restart. Use Options for restart or random run anytime.",
-    ),
-    "neutral",
-    () =>
-      i18n._(
-        "When sunk, press R to restart. Use Options for restart or random run anytime.",
-      ),
-  ),
+    ), "neutral"),
 ]
 export const MAX_LOG_MESSAGES = 200
 
@@ -71,34 +48,20 @@ export interface GroupedLogMessage extends LogMessage {
   count: number
 }
 
-export function createLogMessage(
-  message: string,
-  type: LogMessageTone = "neutral",
-  resolveMessage?: () => string,
-): LogMessage {
-  const entry: LogMessage = { message, type }
-
-  if (resolveMessage) {
-    logMessageResolvers.set(entry, resolveMessage)
-  }
-
-  return entry
-}
-
-export function createInitialLogs(): LogMessage[] {
+export const createInitialLogs = (): LogMessage[] => {
   return [INITIAL_MISSION_MESSAGE, ...HELP_LOG_MESSAGES].map((entry) =>
     cloneLogMessage(entry)
   )
 }
 
-export function createInitialMissionMessage(): string {
+export const createInitialMissionMessage = (): string => {
   return resolveLogMessageText(INITIAL_MISSION_MESSAGE)
 }
 
-export function withGameMessage(
+export const withGameMessage = (
   game: GameState,
   message: LogMessage | string,
-): GameState {
+): GameState => {
   const nextLog = typeof message === "string"
     ? createLogMessage(message)
     : message
@@ -121,9 +84,9 @@ export function withGameMessage(
   }
 }
 
-export function groupLogMessages(
+export const groupLogMessages = (
   messages: readonly LogMessage[],
-): GroupedLogMessage[] {
+): GroupedLogMessage[] => {
   return messages.reduce<GroupedLogMessage[]>((entries, message) => {
     const previous = entries.at(-1)
 
@@ -142,29 +105,32 @@ export function groupLogMessages(
   }, [])
 }
 
-export function groupVisibleLogMessages(
+export const groupVisibleLogMessages = (
   messages: readonly LogMessage[],
   includeAiMessages = false,
-): GroupedLogMessage[] {
+): GroupedLogMessage[] => {
+  const [visibleMessages] = partition(
+    messages,
+    (message: LogMessage) => message.type !== "ai",
+  )
+
   return groupLogMessages(
-    includeAiMessages
-      ? messages
-      : messages.filter((message) => message.type !== "ai"),
+    includeAiMessages ? messages : visibleMessages,
   )
 }
 
-export function formatGroupedLogMessage(entry: GroupedLogMessage): string {
+export const formatGroupedLogMessage = (entry: GroupedLogMessage): string => {
   const message = resolveLogMessageText(entry)
   return entry.count > 1 ? `${message} (x${entry.count})` : message
 }
 
-export function resolveLogMessageText(
+export const resolveLogMessageText = (
   entry: Pick<LogMessage, "message">,
-): string {
+): string => {
   return logMessageResolvers.get(entry as LogMessage)?.() ?? entry.message
 }
 
-function getLogMessageKey(entry: LogMessage | undefined): string {
+const getLogMessageKey = (entry: LogMessage | undefined): string => {
   if (!entry) {
     return ""
   }
@@ -172,21 +138,20 @@ function getLogMessageKey(entry: LogMessage | undefined): string {
   return resolveLogMessageText(entry)
 }
 
-function cloneLogMessage(
+const cloneLogMessage = (
   entry: LogMessage,
   message = entry.message,
-): LogMessage {
-  const clone = createLogMessage(
-    message,
-    entry.type,
-    logMessageResolvers.get(entry),
-  )
+): LogMessage => {
+  const resolver = logMessageResolvers.get(entry)
+  const clone = resolver && message === entry.message
+    ? createLogMessage(resolver, entry.type)
+    : createLogMessage(message, entry.type)
   return clone
 }
 
-function cloneGroupedLogMessage(
+const cloneGroupedLogMessage = (
   entry: LogMessage,
   count: number,
-): GroupedLogMessage {
+): GroupedLogMessage => {
   return Object.assign(cloneLogMessage(entry), { count })
 }

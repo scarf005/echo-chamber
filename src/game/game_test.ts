@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assert, assertEquals } from "jsr:@std/assert"
+import { assert, assertEquals } from "@std/assert"
 
 import { indexForPoint } from "./helpers.ts"
 import { WIN_SEED_MODE_HINT } from "../runSeed.ts"
@@ -1396,10 +1396,10 @@ Deno.test("map pickups reveal an unexplored terrain sector", () => {
   assertEquals(hasKnownTileBeyondPassiveRange(next), true)
 })
 
-function findFirstStepDirection(
+const findFirstStepDirection = (
   map: ReturnType<typeof createGame>["map"],
   start: Point,
-): Direction | null {
+): Direction | null => {
   const directions: Array<{ direction: Direction; point: Point }> = [
     { direction: "up", point: { x: start.x, y: start.y - 1 } },
     { direction: "down", point: { x: start.x, y: start.y + 1 } },
@@ -1416,7 +1416,7 @@ function findFirstStepDirection(
   return null
 }
 
-function directionBetween(from: Point, to: Point): Direction {
+const directionBetween = (from: Point, to: Point): Direction => {
   const direction = directionBetweenPoints(from, to)
 
   if (!direction) {
@@ -1426,7 +1426,7 @@ function directionBetween(from: Point, to: Point): Direction {
   return direction
 }
 
-function createFlatGame(overrides: Partial<GameState> = {}): GameState {
+const createFlatGame = (overrides: Partial<GameState> = {}): GameState => {
   const map = overrides.map ?? createMapFromRows(
     [
       "#######",
@@ -1479,7 +1479,7 @@ function createFlatGame(overrides: Partial<GameState> = {}): GameState {
   }
 }
 
-function createSonarWallGame(): GameState {
+const createSonarWallGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##########",
@@ -1527,7 +1527,7 @@ function createSonarWallGame(): GameState {
   }
 }
 
-function createTorpedoTestGame(): GameState {
+const createTorpedoTestGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -1575,7 +1575,7 @@ function createTorpedoTestGame(): GameState {
   }
 }
 
-function createLeftTorpedoTestGame(): GameState {
+const createLeftTorpedoTestGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -1618,7 +1618,7 @@ function createLeftTorpedoTestGame(): GameState {
   }
 }
 
-function createLongRangeTorpedoGame(): GameState {
+const createLongRangeTorpedoGame = (): GameState => {
   const map = createMapFromRows(
     [
       "################################",
@@ -1661,7 +1661,7 @@ function createLongRangeTorpedoGame(): GameState {
   }
 }
 
-function createTorpedoProximityGame(): GameState {
+const createTorpedoProximityGame = (): GameState => {
   const map = createMapFromRows(
     [
       "#########",
@@ -1711,7 +1711,7 @@ function createTorpedoProximityGame(): GameState {
   }
 }
 
-function createDepthChargeTestGame(): GameState {
+const createDepthChargeTestGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -1755,7 +1755,7 @@ function createDepthChargeTestGame(): GameState {
   }
 }
 
-function createDepthChargeProximityGame(): GameState {
+const createDepthChargeProximityGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -1806,7 +1806,7 @@ function createDepthChargeProximityGame(): GameState {
   }
 }
 
-function createCapsuleSonarGame(): GameState {
+const createCapsuleSonarGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -1849,7 +1849,7 @@ function createCapsuleSonarGame(): GameState {
   }
 }
 
-function createCaveInTestGame(): GameState {
+const createCaveInTestGame = (): GameState => {
   const map = createMapFromRows(
     [
       "################",
@@ -1897,7 +1897,7 @@ function createCaveInTestGame(): GameState {
   }
 }
 
-function createLargeDetachedChunkGame(): GameState {
+const createLargeDetachedChunkGame = (): GameState => {
   const map = createMapFromRows(
     [
       "################",
@@ -1945,7 +1945,7 @@ function createLargeDetachedChunkGame(): GameState {
   }
 }
 
-function createDustSonarGame(): GameState {
+const createDustSonarGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##########",
@@ -1990,7 +1990,7 @@ function createDustSonarGame(): GameState {
   }
 }
 
-function createHostileInvestigationGame(): GameState {
+const createHostileInvestigationGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##############",
@@ -2040,7 +2040,7 @@ function createHostileInvestigationGame(): GameState {
   }
 }
 
-function createHostileAttackGame(): GameState {
+const createHostileAttackGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##########",
@@ -2090,7 +2090,7 @@ function createHostileAttackGame(): GameState {
   }
 }
 
-function createHostileVlsAttackGame(): GameState {
+const createHostileVlsAttackGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##########",
@@ -2138,7 +2138,7 @@ function createHostileVlsAttackGame(): GameState {
   }
 }
 
-function createHostileAboveWithoutVlsGame(): GameState {
+const createHostileAboveWithoutVlsGame = (): GameState => {
   const game = createHostileVlsAttackGame()
 
   return {
@@ -2155,7 +2155,7 @@ function createHostileAboveWithoutVlsGame(): GameState {
   }
 }
 
-function createHostileDepthChargeAttackGame(): GameState {
+const createHostileDepthChargeAttackGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##########",
@@ -2203,7 +2203,7 @@ function createHostileDepthChargeAttackGame(): GameState {
   }
 }
 
-function createHostileUnsafeVlsCaveInGame(): GameState {
+const createHostileUnsafeVlsCaveInGame = (): GameState => {
   const map = createMapFromRows(
     [
       "###########",
@@ -2253,7 +2253,7 @@ function createHostileUnsafeVlsCaveInGame(): GameState {
   }
 }
 
-function createHostileSafeVlsCaveInGame(): GameState {
+const createHostileSafeVlsCaveInGame = (): GameState => {
   const game = createHostileUnsafeVlsCaveInGame()
 
   return {
@@ -2267,7 +2267,7 @@ function createHostileSafeVlsCaveInGame(): GameState {
   }
 }
 
-function createHostileDiagonalContactGame(): GameState {
+const createHostileDiagonalContactGame = (): GameState => {
   const map = createMapFromRows(
     [
       "############",
@@ -2316,7 +2316,7 @@ function createHostileDiagonalContactGame(): GameState {
   }
 }
 
-function createScoutSonarCadenceGame(): GameState {
+const createScoutSonarCadenceGame = (): GameState => {
   const map = createMapFromRows(
     [
       "############",
@@ -2364,7 +2364,7 @@ function createScoutSonarCadenceGame(): GameState {
   }
 }
 
-function createHostileProximityAttackGame(): GameState {
+const createHostileProximityAttackGame = (): GameState => {
   const map = createMapFromRows(
     [
       "############",
@@ -2413,7 +2413,7 @@ function createHostileProximityAttackGame(): GameState {
   }
 }
 
-function createHostileCeilingTrapGame(): GameState {
+const createHostileCeilingTrapGame = (): GameState => {
   const map = createMapFromRows(
     [
       "###########",
@@ -2463,7 +2463,7 @@ function createHostileCeilingTrapGame(): GameState {
   }
 }
 
-function createHostileNoEvidenceGame(): GameState {
+const createHostileNoEvidenceGame = (): GameState => {
   return {
     map: createMapFromRows(
       [
@@ -2508,7 +2508,7 @@ function createHostileNoEvidenceGame(): GameState {
   }
 }
 
-function createHunterReloadPursuitGame(): GameState {
+const createHunterReloadPursuitGame = (): GameState => {
   const game = createHostileAttackGame()
 
   return {
@@ -2525,7 +2525,7 @@ function createHunterReloadPursuitGame(): GameState {
   }
 }
 
-function createGuardPatrolGame(): GameState {
+const createGuardPatrolGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##################",
@@ -2576,7 +2576,7 @@ function createGuardPatrolGame(): GameState {
   }
 }
 
-function createGuardThreatGame(): GameState {
+const createGuardThreatGame = (): GameState => {
   const game = createGuardPatrolGame()
 
   return {
@@ -2594,7 +2594,7 @@ function createGuardThreatGame(): GameState {
   }
 }
 
-function createHostileBacktrackGame(): GameState {
+const createHostileBacktrackGame = (): GameState => {
   const map = createMapFromRows(
     [
       "############",
@@ -2644,7 +2644,7 @@ function createHostileBacktrackGame(): GameState {
   }
 }
 
-function createHunterSalvoOffsetGame(): GameState {
+const createHunterSalvoOffsetGame = (): GameState => {
   const map = createMapFromRows(
     [
       "####################",
@@ -2701,7 +2701,7 @@ function createHunterSalvoOffsetGame(): GameState {
   }
 }
 
-function createHostileRamGame(): GameState {
+const createHostileRamGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -2750,7 +2750,7 @@ function createHostileRamGame(): GameState {
   }
 }
 
-function createHostileDockCollisionGame(): GameState {
+const createHostileDockCollisionGame = (): GameState => {
   const map = createMapFromRows(
     [
       "#####",
@@ -2799,7 +2799,7 @@ function createHostileDockCollisionGame(): GameState {
   }
 }
 
-function createCapsuleAlarmGame(): GameState {
+const createCapsuleAlarmGame = (): GameState => {
   const map = createMapFromRows(
     [
       "################################",
@@ -2852,7 +2852,7 @@ function createCapsuleAlarmGame(): GameState {
   }
 }
 
-function createHostileCommunicationGame(): GameState {
+const createHostileCommunicationGame = (): GameState => {
   const map = createMapFromRows(
     [
       "################",
@@ -2911,7 +2911,7 @@ function createHostileCommunicationGame(): GameState {
   }
 }
 
-function createScoutFireBeforeRetreatGame(): GameState {
+const createScoutFireBeforeRetreatGame = (): GameState => {
   return createScoutRetreatGame({
     seed: "scout-fire-before-retreat-test",
     player: { x: 2, y: 1 },
@@ -2933,7 +2933,7 @@ function createScoutFireBeforeRetreatGame(): GameState {
   })
 }
 
-function createScoutFreshFixGame(): GameState {
+const createScoutFreshFixGame = (): GameState => {
   return createScoutRetreatGame({
     seed: "scout-fresh-fix-test",
     player: { x: 4, y: 2 },
@@ -2955,7 +2955,7 @@ function createScoutFreshFixGame(): GameState {
   })
 }
 
-function createScoutStaleFixGame(): GameState {
+const createScoutStaleFixGame = (): GameState => {
   return createScoutRetreatGame({
     seed: "scout-stale-fix-test",
     player: { x: 2, y: 1 },
@@ -2977,7 +2977,7 @@ function createScoutStaleFixGame(): GameState {
   })
 }
 
-function createScoutFriendlyFireGame(): GameState {
+const createScoutFriendlyFireGame = (): GameState => {
   return createScoutRetreatGame({
     seed: "scout-friendly-fire-test",
     player: { x: 1, y: 1 },
@@ -3011,7 +3011,7 @@ function createScoutFriendlyFireGame(): GameState {
   })
 }
 
-function createScoutRetreatGame(options: {
+const createScoutRetreatGame = (options: {
   seed: string
   player: Point
   scout: {
@@ -3025,7 +3025,7 @@ function createScoutRetreatGame(options: {
     vlsAmmo: number
     depthChargeAmmo: number
   }>
-}): GameState {
+}): GameState => {
   const map = createMapFromRows(
     [
       "##############",
@@ -3085,7 +3085,7 @@ function createScoutRetreatGame(options: {
   }
 }
 
-function createTurtleAwarenessGame(): GameState {
+const createTurtleAwarenessGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -3132,7 +3132,7 @@ function createTurtleAwarenessGame(): GameState {
   }
 }
 
-function createScoutExplorationPersistenceGame(): GameState {
+const createScoutExplorationPersistenceGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##################",
@@ -3195,7 +3195,7 @@ function createScoutExplorationPersistenceGame(): GameState {
   }
 }
 
-function createScoutExplorationFrontierGame(): GameState {
+const createScoutExplorationFrontierGame = (): GameState => {
   const map = createMapFromRows(
     [
       "##################",
@@ -3262,7 +3262,7 @@ function createScoutExplorationFrontierGame(): GameState {
   }
 }
 
-function createPlayerSonarAlertGame(): GameState {
+const createPlayerSonarAlertGame = (): GameState => {
   const map = createMapFromRows(
     [
       "####################",
@@ -3327,7 +3327,7 @@ function createPlayerSonarAlertGame(): GameState {
   }
 }
 
-function createPlayerSonarCueHostileGame(): GameState {
+const createPlayerSonarCueHostileGame = (): GameState => {
   const map = createMapFromRows(
     [
       "####################",
@@ -3384,7 +3384,7 @@ function createPlayerSonarCueHostileGame(): GameState {
   }
 }
 
-function createReversedPlayerSonarAlertGame(): GameState {
+const createReversedPlayerSonarAlertGame = (): GameState => {
   const game = createPlayerSonarAlertGame()
 
   return {
@@ -3402,7 +3402,7 @@ function createReversedPlayerSonarAlertGame(): GameState {
   }
 }
 
-function createBlockedPlayerSonarAlertGame(): GameState {
+const createBlockedPlayerSonarAlertGame = (): GameState => {
   const map = createMapFromRows(
     [
       "####################",
@@ -3459,7 +3459,7 @@ function createBlockedPlayerSonarAlertGame(): GameState {
   }
 }
 
-function createTurtleRelayGame(): GameState {
+const createTurtleRelayGame = (): GameState => {
   const game = createPlayerSonarAlertGame()
 
   return {
@@ -3481,7 +3481,7 @@ function createTurtleRelayGame(): GameState {
   }
 }
 
-function createEnemySonarVisibilityGame(blocked: boolean): GameState {
+const createEnemySonarVisibilityGame = (blocked: boolean): GameState => {
   const rows = blocked
     ? [
       "###########",
@@ -3535,7 +3535,7 @@ function createEnemySonarVisibilityGame(blocked: boolean): GameState {
   }
 }
 
-function createEnemySonarContactGame(): GameState {
+const createEnemySonarContactGame = (): GameState => {
   const map = createMapFromRows(
     [
       "###########",
@@ -3592,7 +3592,7 @@ function createEnemySonarContactGame(): GameState {
   }
 }
 
-function createNonHostileShockwaveGame(): GameState {
+const createNonHostileShockwaveGame = (): GameState => {
   const game = createEnemySonarContactGame()
 
   return {
@@ -3609,7 +3609,7 @@ function createNonHostileShockwaveGame(): GameState {
   }
 }
 
-function createEnemyExplosionVisibilityGame(): GameState {
+const createEnemyExplosionVisibilityGame = (): GameState => {
   const map = createMapFromRows(
     [
       "###########",
@@ -3661,18 +3661,16 @@ function createEnemyExplosionVisibilityGame(): GameState {
   }
 }
 
-function createHostile(
-  options: {
-    id: string
-    position: Point
-    archetype: "scout" | "hunter" | "turtle" | "guard"
-    target?: Point | null
-    lastKnownPlayerPosition?: Point | null
-    lastKnownPlayerTurn?: number | null
-    lastSonarTurn?: number
-    previousPosition?: Point | null
-  },
-): GameState["hostileSubmarines"][number] {
+const createHostile = (options: {
+  id: string
+  position: Point
+  archetype: "scout" | "hunter" | "turtle" | "guard"
+  target?: Point | null
+  lastKnownPlayerPosition?: Point | null
+  lastKnownPlayerTurn?: number | null
+  lastSonarTurn?: number
+  previousPosition?: Point | null
+}): GameState["hostileSubmarines"][number] => {
   const loadout = options.archetype === "scout"
     ? { torpedoAmmo: 2, vlsAmmo: 2, depthChargeAmmo: 2 }
     : options.archetype === "guard"
@@ -3703,10 +3701,10 @@ function createHostile(
   }
 }
 
-function createPickupGame(
+const createPickupGame = (
   kind: "torpedo-cache" | "depth-charge-cache" | "map",
   ammo: { torpedoAmmo: number; depthChargeAmmo: number },
-): GameState {
+): GameState => {
   const map = createMapFromRows(
     [
       "############",
@@ -3750,7 +3748,7 @@ function createPickupGame(
   }
 }
 
-function hasKnownTileBeyondPassiveRange(game: GameState): boolean {
+const hasKnownTileBeyondPassiveRange = (game: GameState): boolean => {
   return game.memory.some((tile, index) => {
     if (tile === null) {
       return false
@@ -3763,11 +3761,11 @@ function hasKnownTileBeyondPassiveRange(game: GameState): boolean {
   })
 }
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GeneratedMap {
+): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

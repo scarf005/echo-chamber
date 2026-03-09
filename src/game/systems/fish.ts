@@ -40,11 +40,11 @@ interface ResolvedFish extends Fish {
   travelTurnsRemaining: number
 }
 
-export function spawnFish(
+export const spawnFish = (
   map: GeneratedMap,
   seed: string,
   hostileSubmarines: HostileSubmarine[],
-): Fish[] {
+): Fish[] => {
   if (hostileSubmarines.length <= 0) {
     return []
   }
@@ -97,7 +97,7 @@ export function spawnFish(
   return fish
 }
 
-export function stepFish(
+export const stepFish = (
   map: GeneratedMap,
   fish: Fish[],
   context: FishTurnContext,
@@ -106,7 +106,7 @@ export function stepFish(
 ): {
   fish: Fish[]
   rammedFishCount: number
-} {
+} => {
   const currentFish = fish.map(hydrateFish)
   const occupied = new Set<string>([
     ...context.hostileSubmarines.map((hostileSubmarine) =>
@@ -148,7 +148,7 @@ export function stepFish(
   return { fish: nextFish, rammedFishCount }
 }
 
-function hydrateFish(fish: Fish): ResolvedFish {
+const hydrateFish = (fish: Fish): ResolvedFish => {
   return {
     ...fish,
     target: fish.target ? { ...fish.target } : null,
@@ -157,13 +157,13 @@ function hydrateFish(fish: Fish): ResolvedFish {
   }
 }
 
-function updateFish(
+const updateFish = (
   map: GeneratedMap,
   fish: ResolvedFish,
   player: Point,
   occupied: Set<string>,
   random: () => number,
-): Fish | null {
+): Fish | null => {
   let position = { ...fish.position }
   let facing = fish.facing
   let mode = fish.mode
@@ -307,12 +307,12 @@ function updateFish(
   }
 }
 
-function chooseWanderStep(
+const chooseWanderStep = (
   map: GeneratedMap,
   position: Point,
   occupied: Set<string>,
   random: () => number,
-): Point | null {
+): Point | null => {
   const options = shufflePoints(
     CARDINAL_STEPS.map((step) => ({
       x: position.x + step.x,
@@ -327,12 +327,12 @@ function chooseWanderStep(
   return options[0] ?? null
 }
 
-function chooseTravelTarget(
+const chooseTravelTarget = (
   map: GeneratedMap,
   position: Point,
   occupied: Set<string>,
   random: () => number,
-): Point | null {
+): Point | null => {
   const candidates = shufflePoints(allWaterTiles(map), random)
 
   for (const candidate of candidates) {
@@ -354,22 +354,22 @@ function chooseTravelTarget(
   return null
 }
 
-function findNextStepToward(
+const findNextStepToward = (
   map: GeneratedMap,
   start: Point,
   goal: Point,
   occupied: Set<string>,
-): Point | null {
+): Point | null => {
   const path = findPathToward(map, start, goal, occupied)
   return path.length > 1 ? path[1] : null
 }
 
-function findPathToward(
+const findPathToward = (
   map: GeneratedMap,
   start: Point,
   goal: Point,
   occupied: Set<string>,
-): Point[] {
+): Point[] => {
   const width = map.width
   const totalTiles = map.tiles.length
   const startIndex = indexForPoint(width, start)
@@ -441,10 +441,10 @@ function findPathToward(
   return path
 }
 
-function occupiedIndexesForPath(
+const occupiedIndexesForPath = (
   width: number,
   occupied: ReadonlySet<string>,
-): Set<number> {
+): Set<number> => {
   const indexes = new Set<number>()
 
   for (const pointKey of occupied) {
@@ -454,7 +454,7 @@ function occupiedIndexesForPath(
   return indexes
 }
 
-function pointFromKey(pointKey: string): Point {
+const pointFromKey = (pointKey: string): Point => {
   const separatorIndex = pointKey.indexOf(":")
   return {
     x: Number(pointKey.slice(0, separatorIndex)),
@@ -462,21 +462,21 @@ function pointFromKey(pointKey: string): Point {
   }
 }
 
-function pointFromIndex(width: number, index: number): Point {
+const pointFromIndex = (width: number, index: number): Point => {
   return {
     x: index % width,
     y: Math.floor(index / width),
   }
 }
 
-function fillOrderedNeighborIndexes(
+const fillOrderedNeighborIndexes = (
   width: number,
   height: number,
   pointIndex: number,
   goal: Point,
   neighborIndexes: Int32Array,
   neighborScores: Int32Array,
-): number {
+): number => {
   const x = pointIndex % width
   const y = Math.floor(pointIndex / width)
   let neighborCount = 0
@@ -515,7 +515,7 @@ function fillOrderedNeighborIndexes(
   return neighborCount
 }
 
-function allWaterTiles(map: GeneratedMap): Point[] {
+const allWaterTiles = (map: GeneratedMap): Point[] => {
   const points: Point[] = []
 
   for (let y = 1; y < map.height - 1; y += 1) {
@@ -529,6 +529,6 @@ function allWaterTiles(map: GeneratedMap): Point[] {
   return points
 }
 
-function samePoint(left: Point, right: Point): boolean {
+const samePoint = (left: Point, right: Point): boolean => {
   return left.x === right.x && left.y === right.y
 }

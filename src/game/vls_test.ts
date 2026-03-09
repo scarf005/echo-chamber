@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assert, assertEquals } from "jsr:@std/assert"
+import { assert, assertEquals } from "@std/assert"
 
 import { fireTorpedo, type GameState } from "./game.ts"
 import type { Point } from "./mapgen.ts"
@@ -19,7 +19,7 @@ Deno.test("player can launch a VLS torpedo upward without changing facing", () =
   assertEquals(next.message, "loud explosion detected at ↑")
 })
 
-function createVlsTorpedoTestGame(): GameState {
+const createVlsTorpedoTestGame = (): GameState => {
   const map = createMapFromRows(
     [
       "#####",
@@ -71,11 +71,11 @@ function createVlsTorpedoTestGame(): GameState {
   }
 }
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GameState["map"] {
+): GameState["map"] => {
   const height = rows.length
   const width = rows[0]?.length ?? 0
 

@@ -9,11 +9,11 @@ import type {
 } from "./model.ts"
 import { tileAt } from "./mapgen.ts"
 
-export function refreshPerception(
+export const refreshPerception = (
   game: GameState,
   tileReveals: TileReveal[],
   entityReveals: EntityReveal[],
-): GameState {
+): GameState => {
   const memory = game.memory.slice()
   const entityMemory = game.entityMemory?.slice() ?? Array.from(
     { length: game.map.tiles.length },
@@ -112,7 +112,7 @@ export function refreshPerception(
   }
 }
 
-export function revealMap(game: GameState): GameState {
+export const revealMap = (game: GameState): GameState => {
   return {
     ...game,
     capsuleKnown: true,
@@ -124,26 +124,26 @@ export function revealMap(game: GameState): GameState {
   }
 }
 
-function clearEntityMemory(
+const clearEntityMemory = (
   entityMemory: Array<EntityMemoryKind | null>,
   index: number,
-): void {
+): void => {
   entityMemory[index] = null
 }
 
-function isRememberedEntity(
+const isRememberedEntity = (
   kind: EntityReveal["kind"],
-): kind is Extract<EntityMemoryKind, EntityReveal["kind"]> {
+): kind is Extract<EntityMemoryKind, EntityReveal["kind"]> => {
   return kind === "item" || kind === "enemy" || kind === "non-hostile"
 }
 
-function rememberVisibleEntity(
+const rememberVisibleEntity = (
   entityMemory: Array<EntityMemoryKind | null>,
   visibility: VisibilityLevel[],
   width: number,
   position: { x: number; y: number },
   kind: EntityMemoryKind,
-): void {
+): void => {
   const index = indexForPoint(width, position)
 
   if (visibility[index] >= 2) {
@@ -151,11 +151,11 @@ function rememberVisibleEntity(
   }
 }
 
-function setVisibility(
+const setVisibility = (
   visibility: VisibilityLevel[],
   index: number,
   level: VisibilityLevel,
-): void {
+): void => {
   if (visibility[index] < level) {
     visibility[index] = level
   }

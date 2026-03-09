@@ -11,7 +11,7 @@ import type {
 } from "./model.ts"
 import type { TileKind } from "./mapgen.ts"
 
-export function localizeTileKind(tile: TileKind | "void" | null): string {
+export const localizeTileKind = (tile: TileKind | "void" | null): string => {
   if (tile === "wall") return i18n._("wall")
   if (tile === "water") return i18n._("water")
   if (tile === "kelp") return i18n._("kelp")
@@ -19,57 +19,57 @@ export function localizeTileKind(tile: TileKind | "void" | null): string {
   return i18n._("void")
 }
 
-export function localizeEntityMemory(
+export const localizeEntityMemory = (
   kind: EntityMemoryKind | "unknown" | string | null,
-): string {
+): string => {
   if (kind === "item") return i18n._("item")
   if (kind === "enemy") return i18n._("hostile entity")
   if (kind === "non-hostile") return i18n._("non-hostile contact")
   return kind === "unknown" || kind === null ? i18n._("unknown") : kind
 }
 
-export function localizePickupKind(kind: PickupKind): string {
+export const localizePickupKind = (kind: PickupKind): string => {
   if (kind === "torpedo-cache") return i18n._("torpedo cache")
   if (kind === "depth-charge-cache") return i18n._("depth charge cache")
   return i18n._("survey map")
 }
 
-export function localizeDirection(direction: Direction): string {
+export const localizeDirection = (direction: Direction): string => {
   if (direction === "up") return i18n._("up")
   if (direction === "down") return i18n._("down")
   if (direction === "left") return i18n._("left")
   return i18n._("right")
 }
 
-export function localizeFishMode(mode: FishMode): string {
+export const localizeFishMode = (mode: FishMode): string => {
   if (mode === "idle") return i18n._("idle")
   if (mode === "wander") return i18n._("wander")
   return i18n._("travel")
 }
 
-export function localizeHostileMode(mode: HostileSubmarineMode): string {
+export const localizeHostileMode = (mode: HostileSubmarineMode): string => {
   if (mode === "patrol") return i18n._("patrol")
   if (mode === "investigate") return i18n._("investigate")
   if (mode === "attack") return i18n._("attack")
   return i18n._("retreat")
 }
 
-export function localizeHostileArchetype(
+export const localizeHostileArchetype = (
   archetype: HostileSubmarineArchetype | "hunter",
-): string {
+): string => {
   if (archetype === "scout") return i18n._("scout")
   if (archetype === "guard") return i18n._("guard")
   if (archetype === "turtle") return i18n._("turtle")
   return i18n._("hunter")
 }
 
-export function localizeHostileWeapon(weapon: HostileWeaponKind): string {
+export const localizeHostileWeapon = (weapon: HostileWeaponKind): string => {
   if (weapon === "torpedo") return i18n._("torpedo")
   if (weapon === "vls") return i18n._("VLS")
   return i18n._("depth charge")
 }
 
-export function localizeKnowledgeSource(
+export const localizeKnowledgeSource = (
   source:
     | "visual"
     | "player sonar"
@@ -78,7 +78,7 @@ export function localizeKnowledgeSource(
     | "message"
     | "clue"
     | "none",
-): string {
+): string => {
   if (source === "visual") return i18n._("visual")
   if (source === "player sonar") return i18n._("player sonar")
   if (source === "relay") return i18n._("relay")
@@ -88,11 +88,11 @@ export function localizeKnowledgeSource(
   return i18n._("none")
 }
 
-export function localizeBoolean(value: boolean): string {
+export const localizeBoolean = (value: boolean): string => {
   return value ? i18n._("yes") : i18n._("no")
 }
 
-export function localizeAttackBlockReason(reason: string | null): string {
+export const localizeAttackBlockReason = (reason: string | null): string => {
   if (reason === "reloading") return i18n._("reloading")
   if (reason === "no player fix") return i18n._("no player fix")
   if (reason === "needs direct detection") {
@@ -112,7 +112,7 @@ export function localizeAttackBlockReason(reason: string | null): string {
   return reason ?? "--"
 }
 
-export function localizeAutoMoveReason(reason: string): string {
+export const localizeAutoMoveReason = (reason: string): string => {
   if (reason === "wall ahead") return i18n._("wall ahead")
   if (reason === "no plotted course") return i18n._("no plotted course")
   if (reason === "charted wall at destination") {

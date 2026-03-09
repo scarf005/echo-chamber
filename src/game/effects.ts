@@ -4,7 +4,10 @@ import { indexForPoint } from "./helpers.ts"
 import type { CrackCell, FadeCell, LogMessage } from "./model.ts"
 import { type GeneratedMap, type Point, tileAt } from "./mapgen.ts"
 
-export function decayCracks(cracks: CrackCell[], amount: number): CrackCell[] {
+export const decayCracks = (
+  cracks: CrackCell[],
+  amount: number,
+): CrackCell[] => {
   return cracks
     .map((crack) => ({
       ...crack,
@@ -13,10 +16,10 @@ export function decayCracks(cracks: CrackCell[], amount: number): CrackCell[] {
     .filter((crack) => crack.alpha > 0.05)
 }
 
-export function mergeCrackCells(
+export const mergeCrackCells = (
   existing: CrackCell[],
   incoming: CrackCell[],
-): CrackCell[] {
+): CrackCell[] => {
   let next = existing
 
   for (const crack of incoming) {
@@ -37,10 +40,10 @@ export function mergeCrackCells(
   return next
 }
 
-export function mergeFadeCells(
+export const mergeFadeCells = (
   cells: FadeCell[],
   incoming: FadeCell[],
-): FadeCell[] {
+): FadeCell[] => {
   let next = cells
 
   for (const cell of incoming) {
@@ -50,59 +53,52 @@ export function mergeFadeCells(
   return next
 }
 
-export function decayShake(amount: number, shakeDecay: number): number {
+export const decayShake = (amount: number, shakeDecay: number): number => {
   return Math.max(0, Number((amount - shakeDecay).toFixed(3)))
 }
 
-export function resolveImpactMessage(
+export const resolveImpactMessage = (
   torpedoImpacts: number,
   depthChargeImpacts: number,
   caveIns: number,
   boulderLandings: number,
-): LogMessage | null {
+): LogMessage | null => {
   if (caveIns > 0) {
     return createLogMessage(
-      i18n._("Violent torpedo impact. Cracks race overhead."),
-      "neutral",
       () => i18n._("Violent torpedo impact. Cracks race overhead."),
+      "neutral",
     )
   }
 
   if (boulderLandings > 0) {
     return createLogMessage(
-      i18n._("Cave-in debris slams through the silt."),
-      "neutral",
       () => i18n._("Cave-in debris slams through the silt."),
+      "neutral",
     )
   }
 
   if (torpedoImpacts > 0) {
-    return createLogMessage(
-      i18n._("Violent torpedo impact."),
-      "neutral",
-      () => i18n._("Violent torpedo impact."),
-    )
+    return createLogMessage(() => i18n._("Violent torpedo impact."), "neutral")
   }
 
   if (depthChargeImpacts > 0) {
     return createLogMessage(
-      i18n._("Depth charge detonates below."),
-      "neutral",
       () => i18n._("Depth charge detonates below."),
+      "neutral",
     )
   }
 
   return null
 }
 
-export function indexAlphaLookup(cells: FadeCell[]): Map<number, number> {
+export const indexAlphaLookup = (cells: FadeCell[]): Map<number, number> => {
   return cells.reduce((lookup, cell) => {
     lookup.set(cell.index, Math.max(lookup.get(cell.index) ?? 0, cell.alpha))
     return lookup
   }, new Map<number, number>())
 }
 
-export function decayCells(cells: FadeCell[], amount: number): FadeCell[] {
+export const decayCells = (cells: FadeCell[], amount: number): FadeCell[] => {
   return cells
     .map((cell) => ({
       ...cell,
@@ -111,11 +107,11 @@ export function decayCells(cells: FadeCell[], amount: number): FadeCell[] {
     .filter((cell) => cell.alpha > 0.05)
 }
 
-export function decayTrailCells(
+export const decayTrailCells = (
   map: GeneratedMap,
   cells: FadeCell[],
   amount: number,
-): FadeCell[] {
+): FadeCell[] => {
   return cells.flatMap((cell) => {
     const alpha = Number((cell.alpha - amount).toFixed(3))
 
@@ -142,11 +138,11 @@ export function decayTrailCells(
   })
 }
 
-export function mergeFadeCell(
+export const mergeFadeCell = (
   cells: FadeCell[],
   index: number,
   alpha: number,
-): FadeCell[] {
+): FadeCell[] => {
   const existing = cells.find((cell) => cell.index === index)
 
   if (existing) {
@@ -157,14 +153,14 @@ export function mergeFadeCell(
   return [...cells, { index, alpha }]
 }
 
-export function mergeTrailCell(
+export const mergeTrailCell = (
   cells: FadeCell[],
   index: number,
   alpha: number,
   drift?: "up",
   source?: FadeCell["source"],
   visibleToPlayer?: boolean,
-): FadeCell[] {
+): FadeCell[] => {
   const existing = cells.find((cell) => cell.index === index)
 
   if (existing) {
@@ -187,11 +183,11 @@ export function mergeTrailCell(
   ]
 }
 
-export function createDustBurst(
+export const createDustBurst = (
   map: GeneratedMap,
   center: Point,
   alpha: number,
-): FadeCell[] {
+): FadeCell[] => {
   const cells: FadeCell[] = []
 
   for (let offsetY = -1; offsetY <= 1; offsetY += 1) {

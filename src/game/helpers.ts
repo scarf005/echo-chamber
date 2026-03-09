@@ -10,7 +10,7 @@ import type {
   Torpedo,
 } from "./model.ts"
 
-export function cloneMap(map: GeneratedMap): GeneratedMap {
+export const cloneMap = (map: GeneratedMap): GeneratedMap => {
   return {
     ...map,
     spawn: { ...map.spawn },
@@ -23,21 +23,21 @@ export function cloneMap(map: GeneratedMap): GeneratedMap {
   }
 }
 
-export function cloneTorpedo(torpedo: Torpedo): Torpedo {
+export const cloneTorpedo = (torpedo: Torpedo): Torpedo => {
   return {
     ...torpedo,
     position: { ...torpedo.position },
   }
 }
 
-export function cloneDepthCharge(depthCharge: DepthCharge): DepthCharge {
+export const cloneDepthCharge = (depthCharge: DepthCharge): DepthCharge => {
   return {
     ...depthCharge,
     position: { ...depthCharge.position },
   }
 }
 
-export function cloneFish(fish: Fish): Fish {
+export const cloneFish = (fish: Fish): Fish => {
   return {
     ...fish,
     position: { ...fish.position },
@@ -45,16 +45,16 @@ export function cloneFish(fish: Fish): Fish {
   }
 }
 
-export function cloneBoulder(boulder: FallingBoulder): FallingBoulder {
+export const cloneBoulder = (boulder: FallingBoulder): FallingBoulder => {
   return {
     ...boulder,
     position: { ...boulder.position },
   }
 }
 
-export function cloneHostileSubmarine(
+export const cloneHostileSubmarine = (
   hostileSubmarine: HostileSubmarine,
-): HostileSubmarine {
+): HostileSubmarine => {
   return {
     ...hostileSubmarine,
     position: { ...hostileSubmarine.position },
@@ -84,9 +84,9 @@ export function cloneHostileSubmarine(
   }
 }
 
-function cloneHostileAiDebugState(
+const cloneHostileAiDebugState = (
   debugState: HostileAiDebugState,
-): HostileAiDebugState {
+): HostileAiDebugState => {
   return {
     ...debugState,
     confirmedPlayerPosition: debugState.confirmedPlayerPosition
@@ -116,19 +116,19 @@ function cloneHostileAiDebugState(
   }
 }
 
-export function indexForPoint(width: number, point: Point): number {
+export const indexForPoint = (width: number, point: Point): number => {
   return point.y * width + point.x
 }
 
-export function chebyshevDistance(a: Point, b: Point): number {
+export const chebyshevDistance = (a: Point, b: Point): number => {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y))
 }
 
-export function euclideanDistance(a: Point, b: Point): number {
+export const euclideanDistance = (a: Point, b: Point): number => {
   return Math.hypot(a.x - b.x, a.y - b.y)
 }
 
-export function bresenhamLine(start: Point, end: Point): Point[] {
+export const bresenhamLine = (start: Point, end: Point): Point[] => {
   const points: Point[] = []
   let x0 = start.x
   let y0 = start.y
@@ -161,7 +161,7 @@ export function bresenhamLine(start: Point, end: Point): Point[] {
   }
 }
 
-export function createDeterministicRandom(seed: string): () => number {
+export const createDeterministicRandom = (seed: string): () => number => {
   let state = hashSeed(seed) || 1
 
   return () => {
@@ -172,7 +172,7 @@ export function createDeterministicRandom(seed: string): () => number {
   }
 }
 
-export function hashSeed(seed: string): number {
+export const hashSeed = (seed: string): number => {
   let hash = 2166136261
 
   for (const character of seed) {
@@ -183,11 +183,11 @@ export function hashSeed(seed: string): number {
   return hash >>> 0
 }
 
-export function randomInteger(
+export const randomInteger = (
   random: () => number,
   min: number,
   max: number,
-): number {
+): number => {
   if (max <= min) {
     return min
   }
@@ -195,11 +195,14 @@ export function randomInteger(
   return Math.floor(random() * (max - min + 1)) + min
 }
 
-export function randomChoice<T>(values: T[], random: () => number): T {
+export const randomChoice = <T>(values: T[], random: () => number): T => {
   return values[randomInteger(random, 0, values.length - 1)]
 }
 
-export function shufflePoints(points: Point[], random: () => number): Point[] {
+export const shufflePoints = (
+  points: Point[],
+  random: () => number,
+): Point[] => {
   const next = points.map((point) => ({ ...point }))
 
   for (let index = next.length - 1; index > 0; index -= 1) {
@@ -212,7 +215,9 @@ export function shufflePoints(points: Point[], random: () => number): Point[] {
   return next
 }
 
-export function uniqueBoulders(boulders: FallingBoulder[]): FallingBoulder[] {
+export const uniqueBoulders = (
+  boulders: FallingBoulder[],
+): FallingBoulder[] => {
   const seen = new Set<string>()
 
   return boulders.filter((boulder) => {
@@ -227,7 +232,7 @@ export function uniqueBoulders(boulders: FallingBoulder[]): FallingBoulder[] {
   })
 }
 
-export function deltaForDirection(direction: Direction): Point {
+export const deltaForDirection = (direction: Direction): Point => {
   switch (direction) {
     case "up":
       return { x: 0, y: -1 }
@@ -240,10 +245,10 @@ export function deltaForDirection(direction: Direction): Point {
   }
 }
 
-export function horizontalFacingForMove(
+export const horizontalFacingForMove = (
   current: HorizontalDirection,
   direction: Direction,
-): HorizontalDirection {
+): HorizontalDirection => {
   if (direction === "left" || direction === "right") {
     return direction
   }
@@ -251,7 +256,10 @@ export function horizontalFacingForMove(
   return current
 }
 
-export function isNearObstacleBelow(map: GeneratedMap, point: Point): boolean {
+export const isNearObstacleBelow = (
+  map: GeneratedMap,
+  point: Point,
+): boolean => {
   const probes = [
     { x: point.x - 1, y: point.y + 1 },
     { x: point.x, y: point.y + 1 },
@@ -264,10 +272,10 @@ export function isNearObstacleBelow(map: GeneratedMap, point: Point): boolean {
   })
 }
 
-export function pointsEqual(a: Point, b: Point): boolean {
+export const pointsEqual = (a: Point, b: Point): boolean => {
   return a.x === b.x && a.y === b.y
 }
 
-export function keyOfPoint(point: Point): string {
+export const keyOfPoint = (point: Point): string => {
   return `${point.x}:${point.y}`
 }

@@ -15,7 +15,7 @@ import type {
 } from "../model.ts"
 import type { Point } from "../mapgen.ts"
 
-export function stepFallingBoulders(
+export const stepFallingBoulders = (
   map: GeneratedMap,
   boulders: FallingBoulder[],
   trails: FadeCell[],
@@ -33,7 +33,7 @@ export function stepFallingBoulders(
   landingPoints: Point[]
   screenShake: number
   playerDestroyed: boolean
-} {
+} => {
   const nextBoulders: FallingBoulder[] = []
   let nextTrails = trails
   let nextDust = dust
@@ -118,7 +118,7 @@ export function stepFallingBoulders(
   }
 }
 
-function crushEntitiesAtPoint(
+const crushEntitiesAtPoint = (
   point: Point,
   player: Point,
   fish: Fish[],
@@ -127,7 +127,7 @@ function crushEntitiesAtPoint(
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   playerDestroyed: boolean
-} {
+} => {
   return {
     fish: fish.filter((candidate) => !pointsEqual(candidate.position, point)),
     hostileSubmarines: hostileSubmarines.filter((candidate) =>
