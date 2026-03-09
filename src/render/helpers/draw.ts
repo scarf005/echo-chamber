@@ -1,9 +1,6 @@
 import type { GameState } from "../../game/game.ts"
 
-export function calculateTileSize(
-  container: HTMLDivElement,
-  game: GameState,
-): number {
+export const calculateTileSize = (container: HTMLDivElement, game: GameState): number => {
   const width = container.clientWidth || window.innerWidth
   const height = container.clientHeight || window.innerHeight
   return Math.max(
@@ -12,14 +9,16 @@ export function calculateTileSize(
   )
 }
 
-export function drawTileBackground(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  tileSize: number,
-  color: string,
-  alpha: number,
-): void {
+export type DrawTileBackgroundOptions = {
+  context: CanvasRenderingContext2D
+  x: number
+  y: number
+  tileSize: number
+  color: string
+  alpha: number
+}
+
+export const drawTileBackground = ({ context, x, y, tileSize, color, alpha }: DrawTileBackgroundOptions): void => {
   const previousAlpha = context.globalAlpha
   const previousFillStyle = context.fillStyle
   context.globalAlpha = alpha
@@ -29,15 +28,17 @@ export function drawTileBackground(
   context.globalAlpha = previousAlpha
 }
 
-export function drawGlyph(
-  context: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  tileSize: number,
-  glyph: string,
-  color: string,
-  alpha: number,
-): void {
+export type DrawGlyphOptions = {
+  context: CanvasRenderingContext2D
+  x: number
+  y: number
+  tileSize: number
+  glyph: string
+  color: string
+  alpha: number
+}
+
+export const drawGlyph = ({ context, x, y, tileSize, glyph, color, alpha }: DrawGlyphOptions): void => {
   const previousAlpha = context.globalAlpha
   const previousFillStyle = context.fillStyle
   context.globalAlpha = alpha
@@ -47,7 +48,7 @@ export function drawGlyph(
   context.globalAlpha = previousAlpha
 }
 
-export function screenShakeOffset(game: GameState): { x: number; y: number } {
+export const screenShakeOffset = (game: GameState): { x: number; y: number } => {
   if (game.screenShake <= 0) {
     return { x: 0, y: 0 }
   }

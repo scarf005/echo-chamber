@@ -31,11 +31,13 @@ export type InspectorOptions = {
   revealAllEntities?: boolean
 }
 
-export function describeHoveredInspectorRows(
-  game: GameState,
-  point: Point | null,
-  options: InspectorOptions = {},
-): InspectorRow[] | null {
+export type DescribeHoveredInspectorRowsOptions = {
+  game: GameState
+  point: Point | null
+  options?: InspectorOptions
+}
+
+export const describeHoveredInspectorRows = ({ game, point, options = {} }: DescribeHoveredInspectorRowsOptions): InspectorRow[] | null => {
   if (!point) {
     return null
   }
@@ -52,7 +54,7 @@ export function describeHoveredInspectorRows(
     },
     {
       label: "contact",
-      value: describeInspectorContact(game, point, options) ?? "--",
+      value: describeInspectorContact({ game, point, options }) ?? "--",
     },
     {
       label: "visibility",
@@ -273,10 +275,7 @@ export function describeHoveredInspectorRows(
   return rows
 }
 
-export function filterInspectorRows(
-  rows: InspectorRow[] | null,
-  showDevDetails: boolean,
-): InspectorRow[] | null {
+export const filterInspectorRows = (rows: InspectorRow[] | null, showDevDetails: boolean): InspectorRow[] | null => {
   if (!rows) {
     return null
   }
@@ -284,11 +283,13 @@ export function filterInspectorRows(
   return showDevDetails ? rows : rows.filter((row) => !row.devOnly)
 }
 
-export function describeInspectorContact(
-  game: GameState,
-  point: Point,
-  options: InspectorOptions = {},
-): string | null {
+export type DescribeInspectorContactOptions = {
+  game: GameState
+  point: Point
+  options?: InspectorOptions
+}
+
+export const describeInspectorContact = ({ game, point, options = {} }: DescribeInspectorContactOptions): string | null => {
   const index = point.y * game.map.width + point.x
 
   if (canRevealExactInspectorDetails(game, point, options)) {
@@ -308,32 +309,25 @@ export function describeInspectorContact(
   return normalizeInspectorContact(game.entityMemory?.[index] ?? null)
 }
 
-export function hasExactInspectorVisibility(
-  game: GameState,
-  point: Point,
-): boolean {
+export const hasExactInspectorVisibility = (game: GameState, point: Point): boolean => {
   const index = point.y * game.map.width + point.x
   return (game.visibility[index] ?? 0) >= 3
 }
 
-function canRevealExactInspectorDetails(
-  game: GameState,
-  point: Point,
-  options: InspectorOptions,
-): boolean {
+const canRevealExactInspectorDetails = (game: GameState, point: Point, options: InspectorOptions): boolean => {
   return options.revealAllEntities === true ||
     hasExactInspectorVisibility(game, point)
 }
 
-function formatPoint(point: Point): string {
+const formatPoint = (point: Point): string => {
   return `${point.x},${point.y}`
 }
 
-function formatVector(vector: Point): string {
+const formatVector = (vector: Point): string => {
   return `${vector.x},${vector.y}`
 }
 
-function describeHostileIntent(hostileSubmarine: HostileSubmarine): string {
+const describeHostileIntent = (hostileSubmarine: HostileSubmarine): string => {
   switch (hostileSubmarine.mode) {
     case "retreat":
       return hostileSubmarine.target
@@ -362,9 +356,7 @@ function describeHostileIntent(hostileSubmarine: HostileSubmarine): string {
   }
 }
 
-export function describeHostileAiDecision(
-  hostileSubmarine: HostileSubmarine,
-): string {
+export const describeHostileAiDecision = (hostileSubmarine: HostileSubmarine): string => {
   const targetSuffix = hostileSubmarine.target
     ? ` ${formatPoint(hostileSubmarine.target)}`
     : ""
@@ -376,9 +368,7 @@ export function describeHostileAiDecision(
   })
 }
 
-export function describeNotableHostileAiDecision(
-  hostileSubmarine: HostileSubmarine,
-): string | null {
+export const describeNotableHostileAiDecision = (hostileSubmarine: HostileSubmarine): string | null => {
   if (!hostileSubmarine.target) {
     return null
   }
@@ -386,7 +376,7 @@ export function describeNotableHostileAiDecision(
   return describeHostileAiDecision(hostileSubmarine)
 }
 
-function normalizeInspectorContact(contact: string | null): string | null {
+const normalizeInspectorContact = (contact: string | null): string | null => {
   if (contact === null) {
     return null
   }
@@ -394,9 +384,7 @@ function normalizeInspectorContact(contact: string | null): string | null {
   return contact === "enemy" ? "hostile entity" : localizeEntityMemory(contact)
 }
 
-function describeHostileDebugRows(
-  debugState: HostileAiDebugState | undefined,
-): InspectorRow[] {
+const describeHostileDebugRows = (debugState: HostileAiDebugState | undefined): InspectorRow[] => {
   if (!debugState) {
     return []
   }
@@ -566,7 +554,7 @@ function describeHostileDebugRows(
   ]
 }
 
-function describeKnowledgeSource(debugState: HostileAiDebugState): string {
+const describeKnowledgeSource = (debugState: HostileAiDebugState): string => {
   if (debugState.directDetection) {
     return localizeKnowledgeSource("visual")
   }

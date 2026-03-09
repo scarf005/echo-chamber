@@ -19,7 +19,7 @@ Deno.test("inspector shows exact fish contact at full visibility", () => {
 
   game.visibility[index] = 3
 
-  assertEquals(describeInspectorContact(game, { x: 4, y: 2 }), "fish")
+  assertEquals(describeInspectorContact({ game, point: { x: 4, y: 2 } }), "fish")
 })
 
 Deno.test("inspector falls back to remembered coarse contact without exact entity", () => {
@@ -34,7 +34,7 @@ Deno.test("inspector falls back to remembered coarse contact without exact entit
   withoutFish.entityMemory![index] = "non-hostile"
 
   assertEquals(
-    describeInspectorContact(withoutFish, { x: 4, y: 2 }),
+    describeInspectorContact({ game: withoutFish, point: { x: 4, y: 2 } }),
     "non-hostile contact",
   )
 })
@@ -46,7 +46,7 @@ Deno.test("inspector renames remembered enemy contact to entity", () => {
 
   game.entityMemory![index] = "enemy"
 
-  assertEquals(describeInspectorContact(game, enemyPoint), "hostile entity")
+  assertEquals(describeInspectorContact({ game, point: enemyPoint }), "hostile entity")
 })
 
 Deno.test("inspector keeps hostile torpedoes generic without exact sight", () => {
@@ -63,13 +63,13 @@ Deno.test("inspector keeps hostile torpedoes generic without exact sight", () =>
     rangeRemaining: 6,
   }]
 
-  assertEquals(describeInspectorContact(game, torpedoPoint), "hostile entity")
+  assertEquals(describeInspectorContact({ game, point: torpedoPoint }), "hostile entity")
 })
 
 Deno.test("inspector does not leak fish identity outside detected visibility", () => {
   const game = createInspectorFishGame()
 
-  assertEquals(describeInspectorContact(game, { x: 4, y: 2 }), null)
+  assertEquals(describeInspectorContact({ game, point: { x: 4, y: 2 } }), null)
 })
 
 Deno.test("exact inspector entity details require full visibility", () => {
@@ -91,7 +91,7 @@ Deno.test("inspector hides dev-only rows outside dev builds", () => {
 
   game.visibility[index] = 3
 
-  const rows = describeHoveredInspectorRows(game, fishPoint)
+  const rows = describeHoveredInspectorRows({ game, point: fishPoint })
   const productionRows = filterInspectorRows(rows, false)
 
   assertEquals(rows?.find((row) => row.label === "visibility")?.devOnly, true)
@@ -112,7 +112,7 @@ Deno.test("inspector does not leak unseen terrain outside exact visibility", () 
   const game = createInspectorFishGame()
   const hiddenWallPoint = { x: 0, y: 0 }
 
-  const hiddenRows = describeHoveredInspectorRows(game, hiddenWallPoint)
+  const hiddenRows = describeHoveredInspectorRows({ game, point: hiddenWallPoint })
 
   assertEquals(
     hiddenRows?.find((row) => row.label === "terrain")?.value,
@@ -121,7 +121,7 @@ Deno.test("inspector does not leak unseen terrain outside exact visibility", () 
 
   game.memory[hiddenWallPoint.y * game.map.width + hiddenWallPoint.x] = "wall"
 
-  const rememberedRows = describeHoveredInspectorRows(game, hiddenWallPoint)
+  const rememberedRows = describeHoveredInspectorRows({ game, point: hiddenWallPoint })
 
   assertEquals(
     rememberedRows?.find((row) => row.label === "terrain")?.value,
@@ -136,7 +136,7 @@ Deno.test("inspector keeps dev-only rows in dev builds", () => {
 
   game.visibility[index] = 3
 
-  const rows = describeHoveredInspectorRows(game, fishPoint)
+  const rows = describeHoveredInspectorRows({ game, point: fishPoint })
   const devRows = filterInspectorRows(rows, true)
 
   assertEquals(devRows?.some((row) => row.label === "visibility"), true)
@@ -150,7 +150,7 @@ Deno.test("inspector includes hostile ai log in god mode rows", () => {
 
   game.visibility[index] = 3
 
-  const rows = describeHoveredInspectorRows(game, hostilePoint)
+  const rows = describeHoveredInspectorRows({ game, point: hostilePoint })
   const productionRows = filterInspectorRows(rows, false)
   const godModeRows = filterInspectorRows(rows, true)
 
@@ -165,8 +165,10 @@ Deno.test("god mode inspector reveals hidden hostile entities under cursor", () 
   const game = createInspectorHostileGame()
   const hostilePoint = { x: 5, y: 2 }
 
-  const rows = describeHoveredInspectorRows(game, hostilePoint, {
-    revealAllEntities: true,
+  const rows = describeHoveredInspectorRows({
+    game,
+    point: hostilePoint,
+    options: { revealAllEntities: true },
   })
 
   assertEquals(
@@ -184,7 +186,7 @@ Deno.test("god mode inspector shows detailed hostile ai state", () => {
   game.visibility[index] = 3
 
   const rows = filterInspectorRows(
-    describeHoveredInspectorRows(game, hostilePoint),
+    describeHoveredInspectorRows({ game, point: hostilePoint }),
     true,
   )
 
@@ -219,7 +221,7 @@ Deno.test("hostile ai helpers only expose notable targeted decisions to orders",
   assertEquals(describeNotableHostileAiDecision(patrollingHostile), null)
 })
 
-function createInspectorFishGame(): GameState {
+const createInspectorFishGame = (): GameState => {
   const map = createMapFromRows(
     [
       "########",
@@ -273,7 +275,7 @@ function createInspectorFishGame(): GameState {
   }
 }
 
-function createInspectorHostileGame(): GameState {
+const createInspectorHostileGame = (): GameState => {
   const game = createInspectorFishGame()
 
   return {
@@ -336,11 +338,7 @@ function createInspectorHostileGame(): GameState {
   }
 }
 
-function createMapFromRows(
-  rows: string[],
-  spawn: Point,
-  capsule: Point,
-): GeneratedMap {
+const createMapFromRows = (rows: string[], spawn: Point, capsule: Point): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

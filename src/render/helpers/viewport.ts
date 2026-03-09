@@ -16,11 +16,13 @@ export type ViewportMetrics = {
   cssHeight: number
 }
 
-export function resolveViewportMetrics(
-  game: Pick<GameState, "map" | "player">,
-  viewportSize: { width: number; height: number },
-  renderOptions: RenderOptions = {},
-): ViewportMetrics {
+export type ResolveViewportMetricsOptions = {
+  game: Pick<GameState, "map" | "player">
+  viewportSize: { width: number; height: number }
+  renderOptions?: RenderOptions
+}
+
+export const resolveViewportMetrics = ({ game, viewportSize, renderOptions = {} }: ResolveViewportMetricsOptions): ViewportMetrics => {
   const mode = renderOptions.viewportMode ?? "camera"
   const width = mode === "full" ? game.map.width : Math.min(
     game.map.width,
@@ -50,21 +52,14 @@ export function resolveViewportMetrics(
   }
 }
 
-export function pointToViewport(
-  point: Point,
-  viewport: Pick<ViewportMetrics, "left" | "top">,
-): Point {
+export const pointToViewport = (point: Point, viewport: Pick<ViewportMetrics, "left" | "top">): Point => {
   return {
     x: point.x - viewport.left,
     y: point.y - viewport.top,
   }
 }
 
-function calculateViewportTileSize(
-  viewportSize: { width: number; height: number },
-  viewportWidth: number,
-  viewportHeight: number,
-): number {
+const calculateViewportTileSize = (viewportSize: { width: number; height: number }, viewportWidth: number, viewportHeight: number): number => {
   return Math.max(
     1,
     Math.floor(
@@ -76,6 +71,6 @@ function calculateViewportTileSize(
   )
 }
 
-function clamp(value: number, min: number, max: number): number {
+const clamp = (value: number, min: number, max: number): number => {
   return Math.min(Math.max(value, min), max)
 }

@@ -10,7 +10,7 @@ import type {
   Torpedo,
 } from "../../game/game.ts"
 
-export function indexAlphaMap(cells: FadeCell[]): Map<number, number> {
+export const indexAlphaMap = (cells: FadeCell[]): Map<number, number> => {
   const result = new Map<number, number>()
 
   for (const cell of cells) {
@@ -20,7 +20,7 @@ export function indexAlphaMap(cells: FadeCell[]): Map<number, number> {
   return result
 }
 
-export function indexFadeMap(cells: FadeCell[]): Map<number, FadeCell> {
+export const indexFadeMap = (cells: FadeCell[]): Map<number, FadeCell> => {
   const result = new Map<number, FadeCell>()
 
   for (const cell of cells) {
@@ -34,7 +34,7 @@ export function indexFadeMap(cells: FadeCell[]): Map<number, FadeCell> {
   return result
 }
 
-export function indexCrackMap(cells: CrackCell[]): Map<number, CrackCell> {
+export const indexCrackMap = (cells: CrackCell[]): Map<number, CrackCell> => {
   const result = new Map<number, CrackCell>()
 
   for (const cell of cells) {
@@ -48,14 +48,14 @@ export function indexCrackMap(cells: CrackCell[]): Map<number, CrackCell> {
   return result
 }
 
-export function buildEntityMaps(game: GameState): {
+export const buildEntityMaps = (game: GameState): {
   torpedoes: Map<number, Torpedo>
   depthCharges: Map<number, DepthCharge>
   boulders: Map<number, FallingBoulder>
   fish: Map<number, Fish>
   hostileSubmarines: Map<number, HostileSubmarine>
   pickups: Map<number, PickupItem>
-} {
+} => {
   return {
     torpedoes: buildEntityMap(game.torpedoes, game.map.width),
     depthCharges: buildEntityMap(game.depthCharges, game.map.width),
@@ -66,21 +66,20 @@ export function buildEntityMaps(game: GameState): {
   }
 }
 
-function buildEntityMap<T extends { position: { x: number; y: number } }>(
-  entities: T[],
-  width: number,
-): Map<number, T> {
+const buildEntityMap = <T extends { position: { x: number; y: number } }>(entities: T[], width: number): Map<number, T> => {
   return entities.reduce((map, entity) => {
     map.set(entity.position.y * width + entity.position.x, entity)
     return map
   }, new Map<number, T>())
 }
 
-export function wallGlyphForMask(
-  game: GameState,
-  x: number,
-  y: number,
-): string {
+export type WallGlyphOptions = {
+  game: GameState
+  x: number
+  y: number
+}
+
+export const wallGlyphForMask = ({ game, x, y }: WallGlyphOptions): string => {
   const north = isKnownWall(game, x, y - 1)
   const east = isKnownWall(game, x + 1, y)
   const south = isKnownWall(game, x, y + 1)
@@ -130,7 +129,7 @@ export function wallGlyphForMask(
   }
 }
 
-function isKnownWall(game: GameState, x: number, y: number): boolean {
+const isKnownWall = (game: GameState, x: number, y: number): boolean => {
   if (x < 0 || x >= game.map.width || y < 0 || y >= game.map.height) {
     return false
   }

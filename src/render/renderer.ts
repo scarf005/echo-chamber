@@ -46,28 +46,21 @@ const tileMemoryCanvasCache = new WeakMap<
   Map<string, HTMLCanvasElement>
 >()
 
-export function drawGame(
-  canvas: HTMLCanvasElement,
-  container: HTMLDivElement,
-  game: GameState,
-  selectedTarget: Point | null = null,
-  previewPath: Point[] = [],
-  renderOptions: RenderOptions = {},
-): void {
+export const drawGame = (canvas: HTMLCanvasElement, container: HTMLDivElement, game: GameState, selectedTarget: Point | null = null, previewPath: Point[] = [], renderOptions: RenderOptions = {}): void => {
   const context = canvas.getContext("2d")
 
   if (!context) {
     throw new Error("2D canvas not supported")
   }
 
-  const viewport = resolveViewportMetrics(
+  const viewport = resolveViewportMetrics({
     game,
-    {
+    viewportSize: {
       width: container.clientWidth || window.innerWidth,
       height: container.clientHeight || window.innerHeight,
     },
     renderOptions,
-  )
+  })
   const tileSize = viewport.tileSize
   const cssWidth = viewport.cssWidth
   const cssHeight = viewport.cssHeight
@@ -124,7 +117,7 @@ export function drawGame(
       const screenX = (x - viewport.left) * tileSize
       const screenY = (y - viewport.top) * tileSize
 
-      drawEffectsLayer(
+      drawEffectsLayer({
         context,
         game,
         tileSize,
@@ -132,8 +125,8 @@ export function drawGame(
         screenY,
         index,
         effectMaps,
-      )
-      drawEntitiesLayer(
+      })
+      drawEntitiesLayer({
         context,
         game,
         renderOptions,
@@ -144,8 +137,8 @@ export function drawGame(
         y,
         index,
         entityMaps,
-      )
-      drawShockwaveLayer(
+      })
+      drawShockwaveLayer({
         context,
         game,
         tileSize,
@@ -153,8 +146,8 @@ export function drawGame(
         screenY,
         index,
         effectMaps,
-        renderOptions.debugEntityOverlay === true,
-      )
+        showHiddenEnemySonar: renderOptions.debugEntityOverlay === true,
+      })
     }
   }
 
@@ -182,31 +175,24 @@ export function drawGame(
   }
 }
 
-function drawHostileEstimateOverlay(
-  context: CanvasRenderingContext2D,
-  game: GameState,
-  tileSize: number,
-  screenX: number,
-  screenY: number,
-  highlighted: boolean,
-): void {
-  drawTileBackground(
+const drawHostileEstimateOverlay = (context: CanvasRenderingContext2D, game: GameState, tileSize: number, screenX: number, screenY: number, highlighted: boolean): void => {
+  drawTileBackground({
     context,
-    screenX,
-    screenY,
+    x: screenX,
+    y: screenY,
     tileSize,
-    COLORS.enemySonar,
-    highlighted ? 0.5 : 0.24,
-  )
-  drawGlyph(
+    color: COLORS.enemySonar,
+    alpha: highlighted ? 0.5 : 0.24,
+  })
+  drawGlyph({
     context,
-    screenX,
-    screenY,
+    x: screenX,
+    y: screenY,
     tileSize,
-    playerGlyphForFacing(game.facing),
-    COLORS.player,
-    highlighted ? 1 : 0.62,
-  )
+    glyph: playerGlyphForFacing(game.facing),
+    color: COLORS.player,
+    alpha: highlighted ? 1 : 0.62,
+  })
 
   if (!highlighted) {
     return
@@ -227,14 +213,7 @@ function drawHostileEstimateOverlay(
   context.restore()
 }
 
-function drawHostileEstimateOverlays(
-  context: CanvasRenderingContext2D,
-  game: GameState,
-  tileSize: number,
-  viewport: ViewportMetrics,
-  estimatedPositions: readonly Point[],
-  highlightedEstimatedPosition: Point | null,
-): void {
+const drawHostileEstimateOverlays = (context: CanvasRenderingContext2D, game: GameState, tileSize: number, viewport: ViewportMetrics, estimatedPositions: readonly Point[], highlightedEstimatedPosition: Point | null): void => {
   for (const point of estimatedPositions) {
     if (
       point.x < viewport.left ||
@@ -259,7 +238,7 @@ function drawHostileEstimateOverlays(
   }
 }
 
-function resolveEffectMaps(game: GameState): EffectMaps {
+const resolveEffectMaps = (game: GameState): EffectMaps => {
   const cachedMaps = effectMapsCache.get(game)
 
   if (cachedMaps) {
@@ -279,7 +258,7 @@ function resolveEffectMaps(game: GameState): EffectMaps {
   return nextMaps
 }
 
-function resolveEntityMaps(game: GameState): EntityMaps {
+const resolveEntityMaps = (game: GameState): EntityMaps => {
   const cachedMaps = entityMapsCache.get(game)
 
   if (cachedMaps) {
@@ -292,10 +271,7 @@ function resolveEntityMaps(game: GameState): EntityMaps {
   return nextMaps
 }
 
-function resolveTileMemoryCanvas(
-  game: GameState,
-  viewport: ViewportMetrics,
-): HTMLCanvasElement {
+const resolveTileMemoryCanvas = (game: GameState, viewport: ViewportMetrics): HTMLCanvasElement => {
   const cacheKey = [
     viewport.left,
     viewport.top,
@@ -331,7 +307,7 @@ function resolveTileMemoryCanvas(
       const screenX = (x - viewport.left) * viewport.tileSize
       const screenY = (y - viewport.top) * viewport.tileSize
 
-      drawTileMemoryLayer(
+      drawTileMemoryLayer({
         context,
         game,
         index,
@@ -339,8 +315,8 @@ function resolveTileMemoryCanvas(
         screenY,
         x,
         y,
-        viewport.tileSize,
-      )
+        tileSize: viewport.tileSize,
+      })
     }
   }
 
@@ -352,15 +328,11 @@ function resolveTileMemoryCanvas(
   return canvas
 }
 
-function drawPathPreview(
-  context: CanvasRenderingContext2D,
-  previewPath: Point[],
-  viewport: {
+const drawPathPreview = (context: CanvasRenderingContext2D, previewPath: Point[], viewport: {
     left: number
     top: number
     tileSize: number
-  },
-): void {
+  }): void => {
   context.save()
   context.strokeStyle = COLORS.sonar
   context.globalAlpha = 0.75
@@ -384,15 +356,11 @@ function drawPathPreview(
   context.restore()
 }
 
-function drawTargetHighlight(
-  context: CanvasRenderingContext2D,
-  target: Point,
-  viewport: {
+const drawTargetHighlight = (context: CanvasRenderingContext2D, target: Point, viewport: {
     left: number
     top: number
     tileSize: number
-  },
-): void {
+  }): void => {
   const point = pointToViewport(target, viewport)
   const inset = Math.max(1, viewport.tileSize * 0.12)
   const lineWidth = Math.max(1, viewport.tileSize * 0.08)
@@ -415,15 +383,11 @@ function drawTargetHighlight(
   context.restore()
 }
 
-function drawHostilePlannedPaths(
-  context: CanvasRenderingContext2D,
-  game: GameState,
-  viewport: {
+const drawHostilePlannedPaths = (context: CanvasRenderingContext2D, game: GameState, viewport: {
     left: number
     top: number
     tileSize: number
-  },
-): void {
+  }): void => {
   context.save()
   context.globalAlpha = 0.35
   context.lineWidth = Math.max(1, viewport.tileSize * 0.12)

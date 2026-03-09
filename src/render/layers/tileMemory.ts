@@ -3,90 +3,92 @@ import { COLORS } from "../colors.ts"
 import { drawGlyph, drawTileBackground } from "../helpers/draw.ts"
 import { wallGlyphForMask } from "../helpers/selectors.ts"
 
-export function drawTileMemoryLayer(
-  context: CanvasRenderingContext2D,
-  game: GameState,
-  index: number,
-  screenX: number,
-  screenY: number,
-  x: number,
-  y: number,
-  tileSize: number,
-): void {
+export type DrawTileMemoryLayerOptions = {
+  context: CanvasRenderingContext2D
+  game: GameState
+  index: number
+  screenX: number
+  screenY: number
+  x: number
+  y: number
+  tileSize: number
+}
+
+export const drawTileMemoryLayer = ({ context, game, index, screenX, screenY, x, y, tileSize }: DrawTileMemoryLayerOptions): void => {
   const visibility = game.visibility[index]
   const memory = game.memory[index]
 
   if (memory === "wall") {
-    drawTileBackground(
+    drawTileBackground({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      visibility >= 2 ? COLORS.visibleWall : COLORS.memoryWall,
-      1,
-    )
-    drawGlyph(
+      color: visibility >= 2 ? COLORS.visibleWall : COLORS.memoryWall,
+      alpha: 1,
+    })
+    drawGlyph({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      wallGlyphForMask(game, x, y),
-      COLORS.background,
-      visibility >= 2 ? 0.92 : 0.65,
-    )
+      glyph: wallGlyphForMask({ game, x, y }),
+      color: COLORS.background,
+      alpha: visibility >= 2 ? 0.92 : 0.65,
+    })
   } else if (memory === "water") {
-    drawTileBackground(
+    drawTileBackground({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
-      visibility >= 2 ? 0.14 : 0.08,
-    )
-    drawGlyph(
+      color: visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
+      alpha: visibility >= 2 ? 0.14 : 0.08,
+    })
+    drawGlyph({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      visibility >= 2 ? "." : "·",
-      visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
-      visibility >= 2 ? 0.8 : 0.42,
-    )
+      glyph: visibility >= 2 ? "." : "·",
+      color: visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
+      alpha: visibility >= 2 ? 0.8 : 0.42,
+    })
   } else if (memory === "kelp") {
-    drawTileBackground(
+    drawTileBackground({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
-      visibility >= 2 ? 0.18 : 0.1,
-    )
-    drawGlyph(
+      color: visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
+      alpha: visibility >= 2 ? 0.18 : 0.1,
+    })
+    drawGlyph({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      '"',
-      visibility >= 2 ? "#5fe08f" : "#2d7a52",
-      visibility >= 2 ? 0.92 : 0.66,
-    )
+      glyph: '"',
+      color: visibility >= 2 ? "#5fe08f" : "#2d7a52",
+      alpha: visibility >= 2 ? 0.92 : 0.66,
+    })
   } else if (memory === "vent") {
-    drawTileBackground(
+    drawTileBackground({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
-      visibility >= 2 ? 0.22 : 0.12,
-    )
-    drawGlyph(
+      color: visibility >= 2 ? COLORS.visibleWater : COLORS.memoryWater,
+      alpha: visibility >= 2 ? 0.22 : 0.12,
+    })
+    drawGlyph({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      "!",
-      visibility >= 2 ? COLORS.vent : COLORS.ventDim,
-      visibility >= 2 ? 0.96 : 0.74,
-    )
+      glyph: "!",
+      color: visibility >= 2 ? COLORS.vent : COLORS.ventDim,
+      alpha: visibility >= 2 ? 0.96 : 0.74,
+    })
   }
 }

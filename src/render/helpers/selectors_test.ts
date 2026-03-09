@@ -14,7 +14,7 @@ Deno.test("wallGlyphForMask renders a stalactite tip with a down triangle", () =
     ".....",
   ])
 
-  assertEquals(wallGlyphForMask(game, 2, 2), "▼")
+  assertEquals(wallGlyphForMask({ game, x: 2, y: 2 }), "▼")
 })
 
 Deno.test("wallGlyphForMask renders a stalagmite tip with an up triangle", () => {
@@ -26,10 +26,10 @@ Deno.test("wallGlyphForMask renders a stalagmite tip with an up triangle", () =>
     ".....",
   ])
 
-  assertEquals(wallGlyphForMask(game, 2, 2), "▲")
+  assertEquals(wallGlyphForMask({ game, x: 2, y: 2 }), "▲")
 })
 
-function createWallGlyphGame(rows: string[]): GameState {
+const createWallGlyphGame = (rows: string[]): GameState => {
   const width = rows[0].length
   const height = rows.length
   const memory = rows.flatMap((row) =>

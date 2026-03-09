@@ -3,38 +3,40 @@ import type { LightCell } from "../lighting.ts"
 import { COLORS } from "../colors.ts"
 import { drawGlyph, drawTileBackground } from "../helpers/draw.ts"
 
-export function resolveTrailColor(trail?: FadeCell): string {
+export const resolveTrailColor = (trail?: FadeCell): string => {
   return trail?.source === "enemy-projectile"
     ? COLORS.enemyProjectileTrail
     : COLORS.trail
 }
 
-export function drawEffectsLayer(
-  context: CanvasRenderingContext2D,
-  game: GameState,
-  tileSize: number,
-  screenX: number,
-  screenY: number,
-  index: number,
+export type DrawEffectsLayerOptions = {
+  context: CanvasRenderingContext2D
+  game: GameState
+  tileSize: number
+  screenX: number
+  screenY: number
+  index: number
   effectMaps: {
     trails: Map<number, FadeCell>
     dust: Map<number, number>
     shockwaveFront: Map<number, FadeCell>
     cracks: Map<number, CrackCell>
     ventLight: Map<number, LightCell>
-  },
-): void {
+  }
+}
+
+export const drawEffectsLayer = ({ context, game, tileSize, screenX, screenY, index, effectMaps }: DrawEffectsLayerOptions): void => {
   const ventLight = effectMaps.ventLight.get(index)
 
   if (ventLight && shouldDrawVentLight(game, index)) {
-    drawTileBackground(
+    drawTileBackground({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      ventLight.color,
-      ventLight.alpha,
-    )
+      color: ventLight.color,
+      alpha: ventLight.alpha,
+    })
   }
 
   const trail = effectMaps.trails.get(index)
@@ -48,80 +50,78 @@ export function drawEffectsLayer(
   const crack = effectMaps.cracks.get(index)
 
   if (trailAlpha > 0) {
-    drawGlyph(
+    drawGlyph({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      "~",
-      resolveTrailColor(trail),
-      trailAlpha,
-    )
+      glyph: "~",
+      color: resolveTrailColor(trail),
+      alpha: trailAlpha,
+    })
   }
 
   if (dustAlpha > 0) {
-    drawTileBackground(
+    drawTileBackground({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      COLORS.dustGlow,
-      Math.min(0.72, dustAlpha * 0.65),
-    )
-    drawGlyph(
+      color: COLORS.dustGlow,
+      alpha: Math.min(0.72, dustAlpha * 0.65),
+    })
+    drawGlyph({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      "%",
-      COLORS.dust,
-      Math.min(1, dustAlpha),
-    )
+      glyph: "%",
+      color: COLORS.dust,
+      alpha: Math.min(1, dustAlpha),
+    })
   }
 
   if (crack) {
-    drawGlyph(
+    drawGlyph({
       context,
-      screenX,
-      screenY,
+      x: screenX,
+      y: screenY,
       tileSize,
-      crack.glyph,
-      COLORS.crack,
-      crack.alpha,
-    )
+      glyph: crack.glyph,
+      color: COLORS.crack,
+      alpha: crack.alpha,
+    })
   }
 }
 
-export function shouldDrawVentLight(game: GameState, index: number): boolean {
+export const shouldDrawVentLight = (game: GameState, index: number): boolean => {
   return shouldRevealEffectsOnDeath(game) || game.visibility[index] > 0
 }
 
-export function shouldDrawTrail(
-  game: GameState,
-  index: number,
-  trail?: FadeCell,
-): boolean {
+export const shouldDrawTrail = (game: GameState, index: number, trail?: FadeCell): boolean => {
   return shouldRevealEffectsOnDeath(game) || game.visibility[index] > 0 ||
     trail?.visibleToPlayer === true
 }
 
-export function shouldRevealEffectsOnDeath(game: GameState): boolean {
+export const shouldRevealEffectsOnDeath = (game: GameState): boolean => {
   return game.status === "lost"
 }
 
-export function drawShockwaveLayer(
-  context: CanvasRenderingContext2D,
-  game: GameState,
-  tileSize: number,
-  screenX: number,
-  screenY: number,
-  index: number,
+export type DrawShockwaveLayerOptions = {
+  context: CanvasRenderingContext2D
+  game: GameState
+  tileSize: number
+  screenX: number
+  screenY: number
+  index: number
   effectMaps: {
     dust: Map<number, number>
     shockwaveFront: Map<number, FadeCell>
-  },
-  showHiddenEnemySonar = false,
-): void {
+  }
+  showHiddenEnemySonar?: boolean
+}
+
+export const drawShockwaveLayer = ({ context, game, tileSize, screenX, screenY, index, effectMaps, showHiddenEnemySonar = false }: DrawShockwaveLayerOptions): void => {
   const dustAlpha = effectMaps.dust.get(index) ?? 0
   const front = effectMaps.shockwaveFront.get(index)
 
@@ -150,21 +150,21 @@ export function drawShockwaveLayer(
     return
   }
 
-  drawTileBackground(
+  drawTileBackground({
     context,
-    screenX,
-    screenY,
+    x: screenX,
+    y: screenY,
     tileSize,
-    sonarGlow,
-    sonarAlpha * 0.5,
-  )
-  drawGlyph(
+    color: sonarGlow,
+    alpha: sonarAlpha * 0.5,
+  })
+  drawGlyph({
     context,
-    screenX,
-    screenY,
+    x: screenX,
+    y: screenY,
     tileSize,
-    "◌",
-    sonarColor,
-    sonarAlpha,
-  )
+    glyph: "◌",
+    color: sonarColor,
+    alpha: sonarAlpha,
+  })
 }
