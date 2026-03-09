@@ -88,11 +88,21 @@ const getViewportSize = (): { width: number; height: number } => {
     ? { width: globalThis.innerWidth, height: globalThis.innerHeight }
     : { width: 1280, height: 720 }
 }
+const getHasTouchLayout = (): boolean => {
+  if (typeof globalThis.matchMedia === "function") {
+    return globalThis.matchMedia("(pointer: coarse)").matches ||
+      globalThis.matchMedia("(hover: none)").matches
+  }
+
+  return false
+}
 const appSettingsSignal = signal<AppSettings>(
   readAppSettings(getBrowserStorage(), { isDevBuild: IS_DEV_BUILD }),
 )
 const viewportSizeSignal = signal(getViewportSize())
+const hasTouchLayoutSignal = signal(getHasTouchLayout())
 const viewportModeSignal = signal<ViewportMode>("camera")
+const isMobileHelmOpenSignal = signal(false)
 const isOptionsOpenSignal = signal(false)
 const isOrdersModalOpenSignal = signal(false)
 const runSeedSignal = signal(INITIAL_RUN_SEED)
@@ -235,8 +245,15 @@ const movePlayerInDirection = (direction: "up" | "down" | "left" | "right") => {
   })
 }
 
-const syncViewportSize = () => {
+const syncResponsiveState = () => {
   viewportSizeSignal.value = getViewportSize()
+
+  const hasTouchLayout = getHasTouchLayout()
+  hasTouchLayoutSignal.value = hasTouchLayout
+
+  if (!hasTouchLayout) {
+    isMobileHelmOpenSignal.value = false
+  }
 }
 
 const beginAutoMoveRoute = (point: Point) => {
@@ -534,7 +551,7 @@ const ensureAppRuntime = () => {
   globalThis.addEventListener("pointerdown", startManagedAudio, {
     passive: true,
   })
-  globalThis.addEventListener("resize", syncViewportSize, { passive: true })
+  globalThis.addEventListener("resize", syncResponsiveState, { passive: true })
   globalThis.addEventListener("focus", syncPageAudioEnabled, { passive: true })
   globalThis.addEventListener("blur", syncPageAudioEnabled, { passive: true })
   document.addEventListener("visibilitychange", syncPageAudioEnabled)
@@ -781,8 +798,15 @@ export const App = () => {
   const crtEnabled = appSettings.crtEnabled
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
   const viewportSize = viewportSizeSignal.value
+  const hasTouchLayout = hasTouchLayoutSignal.value
   const isCompactLayout = viewportSize.width <= MOBILE_LAYOUT_MAX_WIDTH ||
     viewportSize.height <= MOBILE_LAYOUT_MAX_HEIGHT
+  const isTouchLayout = isCompactLayout && hasTouchLayout
+  const isCompactLandscape = isTouchLayout &&
+    viewportSize.width > viewportSize.height
+  const isMobileHelmOpen = isCompactLandscape
+    ? isMobileHelmOpenSignal.value
+    : isTouchLayout
   const activeRunSeedConfig = parseRunSeed(activeRunSeed, INITIAL_RUN_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
     activeRunSeedConfig.enableMapMode
@@ -834,10 +858,103 @@ export const App = () => {
     isGodMode,
   )
   const onOffLabel = (enabled: boolean) => enabled ? t`ON` : t`OFF`
+  const mobileHelmActions = (
+    <div
+      class="mobile-action-grid"
+      role="group"
+      aria-label={t`action controls`}
+    >
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        disabled={game.status !== "playing"}
+        onClick={() => applyPlayerAction((current) => fireTorpedo(current))}
+      >
+        {t`torpedo`}
+      </button>
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        disabled={game.status !== "playing"}
+        onClick={() =>
+          applyPlayerAction((current) => fireTorpedo(current, "up"))}
+      >
+        {t`launch up`}
+      </button>
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        disabled={game.status !== "playing"}
+        onClick={() => applyPlayerAction((current) => dropDepthCharge(current))}
+      >
+        {t`depth`}
+      </button>
+      <button
+        type="button"
+        class={`mobile-control-button mobile-action-button${
+          playerSonarEnabled ? " is-active" : ""
+        }`}
+        disabled={game.status !== "playing"}
+        onClick={() => {
+          startManagedAudio()
+          updateGame((current) => togglePlayerSonar(current))
+        }}
+      >
+        {t`sonar`}
+      </button>
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        onClick={() => {
+          setViewportModeWithMessage(
+            viewportMode === "full" ? "camera" : "full",
+          )
+        }}
+      >
+        {viewportMode === "full" ? t`tracking` : t`map`}
+      </button>
+    </div>
+  )
+  const mobileHelmStatus = (
+    <div class="mobile-helm-status">
+      <div class="stat-row">
+        <span>{t`turn`}</span>
+        <strong>{game.turn}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`sonar in`}</span>
+        <strong>{playerSonarEnabled ? sonarIn : onOffLabel(false)}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`torpedoes`}</span>
+        <strong>{game.torpedoAmmo}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`depth charges`}</span>
+        <strong>{game.depthChargeAmmo}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`position`}</span>
+        <strong>{playerCoordinates}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`target`}</span>
+        <strong>{targetCoordinates}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`display`}</span>
+        <strong>{viewportLabel}</strong>
+      </div>
+    </div>
+  )
 
   return (
     <main class="game-shell">
-      <section class="viewport-stage">
+      <section
+        class={`viewport-stage${
+          isCompactLandscape ? " is-compact-landscape" : ""
+        }`}
+      >
         <FastilesViewport
           crtEnabled={crtEnabled}
           game={game}
@@ -849,155 +966,71 @@ export const App = () => {
           }}
           renderOptions={renderOptions}
         />
+
+        {isCompactLandscape
+          ? (
+            <>
+              <button
+                type="button"
+                class={`mobile-helm-tab${isMobileHelmOpen ? " is-active" : ""}`}
+                aria-label={isMobileHelmOpen
+                  ? t`close mobile helm`
+                  : t`open mobile helm`}
+                aria-expanded={isMobileHelmOpen}
+                onClick={() => {
+                  isMobileHelmOpenSignal.value = !isMobileHelmOpenSignal.peek()
+                }}
+              >
+                {isMobileHelmOpen ? t`close` : t`helm`}
+              </button>
+              {isMobileHelmOpen
+                ? (
+                  <section class="mobile-helm-drawer sidebar-panel sidebar-panel-primary is-open">
+                    <div class="panel-header">
+                      <div class="sidebar-heading">{t`mobile helm`}</div>
+                      <div class="mobile-control-hint">
+                        {t`Tap nearby tiles to move. Tap a distant tile twice to auto-nav.`}
+                      </div>
+                    </div>
+                    {mobileHelmStatus}
+                    {mobileHelmActions}
+                    <button
+                      type="button"
+                      class="mobile-control-button mobile-action-button"
+                      onClick={() => {
+                        isOptionsOpenSignal.value = true
+                        isOrdersModalOpenSignal.value = false
+                      }}
+                    >
+                      {t`options`}
+                    </button>
+                  </section>
+                )
+                : null}
+            </>
+          )
+          : null}
       </section>
 
-      {isCompactLayout
+      {isTouchLayout && !isCompactLandscape
         ? (
           <section class="mobile-controls sidebar-panel sidebar-panel-primary">
             <div class="panel-header">
               <div class="sidebar-heading">{t`mobile helm`}</div>
               <div class="mobile-control-hint">
-                {t`Tap a tile to plot auto-nav. Tap again to engage.`}
+                {t`Tap nearby tiles to move. Tap a distant tile twice to auto-nav.`}
               </div>
             </div>
-            <div class="mobile-controls-grid">
-              <div class="mobile-control-group">
-                <div class="sidebar-heading">{t`movement controls`}</div>
-                <div
-                  class="mobile-dpad"
-                  role="group"
-                  aria-label={t`movement controls`}
-                >
-                  <div class="mobile-control-spacer" />
-                  <button
-                    type="button"
-                    class="mobile-control-button"
-                    aria-label={t`move north`}
-                    disabled={game.status !== "playing"}
-                    onClick={() => movePlayerInDirection("up")}
-                  >
-                    ↑
-                  </button>
-                  <div class="mobile-control-spacer" />
-                  <button
-                    type="button"
-                    class="mobile-control-button"
-                    aria-label={t`move west`}
-                    disabled={game.status !== "playing"}
-                    onClick={() => movePlayerInDirection("left")}
-                  >
-                    ←
-                  </button>
-                  <button
-                    type="button"
-                    class="mobile-control-button"
-                    aria-label={t`hold position`}
-                    disabled={game.status !== "playing"}
-                    onClick={() =>
-                      applyPlayerAction((current) => holdPosition(current))}
-                  >
-                    ·
-                  </button>
-                  <button
-                    type="button"
-                    class="mobile-control-button"
-                    aria-label={t`move east`}
-                    disabled={game.status !== "playing"}
-                    onClick={() => movePlayerInDirection("right")}
-                  >
-                    →
-                  </button>
-                  <div class="mobile-control-spacer" />
-                  <button
-                    type="button"
-                    class="mobile-control-button"
-                    aria-label={t`move south`}
-                    disabled={game.status !== "playing"}
-                    onClick={() => movePlayerInDirection("down")}
-                  >
-                    ↓
-                  </button>
-                  <div class="mobile-control-spacer" />
-                </div>
-              </div>
-              <div class="mobile-control-group">
-                <div class="sidebar-heading">{t`action controls`}</div>
-                <div
-                  class="mobile-action-grid"
-                  role="group"
-                  aria-label={t`action controls`}
-                >
-                  <button
-                    type="button"
-                    class="mobile-control-button mobile-action-button"
-                    disabled={game.status !== "playing"}
-                    onClick={() =>
-                      applyPlayerAction((current) => fireTorpedo(current))}
-                  >
-                    {t`torpedo`}
-                  </button>
-                  <button
-                    type="button"
-                    class="mobile-control-button mobile-action-button"
-                    disabled={game.status !== "playing"}
-                    onClick={() =>
-                      applyPlayerAction((current) =>
-                        fireTorpedo(current, "up")
-                      )}
-                  >
-                    {t`launch up`}
-                  </button>
-                  <button
-                    type="button"
-                    class="mobile-control-button mobile-action-button"
-                    disabled={game.status !== "playing"}
-                    onClick={() =>
-                      applyPlayerAction((current) => dropDepthCharge(current))}
-                  >
-                    {t`depth`}
-                  </button>
-                  <button
-                    type="button"
-                    class={`mobile-control-button mobile-action-button${
-                      playerSonarEnabled ? " is-active" : ""
-                    }`}
-                    disabled={game.status !== "playing"}
-                    onClick={() => {
-                      startManagedAudio()
-                      updateGame((current) => togglePlayerSonar(current))
-                    }}
-                  >
-                    {t`sonar`}
-                  </button>
-                  <button
-                    type="button"
-                    class="mobile-control-button mobile-action-button"
-                    onClick={() => {
-                      setViewportModeWithMessage(
-                        viewportMode === "full" ? "camera" : "full",
-                      )
-                    }}
-                  >
-                    {viewportMode === "full" ? t`tracking` : t`map`}
-                  </button>
-                  <button
-                    type="button"
-                    class="mobile-control-button mobile-action-button"
-                    onClick={() => {
-                      isOptionsOpenSignal.value = true
-                      isOrdersModalOpenSignal.value = false
-                    }}
-                  >
-                    {t`options`}
-                  </button>
-                </div>
-              </div>
-            </div>
+            {mobileHelmActions}
           </section>
         )
         : null}
 
-      <aside class="sidebar">
+      <aside
+        class={`sidebar${
+          isCompactLandscape ? " is-hidden-on-compact-landscape" : ""
+        }`}
+      >
         <section class="sidebar-panel sidebar-panel-primary">
           <div class="panel-header">
             <div class="sidebar-heading">{t`mission status`}</div>
