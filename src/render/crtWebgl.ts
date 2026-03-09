@@ -36,7 +36,7 @@ uniform vec2 uSourceResolution;
 varying vec2 v;
 
 void main() {
-  vec2 uv = vec2(v.x, 1.0 - v.y);
+  vec2 uv = v;
   vec2 centered = uv * 2.0 - 1.0;
   vec2 warped = centered + centered * vec2(centered.y * centered.y * 0.018, centered.x * centered.x * 0.026);
   warped = warped * 0.5 + 0.5;
