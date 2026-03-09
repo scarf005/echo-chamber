@@ -1,5 +1,10 @@
 import type { GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
+import {
+  createCrtRenderer,
+  destroyCrtRenderer,
+  renderCrtFrame,
+} from "./crtWebgl.ts"
 import { TERMINAL_FONT_LOAD } from "./fontFamily.ts"
 import { screenShakeOffset } from "./helpers/draw.ts"
 import { resolveViewportMetrics } from "./helpers/viewport.ts"
@@ -18,32 +23,116 @@ type FastilesViewportProps = {
 type FastilesViewportRuntime = {
   container: HTMLDivElement | null
   canvas: HTMLCanvasElement | null
+  sourceCanvas: HTMLCanvasElement | null
+  crtRenderer: ReturnType<typeof createCrtRenderer> | null
   hoveredTileKey: string | null
   props: FastilesViewportProps | null
+  animationFrame: number | null
+  resizeObserver: ResizeObserver | null
+  sourceDirty: boolean
 }
 
 const fastilesViewportRuntime: FastilesViewportRuntime = {
   container: null,
   canvas: null,
+  sourceCanvas: null,
+  crtRenderer: null,
   hoveredTileKey: null,
   props: null,
+  animationFrame: null,
+  resizeObserver: null,
+  sourceDirty: false,
+}
+
+const syncDisplayCanvas = () => {
+  const { canvas, sourceCanvas } = fastilesViewportRuntime
+
+  if (!canvas || !sourceCanvas || canvas === sourceCanvas) {
+    return
+  }
+
+  canvas.width = sourceCanvas.width
+  canvas.height = sourceCanvas.height
+  canvas.style.width = sourceCanvas.style.width
+  canvas.style.height = sourceCanvas.style.height
+}
+
+const drawCrtViewport = (_time: number) => {
+  const { canvas, crtRenderer, sourceCanvas, sourceDirty } =
+    fastilesViewportRuntime
+
+  if (!canvas || !sourceCanvas || canvas === sourceCanvas) {
+    return
+  }
+
+  if (
+    !crtRenderer || crtRenderer.canvas.width !== sourceCanvas.width ||
+    crtRenderer.canvas.height !== sourceCanvas.height
+  ) {
+    destroyCrtRenderer(crtRenderer)
+    const renderCanvas = document.createElement("canvas")
+    renderCanvas.width = sourceCanvas.width
+    renderCanvas.height = sourceCanvas.height
+    fastilesViewportRuntime.crtRenderer = createCrtRenderer(renderCanvas)
+  }
+
+  syncDisplayCanvas()
+  renderCrtFrame(fastilesViewportRuntime.crtRenderer!, sourceCanvas, {
+    uploadSource: sourceDirty,
+  })
+  const context = canvas.getContext("2d")
+
+  if (!context) {
+    throw new Error("2D canvas not supported")
+  }
+
+  context.clearRect(0, 0, canvas.width, canvas.height)
+  context.drawImage(fastilesViewportRuntime.crtRenderer!.canvas, 0, 0)
+  fastilesViewportRuntime.sourceDirty = false
+}
+
+const runCrtAnimation = (timestamp: number) => {
+  fastilesViewportRuntime.animationFrame = null
+  drawCrtViewport(timestamp * 0.001)
+}
+
+const startCrtAnimation = () => {
+  if (fastilesViewportRuntime.animationFrame !== null) {
+    return
+  }
+
+  fastilesViewportRuntime.animationFrame = globalThis.requestAnimationFrame(
+    runCrtAnimation,
+  )
+}
+
+const stopCrtAnimation = () => {
+  if (fastilesViewportRuntime.animationFrame === null) {
+    return
+  }
+
+  globalThis.cancelAnimationFrame(fastilesViewportRuntime.animationFrame)
+  fastilesViewportRuntime.animationFrame = null
 }
 
 const drawFastilesViewport = () => {
-  const { canvas, container, props } = fastilesViewportRuntime
+  const { container, sourceCanvas, props } = fastilesViewportRuntime
 
-  if (!canvas || !container || !props) {
+  if (!sourceCanvas || !container || !props) {
     return
   }
 
   drawGame(
-    canvas,
+    sourceCanvas,
     container,
     props.game,
     props.selectedTarget,
     props.previewPath,
     props.renderOptions,
   )
+
+  fastilesViewportRuntime.sourceDirty = true
+  startCrtAnimation()
 }
 
 const handleCanvasClick = (event: MouseEvent) => {
@@ -100,7 +189,10 @@ const handleCanvasPointerLeave = () => {
 }
 
 const detachViewport = () => {
-  const { canvas, props } = fastilesViewportRuntime
+  const { canvas, props, resizeObserver } = fastilesViewportRuntime
+
+  stopCrtAnimation()
+  resizeObserver?.disconnect()
 
   if (canvas) {
     globalThis.removeEventListener("resize", drawFastilesViewport)
@@ -110,10 +202,15 @@ const detachViewport = () => {
     canvas.remove()
   }
 
+  destroyCrtRenderer(fastilesViewportRuntime.crtRenderer)
   fastilesViewportRuntime.hoveredTileKey = null
   props?.onTileHover(null)
   fastilesViewportRuntime.canvas = null
+  fastilesViewportRuntime.sourceCanvas = null
+  fastilesViewportRuntime.crtRenderer = null
   fastilesViewportRuntime.container = null
+  fastilesViewportRuntime.resizeObserver = null
+  fastilesViewportRuntime.sourceDirty = false
 }
 
 const attachViewport = (container: HTMLDivElement) => {
@@ -124,18 +221,33 @@ const attachViewport = (container: HTMLDivElement) => {
 
   detachViewport()
 
-  const canvas = document.createElement("canvas")
-  canvas.className = "game-canvas"
-  container.appendChild(canvas)
+  const displayCanvas = document.createElement("canvas")
+  displayCanvas.className = "game-canvas"
+  const sourceCanvas = document.createElement("canvas")
+  sourceCanvas.className = "game-canvas game-canvas-source"
+  const crtRenderer: ReturnType<typeof createCrtRenderer> | null = null
+
+  container.appendChild(displayCanvas)
 
   fastilesViewportRuntime.container = container
-  fastilesViewportRuntime.canvas = canvas
+  fastilesViewportRuntime.canvas = displayCanvas
+  fastilesViewportRuntime.sourceCanvas = sourceCanvas
+  fastilesViewportRuntime.crtRenderer = crtRenderer
   fastilesViewportRuntime.hoveredTileKey = null
+  fastilesViewportRuntime.sourceDirty = true
 
   globalThis.addEventListener("resize", drawFastilesViewport)
-  canvas.addEventListener("click", handleCanvasClick)
-  canvas.addEventListener("pointermove", handleCanvasPointerMove)
-  canvas.addEventListener("pointerleave", handleCanvasPointerLeave)
+  displayCanvas.addEventListener("click", handleCanvasClick)
+  displayCanvas.addEventListener("pointermove", handleCanvasPointerMove)
+  displayCanvas.addEventListener("pointerleave", handleCanvasPointerLeave)
+
+  if ("ResizeObserver" in globalThis) {
+    const resizeObserver = new globalThis.ResizeObserver(() => {
+      drawFastilesViewport()
+    })
+    resizeObserver.observe(container)
+    fastilesViewportRuntime.resizeObserver = resizeObserver
+  }
 
   drawFastilesViewport()
 
@@ -143,7 +255,7 @@ const attachViewport = (container: HTMLDivElement) => {
     void document.fonts.load(TERMINAL_FONT_LOAD)
       .then(() => {
         if (
-          fastilesViewportRuntime.canvas === canvas &&
+          fastilesViewportRuntime.canvas === displayCanvas &&
           fastilesViewportRuntime.container === container
         ) {
           drawFastilesViewport()

@@ -18,39 +18,6 @@
     linear-gradient(180deg, #030c06 0%, #000000 100%);
 }
 
-.game-shell::before,
-.game-shell::after {
-  content: "";
-  position: absolute;
-  pointer-events: none;
-}
-
-.game-shell::before {
-  inset: 1rem;
-  z-index: 0;
-  opacity: 0.22;
-  background: repeating-linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.42) 0,
-    rgba(0, 0, 0, 0.42) 2px,
-    rgba(0, 0, 0, 0.06) 2px,
-    rgba(0, 0, 0, 0.06) 4px
-  );
-  mix-blend-mode: soft-light;
-}
-
-.game-shell::after {
-  inset: 0;
-  z-index: 0;
-  background:
-    radial-gradient(
-      circle at center,
-      transparent 48%,
-      rgba(0, 0, 0, 0.36) 100%
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0));
-}
-
 .viewport-stage {
   position: relative;
   isolation: isolate;
@@ -70,54 +37,6 @@
     0 0 24px var(--crt-shadow-soft);
 }
 
-.viewport-stage::before,
-.viewport-stage::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.viewport-stage::before {
-  z-index: 2;
-  opacity: 0.42;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.02),
-      transparent 18%,
-      transparent 82%,
-      rgba(255, 255, 255, 0.03)
-    ),
-    repeating-linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.5) 0,
-    rgba(0, 0, 0, 0.5) 1px,
-    rgba(60, 255, 122, 0.025) 1px,
-    rgba(60, 255, 122, 0.025) 3px
-  ),
-    radial-gradient(
-    circle at 50% 50%,
-    transparent 58%,
-    rgba(0, 0, 0, 0.28) 100%
-  );
-}
-
-.viewport-stage::after {
-  z-index: 3;
-  inset: -28% 0 auto;
-  height: 38%;
-  opacity: 0.18;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0),
-    rgba(164, 255, 192, 0.16) 46%,
-    rgba(255, 255, 255, 0)
-  );
-  will-change: transform;
-  animation: crt-sweep 7s linear infinite;
-}
-
 .viewport {
   position: relative;
   width: 100%;
@@ -126,29 +45,20 @@
   place-items: center;
 }
 
-.viewport::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0.18;
-  background:
-    radial-gradient(
-      circle at center,
-      rgba(60, 255, 122, 0.14),
-      transparent 58%
-    ),
-    linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.28));
-  animation: crt-flicker 5.6s steps(1) infinite;
-  will-change: opacity;
-}
-
 .game-canvas {
-  image-rendering: pixelated;
   position: relative;
   z-index: 0;
-  filter: saturate(0.92) contrast(1.06) brightness(1.02);
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.game-canvas-webgl {
+  image-rendering: auto;
+}
+
+.game-canvas-source {
+  display: none;
 }
 
 .sidebar {
@@ -496,34 +406,6 @@
   outline: none;
 }
 
-@keyframes crt-flicker {
-  0%, 95%, 100% {
-    opacity: 0.18;
-  }
-
-  96% {
-    opacity: 0.24;
-  }
-
-  97% {
-    opacity: 0.15;
-  }
-
-  98% {
-    opacity: 0.2;
-  }
-}
-
-@keyframes crt-sweep {
-  0% {
-    transform: translateY(-130%);
-  }
-
-  100% {
-    transform: translateY(250%);
-  }
-}
-
 @media (max-width: 920px) {
   .game-shell {
     grid-template-columns: minmax(0, 1fr);
@@ -535,10 +417,6 @@
 
   .viewport-stage {
     min-height: 60vh;
-  }
-
-  .viewport-stage::after {
-    opacity: 0.12;
   }
 
   .sidebar {
@@ -555,12 +433,5 @@
 
   .sidebar-panel {
     padding-inline: 0.8rem;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .viewport::before,
-  .viewport-stage::after {
-    animation: none;
   }
 }
