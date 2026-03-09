@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import type { GameState } from "../../game/game.ts"
 import {
@@ -44,7 +44,7 @@ Deno.test("resolveTrailColor makes enemy projectile trails more reddish", () => 
   )
 })
 
-function createEffectsGame(visibility: GameState["visibility"]): GameState {
+const createEffectsGame = (visibility: GameState["visibility"]): GameState => {
   return {
     map: {
       width: 2,

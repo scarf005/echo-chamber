@@ -14,7 +14,10 @@ export type DrawTileMemoryLayerOptions = {
   tileSize: number
 }
 
-export const drawTileMemoryLayer = ({ context, game, index, screenX, screenY, x, y, tileSize }: DrawTileMemoryLayerOptions): void => {
+export const drawTileMemoryLayer = (
+  { context, game, index, screenX, screenY, x, y, tileSize }:
+    DrawTileMemoryLayerOptions,
+): void => {
   const visibility = game.visibility[index]
   const memory = game.memory[index]
 

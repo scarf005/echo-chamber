@@ -22,7 +22,9 @@ export type ResolveViewportMetricsOptions = {
   renderOptions?: RenderOptions
 }
 
-export const resolveViewportMetrics = ({ game, viewportSize, renderOptions = {} }: ResolveViewportMetricsOptions): ViewportMetrics => {
+export const resolveViewportMetrics = (
+  { game, viewportSize, renderOptions = {} }: ResolveViewportMetricsOptions,
+): ViewportMetrics => {
   const mode = renderOptions.viewportMode ?? "camera"
   const width = mode === "full" ? game.map.width : Math.min(
     game.map.width,
@@ -52,14 +54,21 @@ export const resolveViewportMetrics = ({ game, viewportSize, renderOptions = {} 
   }
 }
 
-export const pointToViewport = (point: Point, viewport: Pick<ViewportMetrics, "left" | "top">): Point => {
+export const pointToViewport = (
+  point: Point,
+  viewport: Pick<ViewportMetrics, "left" | "top">,
+): Point => {
   return {
     x: point.x - viewport.left,
     y: point.y - viewport.top,
   }
 }
 
-const calculateViewportTileSize = (viewportSize: { width: number; height: number }, viewportWidth: number, viewportHeight: number): number => {
+const calculateViewportTileSize = (
+  viewportSize: { width: number; height: number },
+  viewportWidth: number,
+  viewportHeight: number,
+): number => {
   return Math.max(
     1,
     Math.floor(

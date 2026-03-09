@@ -66,7 +66,10 @@ export const buildEntityMaps = (game: GameState): {
   }
 }
 
-const buildEntityMap = <T extends { position: { x: number; y: number } }>(entities: T[], width: number): Map<number, T> => {
+const buildEntityMap = <T extends { position: { x: number; y: number } }>(
+  entities: T[],
+  width: number,
+): Map<number, T> => {
   return entities.reduce((map, entity) => {
     map.set(entity.position.y * width + entity.position.x, entity)
     return map

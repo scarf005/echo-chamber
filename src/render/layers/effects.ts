@@ -25,7 +25,10 @@ export type DrawEffectsLayerOptions = {
   }
 }
 
-export const drawEffectsLayer = ({ context, game, tileSize, screenX, screenY, index, effectMaps }: DrawEffectsLayerOptions): void => {
+export const drawEffectsLayer = (
+  { context, game, tileSize, screenX, screenY, index, effectMaps }:
+    DrawEffectsLayerOptions,
+): void => {
   const ventLight = effectMaps.ventLight.get(index)
 
   if (ventLight && shouldDrawVentLight(game, index)) {
@@ -94,11 +97,18 @@ export const drawEffectsLayer = ({ context, game, tileSize, screenX, screenY, in
   }
 }
 
-export const shouldDrawVentLight = (game: GameState, index: number): boolean => {
+export const shouldDrawVentLight = (
+  game: GameState,
+  index: number,
+): boolean => {
   return shouldRevealEffectsOnDeath(game) || game.visibility[index] > 0
 }
 
-export const shouldDrawTrail = (game: GameState, index: number, trail?: FadeCell): boolean => {
+export const shouldDrawTrail = (
+  game: GameState,
+  index: number,
+  trail?: FadeCell,
+): boolean => {
   return shouldRevealEffectsOnDeath(game) || game.visibility[index] > 0 ||
     trail?.visibleToPlayer === true
 }
@@ -121,7 +131,18 @@ export type DrawShockwaveLayerOptions = {
   showHiddenEnemySonar?: boolean
 }
 
-export const drawShockwaveLayer = ({ context, game, tileSize, screenX, screenY, index, effectMaps, showHiddenEnemySonar = false }: DrawShockwaveLayerOptions): void => {
+export const drawShockwaveLayer = (
+  {
+    context,
+    game,
+    tileSize,
+    screenX,
+    screenY,
+    index,
+    effectMaps,
+    showHiddenEnemySonar = false,
+  }: DrawShockwaveLayerOptions,
+): void => {
   const dustAlpha = effectMaps.dust.get(index) ?? 0
   const front = effectMaps.shockwaveFront.get(index)
 

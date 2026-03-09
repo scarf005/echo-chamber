@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import type { GameState, HostileSubmarine } from "../../game/game.ts"
 import {
@@ -115,14 +115,14 @@ Deno.test("hostile estimate overlay highlights hovered hostile estimate only", (
   assertEquals(unhoveredOverlay.highlightedEstimatedPosition, null)
 })
 
-function comparePoints(
+const comparePoints = (
   left: GameState["player"],
   right: GameState["player"],
-): number {
+): number => {
   return left.y - right.y || left.x - right.x
 }
 
-function createEstimateOverlayGame(): GameState {
+const createEstimateOverlayGame = (): GameState => {
   return {
     map: {
       width: 5,

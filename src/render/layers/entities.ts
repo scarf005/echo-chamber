@@ -14,7 +14,9 @@ import { drawTileBackground } from "../helpers/draw.ts"
 import { drawGlyph } from "../helpers/draw.ts"
 import type { RenderOptions } from "../options.ts"
 
-export const colorForHostileSubmarine = (hostileSubmarine: HostileSubmarine): string => {
+export const colorForHostileSubmarine = (
+  hostileSubmarine: HostileSubmarine,
+): string => {
   switch (hostileSubmarine.archetype) {
     case "turtle":
       return COLORS.hostileSubmarineTurtle
@@ -31,7 +33,9 @@ export const playerGlyphForFacing = (facing: HorizontalDirection): string => {
   return facing === "left" ? "◄" : "►"
 }
 
-export const resolveHostileEstimatedPlayerPosition = (hostileSubmarine: HostileSubmarine): Point | null => {
+export const resolveHostileEstimatedPlayerPosition = (
+  hostileSubmarine: HostileSubmarine,
+): Point | null => {
   const guessedTarget = hostileSubmarine.debugState?.attack.guessedTarget
 
   if (guessedTarget) {
@@ -50,7 +54,10 @@ export const resolveHostileEstimatedPlayerPosition = (hostileSubmarine: HostileS
     : null
 }
 
-export const resolveHostileEstimateOverlay = (game: GameState, hoveredTile: Point | null): {
+export const resolveHostileEstimateOverlay = (
+  game: GameState,
+  hoveredTile: Point | null,
+): {
   estimatedPositions: Point[]
   highlightedEstimatedPosition: Point | null
 } => {
@@ -114,7 +121,20 @@ export type DrawEntitiesLayerOptions = {
   }
 }
 
-export const drawEntitiesLayer = ({ context, game, renderOptions, tileSize, screenX, screenY, x, y, index, entityMaps }: DrawEntitiesLayerOptions): void => {
+export const drawEntitiesLayer = (
+  {
+    context,
+    game,
+    renderOptions,
+    tileSize,
+    screenX,
+    screenY,
+    x,
+    y,
+    index,
+    entityMaps,
+  }: DrawEntitiesLayerOptions,
+): void => {
   const visibility = resolveEntityVisibilityLevel(game, index)
   const entityMemory = game.entityMemory?.[index] ?? null
   const debugOverlayAlpha = renderOptions.debugEntityOverlay ? 0.5 : 0
@@ -131,7 +151,15 @@ export const drawEntitiesLayer = ({ context, game, renderOptions, tileSize, scre
       color: COLORS.dockBackground,
       alpha: 1,
     })
-    drawGlyph({ context, x: screenX, y: screenY, tileSize, glyph: "D", color: COLORS.player, alpha: 1 })
+    drawGlyph({
+      context,
+      x: screenX,
+      y: screenY,
+      tileSize,
+      glyph: "D",
+      color: COLORS.player,
+      alpha: 1,
+    })
   }
 
   if (
@@ -146,7 +174,15 @@ export const drawEntitiesLayer = ({ context, game, renderOptions, tileSize, scre
       color: COLORS.capsuleBackground,
       alpha: 1,
     })
-    drawGlyph({ context, x: screenX, y: screenY, tileSize, glyph: "C", color: COLORS.capsule, alpha: 1 })
+    drawGlyph({
+      context,
+      x: screenX,
+      y: screenY,
+      tileSize,
+      glyph: "C",
+      color: COLORS.capsule,
+      alpha: 1,
+    })
   }
 
   if (visibility === 0) {
@@ -239,7 +275,15 @@ export const drawEntitiesLayer = ({ context, game, renderOptions, tileSize, scre
 
   const boulder = entityMaps.boulders.get(index)
   if (boulder) {
-    drawGlyph({ context, x: screenX, y: screenY, tileSize, glyph: "O", color: COLORS.boulder, alpha: 1 })
+    drawGlyph({
+      context,
+      x: screenX,
+      y: screenY,
+      tileSize,
+      glyph: "O",
+      color: COLORS.boulder,
+      alpha: 1,
+    })
   }
 
   const fish = entityMaps.fish.get(index)
@@ -348,7 +392,13 @@ const indexForPoint = (game: GameState, point: Point): number => {
   return point.y * game.map.width + point.x
 }
 
-const drawEntityMemory = (context: CanvasRenderingContext2D, screenX: number, screenY: number, tileSize: number, kind: EntityMemoryKind): void => {
+const drawEntityMemory = (
+  context: CanvasRenderingContext2D,
+  screenX: number,
+  screenY: number,
+  tileSize: number,
+  kind: EntityMemoryKind,
+): void => {
   const marker = markerForEntityMemory(kind)
 
   if (marker.backgroundColor) {
@@ -373,7 +423,9 @@ const drawEntityMemory = (context: CanvasRenderingContext2D, screenX: number, sc
   })
 }
 
-export const markerForEntityMemory = (kind: EntityMemoryKind): { glyph: string; color: string; backgroundColor?: string } => {
+export const markerForEntityMemory = (
+  kind: EntityMemoryKind,
+): { glyph: string; color: string; backgroundColor?: string } => {
   switch (kind) {
     case "item":
       return { glyph: "?", color: COLORS.pickup }
@@ -388,14 +440,25 @@ export const markerForEntityMemory = (kind: EntityMemoryKind): { glyph: string; 
   }
 }
 
-const drawExactEntityOverlay = (context: CanvasRenderingContext2D, game: GameState, tileSize: number, screenX: number, screenY: number, x: number, y: number, index: number, entityMaps: {
+const drawExactEntityOverlay = (
+  context: CanvasRenderingContext2D,
+  game: GameState,
+  tileSize: number,
+  screenX: number,
+  screenY: number,
+  x: number,
+  y: number,
+  index: number,
+  entityMaps: {
     torpedoes: Map<number, Torpedo>
     depthCharges: Map<number, DepthCharge>
     boulders: Map<number, { position: { x: number; y: number } }>
     fish: Map<number, Fish>
     hostileSubmarines: Map<number, HostileSubmarine>
     pickups: Map<number, PickupItem>
-  }, alpha: number): void => {
+  },
+  alpha: number,
+): void => {
   if (x === game.map.spawn.x && y === game.map.spawn.y) {
     drawTileBackground({
       context,
@@ -405,7 +468,15 @@ const drawExactEntityOverlay = (context: CanvasRenderingContext2D, game: GameSta
       color: COLORS.dockBackground,
       alpha,
     })
-    drawGlyph({ context, x: screenX, y: screenY, tileSize, glyph: "D", color: COLORS.player, alpha })
+    drawGlyph({
+      context,
+      x: screenX,
+      y: screenY,
+      tileSize,
+      glyph: "D",
+      color: COLORS.player,
+      alpha,
+    })
   }
 
   if (x === game.map.capsule.x && y === game.map.capsule.y) {
@@ -418,7 +489,15 @@ const drawExactEntityOverlay = (context: CanvasRenderingContext2D, game: GameSta
         color: COLORS.capsuleBackground,
         alpha,
       })
-      drawGlyph({ context, x: screenX, y: screenY, tileSize, glyph: "C", color: COLORS.capsule, alpha })
+      drawGlyph({
+        context,
+        x: screenX,
+        y: screenY,
+        tileSize,
+        glyph: "C",
+        color: COLORS.capsule,
+        alpha,
+      })
     }
   }
 
@@ -447,7 +526,15 @@ const drawExactEntityOverlay = (context: CanvasRenderingContext2D, game: GameSta
   }
 
   if (entityMaps.boulders.has(index)) {
-    drawGlyph({ context, x: screenX, y: screenY, tileSize, glyph: "O", color: COLORS.boulder, alpha })
+    drawGlyph({
+      context,
+      x: screenX,
+      y: screenY,
+      tileSize,
+      glyph: "O",
+      color: COLORS.boulder,
+      alpha,
+    })
   }
 
   const fish = entityMaps.fish.get(index)
@@ -483,11 +570,21 @@ export const shouldRenderProjectileInDarkness = (senderId: string): boolean => {
   return senderId === "player"
 }
 
-export const resolveEntityVisibilityLevel = (game: GameState, index: number): number => {
+export const resolveEntityVisibilityLevel = (
+  game: GameState,
+  index: number,
+): number => {
   return game.status === "lost" ? 3 : game.visibility[index]
 }
 
-const drawTorpedoGlyph = (context: CanvasRenderingContext2D, screenX: number, screenY: number, tileSize: number, torpedo: Torpedo, alpha: number): void => {
+const drawTorpedoGlyph = (
+  context: CanvasRenderingContext2D,
+  screenX: number,
+  screenY: number,
+  tileSize: number,
+  torpedo: Torpedo,
+  alpha: number,
+): void => {
   drawGlyph({
     context,
     x: screenX,
@@ -505,6 +602,20 @@ const drawTorpedoGlyph = (context: CanvasRenderingContext2D, screenX: number, sc
   })
 }
 
-const drawDepthChargeGlyph = (context: CanvasRenderingContext2D, screenX: number, screenY: number, tileSize: number, alpha: number): void => {
-  drawGlyph({ context, x: screenX, y: screenY, tileSize, glyph: "◉", color: COLORS.depthCharge, alpha })
+const drawDepthChargeGlyph = (
+  context: CanvasRenderingContext2D,
+  screenX: number,
+  screenY: number,
+  tileSize: number,
+  alpha: number,
+): void => {
+  drawGlyph({
+    context,
+    x: screenX,
+    y: screenY,
+    tileSize,
+    glyph: "◉",
+    color: COLORS.depthCharge,
+    alpha,
+  })
 }

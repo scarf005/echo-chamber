@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import type { GeneratedMap } from "../../game/mapgen.ts"
 import { resolveViewportMetrics } from "./viewport.ts"
@@ -58,7 +58,12 @@ Deno.test("full map viewport always covers the entire map", () => {
   assertEquals(viewport.cssHeight, 504)
 })
 
-const createGameStub = (mapWidth: number, mapHeight: number, playerX: number, playerY: number) => {
+const createGameStub = (
+  mapWidth: number,
+  mapHeight: number,
+  playerX: number,
+  playerY: number,
+) => {
   return {
     map: createMapStub(mapWidth, mapHeight),
     player: {

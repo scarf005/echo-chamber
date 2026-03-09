@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assert, assertEquals } from "jsr:@std/assert"
+import { assert, assertEquals } from "@std/assert"
 
 import type { GameState } from "../game/game.ts"
 import type { GeneratedMap, Point } from "../game/mapgen.ts"
@@ -30,7 +30,7 @@ Deno.test("buildVentLightMap only lights vent tiles", () => {
   assertEquals(lightMap.size, 1)
 })
 
-function createLightingGame(map: GeneratedMap): GameState {
+const createLightingGame = (map: GeneratedMap): GameState => {
   return {
     map,
     player: { x: 1, y: 3 },
@@ -71,11 +71,11 @@ function createLightingGame(map: GeneratedMap): GameState {
   }
 }
 
-function createMapFromRows(
+const createMapFromRows = (
   rows: string[],
   spawn: Point,
   capsule: Point,
-): GeneratedMap {
+): GeneratedMap => {
   const width = rows[0].length
   const height = rows.length
   const tiles = rows.flatMap((row) =>

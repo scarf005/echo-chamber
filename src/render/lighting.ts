@@ -1,4 +1,4 @@
-import { FOV, Lighting } from "npm:rot-js@2.2.1"
+import { FOV, Lighting } from "rot-js"
 
 import type { GameState } from "../game/game.ts"
 import { indexForPoint } from "../game/helpers.ts"
@@ -10,7 +10,7 @@ export interface LightCell {
   alpha: number
 }
 
-export function buildVentLightMap(game: GameState): Map<number, LightCell> {
+export const buildVentLightMap = (game: GameState): Map<number, LightCell> => {
   const vents = collectVentPoints(game.map)
 
   if (vents.length === 0) {
@@ -57,7 +57,7 @@ export function buildVentLightMap(game: GameState): Map<number, LightCell> {
   return lightMap
 }
 
-function reflectivityForTile(tile: ReturnType<typeof tileAt>): number {
+const reflectivityForTile = (tile: ReturnType<typeof tileAt>): number => {
   if (tile === "wall" || tile === null) {
     return 0.06
   }

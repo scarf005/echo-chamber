@@ -37,7 +37,9 @@ export type DescribeHoveredInspectorRowsOptions = {
   options?: InspectorOptions
 }
 
-export const describeHoveredInspectorRows = ({ game, point, options = {} }: DescribeHoveredInspectorRowsOptions): InspectorRow[] | null => {
+export const describeHoveredInspectorRows = (
+  { game, point, options = {} }: DescribeHoveredInspectorRowsOptions,
+): InspectorRow[] | null => {
   if (!point) {
     return null
   }
@@ -275,7 +277,10 @@ export const describeHoveredInspectorRows = ({ game, point, options = {} }: Desc
   return rows
 }
 
-export const filterInspectorRows = (rows: InspectorRow[] | null, showDevDetails: boolean): InspectorRow[] | null => {
+export const filterInspectorRows = (
+  rows: InspectorRow[] | null,
+  showDevDetails: boolean,
+): InspectorRow[] | null => {
   if (!rows) {
     return null
   }
@@ -289,7 +294,9 @@ export type DescribeInspectorContactOptions = {
   options?: InspectorOptions
 }
 
-export const describeInspectorContact = ({ game, point, options = {} }: DescribeInspectorContactOptions): string | null => {
+export const describeInspectorContact = (
+  { game, point, options = {} }: DescribeInspectorContactOptions,
+): string | null => {
   const index = point.y * game.map.width + point.x
 
   if (canRevealExactInspectorDetails(game, point, options)) {
@@ -309,12 +316,19 @@ export const describeInspectorContact = ({ game, point, options = {} }: Describe
   return normalizeInspectorContact(game.entityMemory?.[index] ?? null)
 }
 
-export const hasExactInspectorVisibility = (game: GameState, point: Point): boolean => {
+export const hasExactInspectorVisibility = (
+  game: GameState,
+  point: Point,
+): boolean => {
   const index = point.y * game.map.width + point.x
   return (game.visibility[index] ?? 0) >= 3
 }
 
-const canRevealExactInspectorDetails = (game: GameState, point: Point, options: InspectorOptions): boolean => {
+const canRevealExactInspectorDetails = (
+  game: GameState,
+  point: Point,
+  options: InspectorOptions,
+): boolean => {
   return options.revealAllEntities === true ||
     hasExactInspectorVisibility(game, point)
 }
@@ -356,7 +370,9 @@ const describeHostileIntent = (hostileSubmarine: HostileSubmarine): string => {
   }
 }
 
-export const describeHostileAiDecision = (hostileSubmarine: HostileSubmarine): string => {
+export const describeHostileAiDecision = (
+  hostileSubmarine: HostileSubmarine,
+): string => {
   const targetSuffix = hostileSubmarine.target
     ? ` ${formatPoint(hostileSubmarine.target)}`
     : ""
@@ -368,7 +384,9 @@ export const describeHostileAiDecision = (hostileSubmarine: HostileSubmarine): s
   })
 }
 
-export const describeNotableHostileAiDecision = (hostileSubmarine: HostileSubmarine): string | null => {
+export const describeNotableHostileAiDecision = (
+  hostileSubmarine: HostileSubmarine,
+): string | null => {
   if (!hostileSubmarine.target) {
     return null
   }
@@ -384,7 +402,9 @@ const normalizeInspectorContact = (contact: string | null): string | null => {
   return contact === "enemy" ? "hostile entity" : localizeEntityMemory(contact)
 }
 
-const describeHostileDebugRows = (debugState: HostileAiDebugState | undefined): InspectorRow[] => {
+const describeHostileDebugRows = (
+  debugState: HostileAiDebugState | undefined,
+): InspectorRow[] => {
   if (!debugState) {
     return []
   }

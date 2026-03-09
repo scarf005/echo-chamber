@@ -1,6 +1,6 @@
 /// <reference lib="deno.ns" />
 
-import { assertEquals } from "jsr:@std/assert"
+import { assertEquals } from "@std/assert"
 
 import type { GameState } from "../../game/game.ts"
 import { wallGlyphForMask } from "./selectors.ts"

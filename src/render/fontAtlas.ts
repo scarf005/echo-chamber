@@ -42,7 +42,7 @@ export const Glyph = {
   sonar: 17,
 } as const
 
-export function createFontAtlas(tileSize: number): HTMLCanvasElement {
+export const createFontAtlas = (tileSize: number): HTMLCanvasElement => {
   const columns = 6
   const rows = Math.ceil(GLYPHS.length / columns)
   const canvas = document.createElement("canvas")
@@ -70,7 +70,7 @@ export function createFontAtlas(tileSize: number): HTMLCanvasElement {
   return canvas
 }
 
-export function wallGlyphForMask(mask: number): number {
+export const wallGlyphForMask = (mask: number): number => {
   switch (mask) {
     case 0:
       return Glyph.wallSolo
