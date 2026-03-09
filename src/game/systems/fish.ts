@@ -21,6 +21,7 @@ import {
   type Point,
   tileAt,
 } from "../mapgen.ts"
+import { fillOrderedNeighborIndexes } from "../orderedNeighbors.ts"
 
 const CARDINAL_STEPS: Point[] = [
   { x: 1, y: 0 },
@@ -399,14 +400,14 @@ const findPathToward = (
       break
     }
 
-    const neighborCount = fillOrderedNeighborIndexes(
+    const neighborCount = fillOrderedNeighborIndexes({
       width,
-      map.height,
-      currentIndex,
+      height: map.height,
+      pointIndex: currentIndex,
       goal,
       neighborIndexes,
       neighborScores,
-    )
+    })
 
     for (let index = 0; index < neighborCount; index += 1) {
       const nextIndex = neighborIndexes[index]
@@ -467,52 +468,6 @@ const pointFromIndex = (width: number, index: number): Point => {
     x: index % width,
     y: Math.floor(index / width),
   }
-}
-
-const fillOrderedNeighborIndexes = (
-  width: number,
-  height: number,
-  pointIndex: number,
-  goal: Point,
-  neighborIndexes: Int32Array,
-  neighborScores: Int32Array,
-): number => {
-  const x = pointIndex % width
-  const y = Math.floor(pointIndex / width)
-  let neighborCount = 0
-
-  const insertNeighbor = (nextIndex: number, nextX: number, nextY: number) => {
-    const score = Math.abs(nextX - goal.x) + Math.abs(nextY - goal.y)
-    let insertIndex = neighborCount
-
-    while (insertIndex > 0 && neighborScores[insertIndex - 1] > score) {
-      neighborIndexes[insertIndex] = neighborIndexes[insertIndex - 1]
-      neighborScores[insertIndex] = neighborScores[insertIndex - 1]
-      insertIndex -= 1
-    }
-
-    neighborIndexes[insertIndex] = nextIndex
-    neighborScores[insertIndex] = score
-    neighborCount += 1
-  }
-
-  if (x + 1 < width) {
-    insertNeighbor(pointIndex + 1, x + 1, y)
-  }
-
-  if (x > 0) {
-    insertNeighbor(pointIndex - 1, x - 1, y)
-  }
-
-  if (y + 1 < height) {
-    insertNeighbor(pointIndex + width, x, y + 1)
-  }
-
-  if (y > 0) {
-    insertNeighbor(pointIndex - width, x, y - 1)
-  }
-
-  return neighborCount
 }
 
 const allWaterTiles = (map: GeneratedMap): Point[] => {
