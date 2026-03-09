@@ -78,38 +78,14 @@ const syncDisplayCanvas = () => {
 
 const resolveCrtEventState = (
   game: GameState,
-  viewport: ReturnType<typeof resolveViewportMetrics>,
+  _viewport: ReturnType<typeof resolveViewportMetrics>,
 ) => {
-  let strongestContribution = 0
-  let strongestLineY = 0.5
-  let accumulatedContribution = 0
-
-  for (const cell of game.shockwaveFront) {
-    const x = cell.index % game.map.width
-    const y = Math.floor(cell.index / game.map.width)
-    const distance = Math.hypot(x - game.player.x, y - game.player.y)
-    const inverseDistance = 1 / (1 + distance)
-    const contribution = (cell.alpha * cell.alpha) * inverseDistance
-
-    accumulatedContribution += contribution
-
-    if (contribution <= strongestContribution) {
-      continue
-    }
-
-    strongestContribution = contribution
-    strongestLineY = (y - viewport.top + 0.5) / viewport.height
-  }
-
   const shakeContribution = Math.pow(Math.max(game.screenShake, 0), 2) * 0.12
-  const eventIntensity = Math.min(
-    1,
-    shakeContribution + accumulatedContribution * 2.8,
-  )
+  const eventIntensity = Math.min(1, shakeContribution)
 
   return {
     eventIntensity,
-    lineY: Math.min(0.95, Math.max(0.05, strongestLineY)),
+    lineY: 0.5,
   }
 }
 
