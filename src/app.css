@@ -82,7 +82,7 @@
     rgba(1, 10, 4, 0.92),
     rgba(0, 0, 0, 0.88)
   );
-  color: var(--crt-phosphor-strong);
+  color: var(--crt-text);
   text-transform: lowercase;
   box-shadow:
     inset 0 0 0 1px rgba(154, 255, 180, 0.07),
@@ -119,9 +119,9 @@
 }
 
 .stat-row strong {
-  color: var(--crt-phosphor-strong);
+  color: var(--crt-text);
   font-size: 1rem;
-  text-shadow: 0 0 8px rgba(60, 255, 122, 0.12);
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.08);
 }
 
 .stat-row-dev-only {
@@ -183,7 +183,7 @@
 .seed-input {
   width: 100%;
   font: inherit;
-  color: var(--crt-phosphor-strong);
+  color: var(--crt-text);
   background: rgba(0, 8, 4, 0.92);
   border: 1px solid rgba(60, 255, 122, 0.3);
   padding: 0.55rem 0.7rem;
@@ -348,7 +348,7 @@
 }
 
 .sidebar-log-message {
-  color: rgba(154, 255, 180, 0.92);
+  color: var(--crt-text-soft);
 }
 
 .sidebar-log-message-positive {
@@ -394,14 +394,14 @@
 }
 
 .credit-link {
-  color: rgba(154, 255, 180, 0.92);
+  color: var(--crt-text-soft);
   text-decoration-color: rgba(60, 255, 122, 0.42);
   word-break: break-word;
 }
 
 .credit-link:hover,
 .credit-link:focus-visible {
-  color: #deffe6;
+  color: var(--crt-text);
   text-decoration-color: rgba(154, 255, 180, 0.72);
   outline: none;
 }

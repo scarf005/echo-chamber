@@ -12,6 +12,7 @@ import type { RenderOptions } from "./options.ts"
 import { drawGame } from "./renderer.ts"
 
 type FastilesViewportProps = {
+  crtEnabled: boolean
   game: GameState
   selectedTarget: Point | null
   previewPath: Point[]
@@ -204,9 +205,10 @@ const stopCrtAnimation = () => {
 }
 
 const drawFastilesViewport = () => {
-  const { container, sourceCanvas, props } = fastilesViewportRuntime
+  const { canvas, canvasContext, container, sourceCanvas, props } =
+    fastilesViewportRuntime
 
-  if (!sourceCanvas || !container || !props) {
+  if (!canvas || !canvasContext || !sourceCanvas || !container || !props) {
     return
   }
 
@@ -228,6 +230,21 @@ const drawFastilesViewport = () => {
     renderOptions: props.renderOptions,
   })
   const eventState = resolveCrtEventState(props.game, viewport)
+
+  syncDisplayCanvas()
+
+  if (!props.crtEnabled) {
+    stopCrtAnimation()
+    destroyCrtRenderer(fastilesViewportRuntime.crtRenderer)
+    fastilesViewportRuntime.crtRenderer = null
+    fastilesViewportRuntime.sourceDirty = false
+    fastilesViewportRuntime.crtEventIntensity = 0
+    fastilesViewportRuntime.crtEventLineY = 0.5
+    fastilesViewportRuntime.effectActiveUntil = 0
+    canvasContext.clearRect(0, 0, canvas.width, canvas.height)
+    canvasContext.drawImage(sourceCanvas, 0, 0)
+    return
+  }
 
   fastilesViewportRuntime.sourceDirty = true
   fastilesViewportRuntime.crtEventIntensity = Math.max(

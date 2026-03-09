@@ -160,7 +160,7 @@ void main() {
   vec2 aberrationUnit = aberrationDistance > 0.0
     ? aberrationDirection / aberrationDistance
     : vec2(0.0);
-  float rgbShift = (0.0004 + u_eventIntensity * 0.003) * aberrationDistance * aberrationDistance;
+  float rgbShift = (0.0012 + u_eventIntensity * 0.0085) * (0.2 + aberrationDistance * 1.8);
   vec2 aberrationOffset = aberrationUnit * rgbShift;
   vec3 shiftedColor = vec3(
     texture2D(u_source, warped + aberrationOffset).r,

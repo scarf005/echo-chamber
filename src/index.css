@@ -10,6 +10,8 @@
   --crt-phosphor: #3cff7a;
   --crt-phosphor-strong: #9affb4;
   --crt-phosphor-dim: rgba(60, 255, 122, 0.72);
+  --crt-text: #f1f8fb;
+  --crt-text-soft: rgba(241, 248, 251, 0.84);
   --crt-border: rgba(60, 255, 122, 0.3);
   --crt-border-strong: rgba(154, 255, 180, 0.58);
   --crt-shadow: rgba(16, 255, 105, 0.18);
@@ -23,7 +25,7 @@
   font-family: var(--font-terminal);
   line-height: 1.4;
   font-weight: 400;
-  color: var(--crt-phosphor-strong);
+  color: var(--crt-text);
   background: var(--crt-screen);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -47,7 +49,7 @@ body {
   margin: 0;
   min-width: 320px;
   overflow: hidden;
-  color: var(--crt-phosphor-strong);
+  color: var(--crt-text);
   background:
     radial-gradient(circle at top, rgba(60, 255, 122, 0.08), transparent 28%),
     radial-gradient(circle at bottom, rgba(14, 95, 46, 0.18), transparent 36%),

@@ -746,6 +746,7 @@ export const App = () => {
   const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
   const difficulty = appSettings.difficulty
+  const crtEnabled = appSettings.crtEnabled
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
   const activeRunSeedConfig = parseRunSeed(activeRunSeed, INITIAL_RUN_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
@@ -799,6 +800,7 @@ export const App = () => {
     <main class="game-shell">
       <section class="viewport-stage">
         <FastilesViewport
+          crtEnabled={crtEnabled}
           game={game}
           selectedTarget={previewTarget}
           previewPath={previewPath}
@@ -1056,6 +1058,27 @@ export const App = () => {
                   >
                     {t`hard`} (4x)
                   </button>
+                </div>
+              </div>
+              <div class="language-switch-row">
+                <span class="sidebar-heading">{t`graphics`}</span>
+                <div class="language-switch">
+                  <span>{t`CRT effect`}</span>
+                  <input
+                    class="audio-toggle"
+                    type="checkbox"
+                    checked={crtEnabled}
+                    aria-label={t`toggle CRT effect`}
+                    onChange={(
+                      event: JSX.TargetedEvent<HTMLInputElement>,
+                    ) => {
+                      updateAppSettings((current) => ({
+                        ...current,
+                        crtEnabled: event.currentTarget.checked,
+                      }))
+                    }}
+                  />
+                  <strong>{onOffLabel(crtEnabled)}</strong>
                 </div>
               </div>
               <div class="sidebar-heading">{t`audio`}</div>
