@@ -25,6 +25,9 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Typecheck source files
+        run: deno task typecheck
+
       - name: Build production bundle
         run: deno task build
 
