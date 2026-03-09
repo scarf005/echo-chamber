@@ -1,3 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
-  <path d="M3 10h10l4-4h2l-1 4 3 2-3 2 1 4h-2l-4-4H3z" fill="currentColor" />
+  <path
+    d="M2 10.75h11.5L18 7.8h1.7l-.8 2.95L22 12l-3.1 1.25.8 2.95H18l-4.5-2.95H2z"
+    fill="currentColor"
+  />
 </svg>
