@@ -21,6 +21,8 @@ type CompositeProgram = ProgramBundle & {
   burnInLocation: WebGLUniformLocation
   resolutionLocation: WebGLUniformLocation
   sourceResolutionLocation: WebGLUniformLocation
+  eventIntensityLocation: WebGLUniformLocation
+  eventLineLocation: WebGLUniformLocation
 }
 
 type TextureTarget = {
@@ -47,6 +49,8 @@ type CrtRenderer = {
 
 type RenderCrtFrameOptions = {
   deltaTime: number
+  eventIntensity: number
+  eventLineY: number
   uploadSource?: boolean
 }
 
@@ -117,11 +121,17 @@ uniform sampler2D u_bloom;
 uniform sampler2D u_burnIn;
 uniform vec2 u_resolution;
 uniform vec2 u_sourceResolution;
+uniform float u_eventIntensity;
+uniform float u_eventLineY;
 
 varying vec2 v_uv;
 
 float rgb2grey(vec3 value) {
   return dot(value, vec3(0.21, 0.72, 0.04));
+}
+
+float hash(vec2 value) {
+  return fract(sin(dot(value, vec2(127.1, 311.7))) * 43758.5453123);
 }
 
 vec2 distortCoordinates(vec2 uv) {
@@ -145,7 +155,13 @@ void main() {
   vec3 sourceColor = texture2D(u_source, warped).rgb;
   vec3 bloomColor = texture2D(u_bloom, warped).rgb;
   vec3 burnInColor = texture2D(u_burnIn, warped).rgb;
-  vec3 localGlow = sourceColor * 0.05;
+  float rgbShift = 0.0008 + u_eventIntensity * 0.005;
+  vec3 shiftedColor = vec3(
+    texture2D(u_source, warped + vec2(rgbShift, 0.0)).r,
+    sourceColor.g,
+    texture2D(u_source, warped - vec2(rgbShift, 0.0)).b
+  );
+  vec3 localGlow = shiftedColor * 0.05;
   localGlow += texture2D(u_source, warped + vec2(texel.x, 0.0)).rgb * 0.025;
   localGlow += texture2D(u_source, warped - vec2(texel.x, 0.0)).rgb * 0.025;
 
@@ -156,12 +172,16 @@ void main() {
   float ambientTop = smoothstep(1.05, -0.08, warped.y) * 0.05;
   float ambientCurve = smoothstep(0.98, 0.12, distance(warped, vec2(0.5))) * 0.018;
   vec3 ambientLight = (bloomColor * 0.08 + vec3(0.012, 0.018, 0.016)) * (ambientTop + ambientCurve);
+  float glowLine = exp(-pow((warped.y - u_eventLineY) / 0.03, 2.0)) * (0.04 + u_eventIntensity * 0.25);
+  float staticNoise = (hash(floor(warped * u_resolution * 0.33)) - 0.5) * 0.018;
 
-  vec3 color = sourceColor;
+  vec3 color = shiftedColor;
   color = max(color, max(burnInColor - vec3(0.03), vec3(0.0)) * burnInAlpha * 0.65);
   color += bloomColor * bloomAlpha * 0.22;
   color += localGlow * vec3(0.03, 0.05, 0.04);
   color += ambientLight;
+  color += vec3(0.05, 0.08, 0.06) * glowLine;
+  color += staticNoise;
   color *= vec3(0.985, 1.01, 0.99);
   color *= scanline * vignette;
 
@@ -374,10 +394,20 @@ export const createCrtRenderer = (canvas: HTMLCanvasElement): CrtRenderer => {
       compositeBase.program,
       "u_sourceResolution",
     ),
+    eventIntensityLocation: getUniformLocation(
+      gl,
+      compositeBase.program,
+      "u_eventIntensity",
+    ),
+    eventLineLocation: getUniformLocation(
+      gl,
+      compositeBase.program,
+      "u_eventLineY",
+    ),
   }
 
-  const bloomWidth = Math.max(1, Math.floor(canvas.width * 0.5))
-  const bloomHeight = Math.max(1, Math.floor(canvas.height * 0.5))
+  const bloomWidth = Math.max(1, Math.floor(canvas.width * 0.25))
+  const bloomHeight = Math.max(1, Math.floor(canvas.height * 0.25))
 
   return {
     canvas,
@@ -396,8 +426,8 @@ export const createCrtRenderer = (canvas: HTMLCanvasElement): CrtRenderer => {
       createTextureTarget(gl, canvas.width, canvas.height),
     ],
     burnInIndex: 0,
-    sourceWidth: canvas.width,
-    sourceHeight: canvas.height,
+    sourceWidth: 0,
+    sourceHeight: 0,
   }
 }
 
@@ -416,6 +446,8 @@ const uploadSourceTexture = (
     gl.UNSIGNED_BYTE,
     sourceCanvas,
   )
+  renderer.sourceWidth = sourceCanvas.width
+  renderer.sourceHeight = sourceCanvas.height
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 0)
 }
 
@@ -465,6 +497,7 @@ const renderCompositePass = (
   renderer: CrtRenderer,
   bloomTexture: WebGLTexture,
   burnInTexture: WebGLTexture,
+  options: RenderCrtFrameOptions,
 ) => {
   const { gl, compositeProgram, quadBuffer } = renderer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
@@ -487,6 +520,8 @@ const renderCompositePass = (
     renderer.sourceWidth,
     renderer.sourceHeight,
   )
+  gl.uniform1f(compositeProgram.eventIntensityLocation, options.eventIntensity)
+  gl.uniform1f(compositeProgram.eventLineLocation, options.eventLineY)
   gl.clearColor(0, 0, 0, 1)
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
@@ -506,25 +541,28 @@ export const renderCrtFrame = (
   const nextBurnTarget = renderer.burnInTargets[nextBurnIndex]
   const burnDecay = Math.min(0.1875, options.deltaTime * 3.6)
 
-  renderBlurPass(
-    renderer,
-    renderer.sourceTexture,
-    renderer.bloomTargets[0],
-    1,
-    0,
-  )
-  renderBlurPass(
-    renderer,
-    renderer.bloomTargets[0].texture,
-    renderer.bloomTargets[1],
-    0,
-    1,
-  )
+  if (options.uploadSource === true) {
+    renderBlurPass(
+      renderer,
+      renderer.sourceTexture,
+      renderer.bloomTargets[0],
+      1,
+      0,
+    )
+    renderBlurPass(
+      renderer,
+      renderer.bloomTargets[0].texture,
+      renderer.bloomTargets[1],
+      0,
+      1,
+    )
+  }
   renderBurnInPass(renderer, nextBurnTarget, previousBurnTarget, burnDecay)
   renderCompositePass(
     renderer,
     renderer.bloomTargets[1].texture,
     nextBurnTarget.texture,
+    options,
   )
 
   renderer.burnInIndex = nextBurnIndex

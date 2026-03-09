@@ -23,12 +23,16 @@ type FastilesViewportProps = {
 type FastilesViewportRuntime = {
   container: HTMLDivElement | null
   canvas: HTMLCanvasElement | null
+  canvasContext: CanvasRenderingContext2D | null
   sourceCanvas: HTMLCanvasElement | null
   crtRenderer: ReturnType<typeof createCrtRenderer> | null
   hoveredTileKey: string | null
   props: FastilesViewportProps | null
   animationFrame: number | null
   lastFrameTime: number | null
+  effectActiveUntil: number
+  crtEventIntensity: number
+  crtEventLineY: number
   resizeObserver: ResizeObserver | null
   sourceDirty: boolean
 }
@@ -36,12 +40,16 @@ type FastilesViewportRuntime = {
 const fastilesViewportRuntime: FastilesViewportRuntime = {
   container: null,
   canvas: null,
+  canvasContext: null,
   sourceCanvas: null,
   crtRenderer: null,
   hoveredTileKey: null,
   props: null,
   animationFrame: null,
   lastFrameTime: null,
+  effectActiveUntil: 0,
+  crtEventIntensity: 0,
+  crtEventLineY: 0.5,
   resizeObserver: null,
   sourceDirty: false,
 }
@@ -53,17 +61,67 @@ const syncDisplayCanvas = () => {
     return
   }
 
-  canvas.width = sourceCanvas.width
-  canvas.height = sourceCanvas.height
+  if (canvas.width !== sourceCanvas.width) {
+    canvas.width = sourceCanvas.width
+  }
+
+  if (canvas.height !== sourceCanvas.height) {
+    canvas.height = sourceCanvas.height
+  }
+
   canvas.style.width = sourceCanvas.style.width
   canvas.style.height = sourceCanvas.style.height
 }
 
-const drawCrtViewport = (deltaTime: number) => {
-  const { canvas, crtRenderer, sourceCanvas, sourceDirty } =
-    fastilesViewportRuntime
+const resolveCrtEventState = (
+  game: GameState,
+  viewport: ReturnType<typeof resolveViewportMetrics>,
+) => {
+  let strongestContribution = 0
+  let strongestLineY = 0.5
+  let accumulatedContribution = 0
 
-  if (!canvas || !sourceCanvas || canvas === sourceCanvas) {
+  for (const cell of game.shockwaveFront) {
+    const x = cell.index % game.map.width
+    const y = Math.floor(cell.index / game.map.width)
+    const distance = Math.hypot(x - game.player.x, y - game.player.y)
+    const inverseDistance = 1 / (1 + distance)
+    const contribution = (cell.alpha * cell.alpha) * inverseDistance
+
+    accumulatedContribution += contribution
+
+    if (contribution <= strongestContribution) {
+      continue
+    }
+
+    strongestContribution = contribution
+    strongestLineY = (y - viewport.top + 0.5) / viewport.height
+  }
+
+  const shakeContribution = Math.pow(Math.max(game.screenShake, 0), 2) * 0.12
+  const eventIntensity = Math.min(
+    1,
+    0.04 + shakeContribution + accumulatedContribution * 2.8,
+  )
+
+  return {
+    eventIntensity,
+    lineY: Math.min(0.95, Math.max(0.05, strongestLineY)),
+  }
+}
+
+const drawCrtViewport = (deltaTime: number) => {
+  const {
+    canvas,
+    canvasContext,
+    crtRenderer,
+    sourceCanvas,
+    sourceDirty,
+    crtEventIntensity,
+    crtEventLineY,
+  } = fastilesViewportRuntime
+
+  if (!canvas || !canvasContext || !sourceCanvas || canvas === sourceCanvas) {
     return
   }
 
@@ -79,18 +137,17 @@ const drawCrtViewport = (deltaTime: number) => {
   }
 
   syncDisplayCanvas()
+  fastilesViewportRuntime.crtEventIntensity = Math.max(
+    0.035,
+    crtEventIntensity * Math.exp(-deltaTime * 5.5),
+  )
   renderCrtFrame(fastilesViewportRuntime.crtRenderer!, sourceCanvas, {
     deltaTime,
+    eventIntensity: fastilesViewportRuntime.crtEventIntensity,
+    eventLineY: crtEventLineY,
     uploadSource: sourceDirty,
   })
-  const context = canvas.getContext("2d")
-
-  if (!context) {
-    throw new Error("2D canvas not supported")
-  }
-
-  context.clearRect(0, 0, canvas.width, canvas.height)
-  context.drawImage(fastilesViewportRuntime.crtRenderer!.canvas, 0, 0)
+  canvasContext.drawImage(fastilesViewportRuntime.crtRenderer!.canvas, 0, 0)
   fastilesViewportRuntime.sourceDirty = false
 }
 
@@ -108,6 +165,15 @@ const runCrtAnimation = (timestamp: number) => {
   }
 
   const deltaTime = elapsedTime / 1000
+
+  if (
+    !fastilesViewportRuntime.sourceDirty &&
+    timestamp >= fastilesViewportRuntime.effectActiveUntil &&
+    fastilesViewportRuntime.crtEventIntensity <= 0.036
+  ) {
+    stopCrtAnimation()
+    return
+  }
 
   fastilesViewportRuntime.lastFrameTime = timestamp
   drawCrtViewport(deltaTime)
@@ -153,7 +219,24 @@ const drawFastilesViewport = () => {
     props.renderOptions,
   )
 
+  const viewport = resolveViewportMetrics({
+    game: props.game,
+    viewportSize: {
+      width: container.clientWidth || globalThis.innerWidth,
+      height: container.clientHeight || globalThis.innerHeight,
+    },
+    renderOptions: props.renderOptions,
+  })
+  const eventState = resolveCrtEventState(props.game, viewport)
+
   fastilesViewportRuntime.sourceDirty = true
+  fastilesViewportRuntime.crtEventIntensity = Math.max(
+    fastilesViewportRuntime.crtEventIntensity,
+    eventState.eventIntensity,
+  )
+  fastilesViewportRuntime.crtEventLineY = eventState.lineY
+  fastilesViewportRuntime.effectActiveUntil = globalThis.performance.now() +
+    Math.max(220, 1200 + eventState.eventIntensity * 900)
   startCrtAnimation()
 }
 
@@ -228,10 +311,14 @@ const detachViewport = () => {
   fastilesViewportRuntime.hoveredTileKey = null
   props?.onTileHover(null)
   fastilesViewportRuntime.canvas = null
+  fastilesViewportRuntime.canvasContext = null
   fastilesViewportRuntime.sourceCanvas = null
   fastilesViewportRuntime.crtRenderer = null
   fastilesViewportRuntime.container = null
   fastilesViewportRuntime.resizeObserver = null
+  fastilesViewportRuntime.effectActiveUntil = 0
+  fastilesViewportRuntime.crtEventIntensity = 0
+  fastilesViewportRuntime.crtEventLineY = 0.5
   fastilesViewportRuntime.sourceDirty = false
 }
 
@@ -245,6 +332,12 @@ const attachViewport = (container: HTMLDivElement) => {
 
   const displayCanvas = document.createElement("canvas")
   displayCanvas.className = "game-canvas"
+  const canvasContext = displayCanvas.getContext("2d")
+
+  if (!canvasContext) {
+    throw new Error("2D canvas not supported")
+  }
+
   const sourceCanvas = document.createElement("canvas")
   sourceCanvas.className = "game-canvas game-canvas-source"
   const crtRenderer: ReturnType<typeof createCrtRenderer> | null = null
@@ -253,6 +346,7 @@ const attachViewport = (container: HTMLDivElement) => {
 
   fastilesViewportRuntime.container = container
   fastilesViewportRuntime.canvas = displayCanvas
+  fastilesViewportRuntime.canvasContext = canvasContext
   fastilesViewportRuntime.sourceCanvas = sourceCanvas
   fastilesViewportRuntime.crtRenderer = crtRenderer
   fastilesViewportRuntime.hoveredTileKey = null
