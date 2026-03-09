@@ -4,6 +4,10 @@ import type { RenderOptions, ViewportMode } from "../options.ts"
 
 export const DEFAULT_CAMERA_TILE_WIDTH = 30
 export const DEFAULT_CAMERA_TILE_HEIGHT = 20
+export const COMPACT_CAMERA_TILE_WIDTH = 18
+export const COMPACT_CAMERA_TILE_HEIGHT = 14
+export const NARROW_CAMERA_TILE_WIDTH = 14
+export const NARROW_CAMERA_TILE_HEIGHT = 10
 
 export type ViewportMetrics = {
   mode: ViewportMode
@@ -20,6 +24,39 @@ export type ResolveViewportMetricsOptions = {
   game: Pick<GameState, "map" | "player">
   viewportSize: { width: number; height: number }
   renderOptions?: RenderOptions
+}
+
+export type ResponsiveCameraTileCounts = {
+  width: number
+  height: number
+}
+
+export type ResolveResponsiveCameraTileCountsOptions = {
+  viewportSize: { width: number; height: number }
+  isCompactLayout: boolean
+}
+
+export const resolveResponsiveCameraTileCounts = (
+  { viewportSize, isCompactLayout }: ResolveResponsiveCameraTileCountsOptions,
+): ResponsiveCameraTileCounts => {
+  if (!isCompactLayout) {
+    return {
+      width: DEFAULT_CAMERA_TILE_WIDTH,
+      height: DEFAULT_CAMERA_TILE_HEIGHT,
+    }
+  }
+
+  if (viewportSize.width <= 480) {
+    return {
+      width: NARROW_CAMERA_TILE_WIDTH,
+      height: NARROW_CAMERA_TILE_HEIGHT,
+    }
+  }
+
+  return {
+    width: COMPACT_CAMERA_TILE_WIDTH,
+    height: COMPACT_CAMERA_TILE_HEIGHT,
+  }
 }
 
 export const resolveViewportMetrics = (
