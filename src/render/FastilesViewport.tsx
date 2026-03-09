@@ -28,6 +28,7 @@ type FastilesViewportRuntime = {
   hoveredTileKey: string | null
   props: FastilesViewportProps | null
   animationFrame: number | null
+  lastFrameTime: number | null
   resizeObserver: ResizeObserver | null
   sourceDirty: boolean
 }
@@ -40,6 +41,7 @@ const fastilesViewportRuntime: FastilesViewportRuntime = {
   hoveredTileKey: null,
   props: null,
   animationFrame: null,
+  lastFrameTime: null,
   resizeObserver: null,
   sourceDirty: false,
 }
@@ -57,7 +59,7 @@ const syncDisplayCanvas = () => {
   canvas.style.height = sourceCanvas.style.height
 }
 
-const drawCrtViewport = (_time: number) => {
+const drawCrtViewport = (deltaTime: number) => {
   const { canvas, crtRenderer, sourceCanvas, sourceDirty } =
     fastilesViewportRuntime
 
@@ -78,6 +80,7 @@ const drawCrtViewport = (_time: number) => {
 
   syncDisplayCanvas()
   renderCrtFrame(fastilesViewportRuntime.crtRenderer!, sourceCanvas, {
+    deltaTime,
     uploadSource: sourceDirty,
   })
   const context = canvas.getContext("2d")
@@ -92,8 +95,25 @@ const drawCrtViewport = (_time: number) => {
 }
 
 const runCrtAnimation = (timestamp: number) => {
-  fastilesViewportRuntime.animationFrame = null
-  drawCrtViewport(timestamp * 0.001)
+  const { lastFrameTime } = fastilesViewportRuntime
+  const elapsedTime = lastFrameTime === null
+    ? 1000 / 30
+    : timestamp - lastFrameTime
+
+  if (elapsedTime < 1000 / 30) {
+    fastilesViewportRuntime.animationFrame = globalThis.requestAnimationFrame(
+      runCrtAnimation,
+    )
+    return
+  }
+
+  const deltaTime = elapsedTime / 1000
+
+  fastilesViewportRuntime.lastFrameTime = timestamp
+  drawCrtViewport(deltaTime)
+  fastilesViewportRuntime.animationFrame = globalThis.requestAnimationFrame(
+    runCrtAnimation,
+  )
 }
 
 const startCrtAnimation = () => {
@@ -101,6 +121,7 @@ const startCrtAnimation = () => {
     return
   }
 
+  fastilesViewportRuntime.lastFrameTime = null
   fastilesViewportRuntime.animationFrame = globalThis.requestAnimationFrame(
     runCrtAnimation,
   )
@@ -113,6 +134,7 @@ const stopCrtAnimation = () => {
 
   globalThis.cancelAnimationFrame(fastilesViewportRuntime.animationFrame)
   fastilesViewportRuntime.animationFrame = null
+  fastilesViewportRuntime.lastFrameTime = null
 }
 
 const drawFastilesViewport = () => {
