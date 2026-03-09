@@ -559,276 +559,272 @@ msgstr "holding near {target}"
 msgid "{id}: will {mode}{targetSuffix}"
 msgstr "{id}: will {mode}{targetSuffix}"
 
-#: src/app.tsx:919
-#: src/app.tsx:923
+#: src/app.tsx:861
 msgid "action controls"
 msgstr "action controls"
 
-#: src/app.tsx:1150
+#: src/app.tsx:1183
 msgid "active seed modes"
 msgstr "active seed modes"
 
-#: src/app.tsx:1243
+#: src/app.tsx:1276
 msgid "audio"
 msgstr "audio"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:385
+#: src/app.tsx:402
 msgid "Auto-nav engaged to {0}."
 msgstr "Auto-nav engaged to {0}."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1554
+#: src/app.tsx:1587
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "Auto-nav halted: {localizedReason} at {0}{1}."
 
-#: src/app.tsx:1121
-#: src/app.tsx:1525
+#: src/app.tsx:979
+#: src/app.tsx:1154
+#: src/app.tsx:1558
 msgid "close"
 msgstr "close"
 
+#: src/app.tsx:972
+msgid "close mobile helm"
+msgstr "close mobile helm"
+
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:404
+#: src/app.tsx:421
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "Course plotted to {0}. Click again to engage."
 
-#: src/app.tsx:1393
+#: src/app.tsx:1426
 msgid "credits"
 msgstr "credits"
 
-#: src/app.tsx:952
+#: src/app.tsx:886
 msgid "depth"
 msgstr "depth"
 
-#: src/app.tsx:1028
+#: src/app.tsx:929
+#: src/app.tsx:1061
 msgid "depth charges"
 msgstr "depth charges"
 
-#: src/app.tsx:1337
+#: src/app.tsx:1370
 msgid "dev"
 msgstr "dev"
 
-#: src/app.tsx:1187
-#: src/app.tsx:1191
+#: src/app.tsx:1220
+#: src/app.tsx:1224
 msgid "difficulty"
 msgstr "difficulty"
 
-#: src/app.tsx:1040
+#: src/app.tsx:941
+#: src/app.tsx:1073
 msgid "display"
 msgstr "display"
 
-#: src/app.tsx:338
+#: src/app.tsx:355
 msgid "Display set to full map."
 msgstr "Display set to full map."
 
-#: src/app.tsx:339
+#: src/app.tsx:356
 msgid "Display set to tracking camera."
 msgstr "Display set to tracking camera."
 
-#: src/app.tsx:1199
-#: src/app.tsx:1207
+#: src/app.tsx:1232
+#: src/app.tsx:1240
 msgid "easy"
 msgstr "easy"
 
-#: src/app.tsx:1273
+#: src/app.tsx:1306
 msgid "enable music"
 msgstr "enable music"
 
-#: src/app.tsx:1317
+#: src/app.tsx:1350
 msgid "enable sfx"
 msgstr "enable sfx"
 
-#: src/app.tsx:1168
+#: src/app.tsx:1201
 msgid "English"
 msgstr "English"
 
-#: src/app.tsx:819
+#: src/app.tsx:843
 msgid "FULL MAP (M)"
 msgstr "FULL MAP (M)"
 
-#: src/app.tsx:1369
-#: src/app.tsx:1375
+#: src/app.tsx:1402
+#: src/app.tsx:1408
 msgid "god mode"
 msgstr "god mode"
 
-#: src/app.tsx:1231
-#: src/app.tsx:1239
+#: src/app.tsx:1264
+#: src/app.tsx:1272
 msgid "hard"
 msgstr "hard"
 
-#: src/app.tsx:889
-msgid "hold position"
-msgstr "hold position"
+#: src/app.tsx:979
+msgid "helm"
+msgstr "helm"
 
-#: src/app.tsx:1095
+#: src/app.tsx:1128
 msgid "hover any tile to inspect terrain and contacts."
 msgstr "hover any tile to inspect terrain and contacts."
 
-#: src/app.tsx:1076
+#: src/app.tsx:1109
 msgid "hover tile"
 msgstr "hover tile"
 
-#: src/app.tsx:1074
+#: src/app.tsx:1107
 msgid "inspector"
 msgstr "inspector"
 
-#: src/app.tsx:1179
+#: src/app.tsx:1212
 msgid "Korean"
 msgstr "Korean"
 
-#: src/app.tsx:1156
-#: src/app.tsx:1160
+#: src/app.tsx:1189
+#: src/app.tsx:1193
 msgid "language"
 msgstr "language"
 
-#: src/app.tsx:943
+#: src/app.tsx:878
 msgid "launch up"
 msgstr "launch up"
 
-#: src/app.tsx:976
+#: src/app.tsx:910
 msgid "map"
 msgstr "map"
 
-#: src/app.tsx:1366
+#: src/app.tsx:1399
 msgid "map overlay"
 msgstr "map overlay"
 
-#: src/app.tsx:1340
+#: src/app.tsx:1373
 msgid "map visibility"
 msgstr "map visibility"
 
-#: src/app.tsx:1215
-#: src/app.tsx:1223
+#: src/app.tsx:1248
+#: src/app.tsx:1256
 msgid "medium"
 msgstr "medium"
 
-#: src/app.tsx:998
+#: src/app.tsx:1031
 msgid "mission status"
 msgstr "mission status"
 
-#: src/app.tsx:853
+#: src/app.tsx:985
+#: src/app.tsx:1014
 msgid "mobile helm"
 msgstr "mobile helm"
 
-#: src/app.tsx:899
-msgid "move east"
-msgstr "move east"
-
-#: src/app.tsx:870
-msgid "move north"
-msgstr "move north"
-
-#: src/app.tsx:909
-msgid "move south"
-msgstr "move south"
-
-#: src/app.tsx:880
-msgid "move west"
-msgstr "move west"
-
-#: src/app.tsx:860
-#: src/app.tsx:864
-msgid "movement controls"
-msgstr "movement controls"
-
-#: src/app.tsx:1246
+#: src/app.tsx:1279
 msgid "music"
 msgstr "music"
 
-#: src/app.tsx:1255
+#: src/app.tsx:1288
 msgid "music volume"
 msgstr "music volume"
 
-#: src/app.tsx:832
+#: src/app.tsx:856
 msgid "OFF"
 msgstr "OFF"
 
-#: src/app.tsx:832
+#: src/app.tsx:856
 msgid "ON"
 msgstr "ON"
 
-#: src/app.tsx:1050
+#: src/app.tsx:1083
 msgid "open full order log"
 msgstr "open full order log"
 
-#: src/app.tsx:1002
+#: src/app.tsx:973
+msgid "open mobile helm"
+msgstr "open mobile helm"
+
+#: src/app.tsx:1035
 msgid "open options"
 msgstr "open options"
 
-#: src/app.tsx:986
-#: src/app.tsx:1111
-#: src/app.tsx:1115
+#: src/app.tsx:1000
+#: src/app.tsx:1144
+#: src/app.tsx:1148
 msgid "options"
 msgstr "options"
 
-#: src/app.tsx:1058
-#: src/app.tsx:1515
-#: src/app.tsx:1519
+#: src/app.tsx:1091
+#: src/app.tsx:1548
+#: src/app.tsx:1552
 msgid "orders"
 msgstr "orders"
 
-#: src/app.tsx:1032
+#: src/app.tsx:933
+#: src/app.tsx:1065
 msgid "position"
 msgstr "position"
 
-#: src/app.tsx:1144
+#: src/app.tsx:1177
 msgid "restart"
 msgstr "restart"
 
-#: src/app.tsx:1342
-#: src/app.tsx:1347
+#: src/app.tsx:1375
+#: src/app.tsx:1380
 msgid "reveal map"
 msgstr "reveal map"
 
-#: src/app.tsx:1132
+#: src/app.tsx:1165
 msgid "run seed"
 msgstr "run seed"
 
-#: src/app.tsx:1131
+#: src/app.tsx:1164
 msgid "seed"
 msgstr "seed"
 
-#: src/app.tsx:1290
+#: src/app.tsx:1323
 msgid "sfx"
 msgstr "sfx"
 
-#: src/app.tsx:1299
+#: src/app.tsx:1332
 msgid "sfx volume"
 msgstr "sfx volume"
 
-#: src/app.tsx:965
+#: src/app.tsx:899
 msgid "sonar"
 msgstr "sonar"
 
-#: src/app.tsx:1020
+#: src/app.tsx:921
+#: src/app.tsx:1053
 msgid "sonar in"
 msgstr "sonar in"
 
-#: src/app.tsx:855
-msgid "Tap a tile to plot auto-nav. Tap again to engage."
-msgstr "Tap a tile to plot auto-nav. Tap again to engage."
+#: src/app.tsx:987
+#: src/app.tsx:1016
+msgid "Tap nearby tiles to move. Tap a distant tile twice to auto-nav."
+msgstr "Tap nearby tiles to move. Tap a distant tile twice to auto-nav."
 
-#: src/app.tsx:1036
+#: src/app.tsx:937
+#: src/app.tsx:1069
 msgid "target"
 msgstr "target"
 
-#: src/app.tsx:932
+#: src/app.tsx:869
 msgid "torpedo"
 msgstr "torpedo"
 
-#: src/app.tsx:1024
+#: src/app.tsx:925
+#: src/app.tsx:1057
 msgid "torpedoes"
 msgstr "torpedoes"
 
-#: src/app.tsx:976
+#: src/app.tsx:910
 msgid "tracking"
 msgstr "tracking"
 
-#: src/app.tsx:820
+#: src/app.tsx:844
 msgid "TRACKING (M)"
 msgstr "TRACKING (M)"
 
-#: src/app.tsx:1016
+#: src/app.tsx:917
+#: src/app.tsx:1049
 msgid "turn"
 msgstr "turn"
