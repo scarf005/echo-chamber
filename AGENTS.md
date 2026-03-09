@@ -2,7 +2,14 @@
 
 - NEVER remove existing `/// <reference lib="deno.ns" />`
 - **MUST** Commit after given task is finished
+- setup repo git hooks and keep them running `deno fmt`, `deno lint`, and
+  `deno test --parallel`
+- never use `function`; use arrow functions instead
 - NEVER use `use*` hooks when preact signals can do the job/
+- inline simple signal setters instead of `handle{Name}` helpers unless a named
+  callback is truly needed
+- keep functions to 2 required arguments when possible; move additional inputs
+  into an options object following Deno style guidance
 - use ROT.js (https://ondras.github.io/rot.js/manual/,
   https://ondras.github.io/rot.js/doc/) and jsr (e.g
   [@std/random](https://jsr.io/@std/random))

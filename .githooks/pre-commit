@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+deno fmt
+deno lint
+deno test --parallel --allow-env=NODE_ENV
