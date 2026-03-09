@@ -5,7 +5,12 @@ import { resolveViewportMetrics } from "./viewport.ts"
 
 Deno.test("camera viewport centers on the player when space allows", () => {
   const viewport = resolveViewportMetrics({
-    game: createGameStub(80, 60, 40, 30),
+    game: createGameStub({
+      mapWidth: 80,
+      mapHeight: 60,
+      playerX: 40,
+      playerY: 30,
+    }),
     viewportSize: { width: 1200, height: 800 },
     renderOptions: {
       viewportMode: "camera",
@@ -23,7 +28,12 @@ Deno.test("camera viewport centers on the player when space allows", () => {
 
 Deno.test("camera viewport clamps at map edges", () => {
   const viewport = resolveViewportMetrics({
-    game: createGameStub(80, 60, 3, 4),
+    game: createGameStub({
+      mapWidth: 80,
+      mapHeight: 60,
+      playerX: 3,
+      playerY: 4,
+    }),
     viewportSize: { width: 1200, height: 800 },
     renderOptions: {
       viewportMode: "camera",
@@ -40,7 +50,12 @@ Deno.test("camera viewport clamps at map edges", () => {
 
 Deno.test("full map viewport always covers the entire map", () => {
   const viewport = resolveViewportMetrics({
-    game: createGameStub(144, 84, 70, 30),
+    game: createGameStub({
+      mapWidth: 144,
+      mapHeight: 84,
+      playerX: 70,
+      playerY: 30,
+    }),
     viewportSize: { width: 960, height: 720 },
     renderOptions: {
       viewportMode: "full",
@@ -58,17 +73,17 @@ Deno.test("full map viewport always covers the entire map", () => {
   assertEquals(viewport.cssHeight, 504)
 })
 
-const createGameStub = (
-  mapWidth: number,
-  mapHeight: number,
-  playerX: number,
-  playerY: number,
-) => {
+const createGameStub = (options: {
+  mapWidth: number
+  mapHeight: number
+  playerX: number
+  playerY: number
+}) => {
   return {
-    map: createMapStub(mapWidth, mapHeight),
+    map: createMapStub(options.mapWidth, options.mapHeight),
     player: {
-      x: playerX,
-      y: playerY,
+      x: options.playerX,
+      y: options.playerY,
     },
   }
 }
