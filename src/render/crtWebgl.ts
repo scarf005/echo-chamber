@@ -38,7 +38,7 @@ varying vec2 v;
 void main() {
   vec2 uv = vec2(v.x, 1.0 - v.y);
   vec2 centered = uv * 2.0 - 1.0;
-  vec2 warped = centered + centered * vec2(centered.y * centered.y * 0.045, centered.x * centered.x * 0.06);
+  vec2 warped = centered + centered * vec2(centered.y * centered.y * 0.018, centered.x * centered.x * 0.026);
   warped = warped * 0.5 + 0.5;
 
   if (warped.x < 0.0 || warped.x > 1.0 || warped.y < 0.0 || warped.y > 1.0) {
@@ -48,17 +48,18 @@ void main() {
 
   vec2 texel = 1.0 / uSourceResolution;
   vec3 base = texture2D(t, warped).rgb;
-  vec3 glow = base * 0.3;
-  glow += texture2D(t, warped + vec2(texel.x, 0.0)).rgb * 0.12;
-  glow += texture2D(t, warped - vec2(texel.x, 0.0)).rgb * 0.12;
-  glow += texture2D(t, warped + vec2(0.0, texel.y)).rgb * 0.08;
-  glow += texture2D(t, warped - vec2(0.0, texel.y)).rgb * 0.08;
+  vec3 glow = base * 0.16;
+  glow += texture2D(t, warped + vec2(texel.x, 0.0)).rgb * 0.08;
+  glow += texture2D(t, warped - vec2(texel.x, 0.0)).rgb * 0.08;
+  glow += texture2D(t, warped + vec2(0.0, texel.y)).rgb * 0.05;
+  glow += texture2D(t, warped - vec2(0.0, texel.y)).rgb * 0.05;
 
-  float scanline = 0.8 + 0.2 * sin(warped.y * uResolution.y * 1.35);
-  float vignette = smoothstep(1.15, 0.16, distance(v, vec2(0.5)));
+  float scanline = 0.94 + 0.06 * sin(warped.y * uResolution.y * 1.1);
+  float vignette = 1.0 - smoothstep(0.32, 0.92, distance(v, vec2(0.5))) * 0.18;
 
-  vec3 color = base + glow * vec3(0.08, 0.24, 0.1);
-  color *= vec3(0.72, 1.12, 0.74);
+  vec3 color = base;
+  color += glow * vec3(0.04, 0.06, 0.05);
+  color *= vec3(0.985, 1.01, 0.99);
   color *= scanline * vignette;
 
   gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
