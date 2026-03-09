@@ -19,6 +19,7 @@
     "npm:@preact/preset-vite@^2.10.2": "2.10.3_@babel+core@7.29.0_vite@7.3.1_preact@10.28.4",
     "npm:@preact/signals@2": "2.8.1_preact@10.28.4",
     "npm:@preact/signals@^2.8.1": "2.8.1_preact@10.28.4",
+    "npm:howler@^2.2.4": "2.2.4",
     "npm:playwright@*": "1.58.0",
     "npm:preact@^10.28.0": "10.28.4",
     "npm:rot-js@2.2.1": "2.2.1",
@@ -1162,6 +1163,9 @@
       "integrity": "sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==",
       "bin": true
     },
+    "howler@2.2.4": {
+      "integrity": "sha512-iARIBPgcQrwtEr+tALF+rapJ8qSc+Set2GJQl7xT1MQzWaVkFebdJhR3alVlSiUf5U7nAANKuj3aWpwerocD5w=="
+    },
     "is-extglob@2.1.1": {
       "integrity": "sha512-SbKbANkN603Vi4jEZv49LeVJMn4yGwsbzZworEoyEiutsN3nJYdbO36zfhGJ6QEDpOZIFkDtnq5JRxmvl3jsoQ=="
     },
@@ -1572,6 +1576,7 @@
       "npm:@lingui/vite-plugin@6.0.0-next.0",
       "npm:@preact/preset-vite@^2.10.2",
       "npm:@preact/signals@^2.8.1",
+      "npm:howler@^2.2.4",
       "npm:preact@^10.28.0",
       "npm:rot-js@^2.2.1",
       "npm:vite@^7.2.7"
