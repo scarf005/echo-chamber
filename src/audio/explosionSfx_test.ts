@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert@1"
+import { assertEquals } from "@std/assert"
 
 import {
   getExplosionSampleChoices,
@@ -28,6 +28,6 @@ Deno.test("getExplosionVolume keeps explosions equally loud within range", () =>
   assertEquals(getExplosionVolume(30), 0)
 })
 
-function fileNameFromUrl(url: string): string {
+const fileNameFromUrl = (url: string): string => {
   return url.slice(url.lastIndexOf("/") + 1)
 }

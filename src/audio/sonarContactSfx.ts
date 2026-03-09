@@ -23,31 +23,31 @@ export type SonarContactSfxController = {
   dispose: () => void
 }
 
-export function getSonarContactSampleChoices(): readonly string[] {
+export const getSonarContactSampleChoices = (): readonly string[] => {
   return SONAR_CONTACT_SAMPLE_ORDER.map((variant) =>
     SONAR_CONTACT_SAMPLE_URLS[variant]
   )
 }
 
-export function getSonarContactSampleUrl(
+export const getSonarContactSampleUrl = (
   variant: SonarContactAudioVariant,
-): string {
+): string => {
   return SONAR_CONTACT_SAMPLE_URLS[variant]
 }
 
-export function getSonarContactVolume(volume: number): number {
+export const getSonarContactVolume = (volume: number): number => {
   return clampAudioLevel(volume) * SONAR_CONTACT_VOLUME
 }
 
-export function canPlaySonarContactPing(
+export const canPlaySonarContactPing = (
   lastPlayedAt: number | null,
   playedAt: number,
-): boolean {
+): boolean => {
   return lastPlayedAt === null ||
     playedAt - lastPlayedAt >= SONAR_CONTACT_COOLDOWN_MS
 }
 
-export function createSonarContactSfx(): SonarContactSfxController {
+export const createSonarContactSfx = (): SonarContactSfxController => {
   const sampleUrls = Array.from(getSonarContactSampleChoices())
   const playersByUrl = new Map(sampleUrls.map((url) => [
     url,
@@ -151,13 +151,13 @@ export function createSonarContactSfx(): SonarContactSfxController {
   }
 }
 
-function createPlayer(url: string): HTMLAudioElement {
+const createPlayer = (url: string): HTMLAudioElement => {
   const audio = new Audio(url)
   audio.preload = "auto"
   return audio
 }
 
-async function primePlayer(audio: HTMLAudioElement): Promise<void> {
+const primePlayer = async (audio: HTMLAudioElement): Promise<void> => {
   audio.volume = 0
   audio.muted = true
 
@@ -172,10 +172,10 @@ async function primePlayer(audio: HTMLAudioElement): Promise<void> {
   audio.muted = false
 }
 
-function takePlayer(
+const takePlayer = (
   players: HTMLAudioElement[],
   preferredIndex: number,
-): HTMLAudioElement | null {
+): HTMLAudioElement | null => {
   if (players.length === 0) {
     return null
   }

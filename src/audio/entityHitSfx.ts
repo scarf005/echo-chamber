@@ -14,15 +14,15 @@ export type EntityHitSfxController = {
   dispose: () => void
 }
 
-export function getEntityHitSampleChoices(): readonly string[] {
+export const getEntityHitSampleChoices = (): readonly string[] => {
   return ENTITY_HIT_SAMPLE_URLS
 }
 
-export function getEntityHitVolume(volume: number): number {
+export const getEntityHitVolume = (volume: number): number => {
   return clampAudioLevel(volume) * ENTITY_HIT_VOLUME
 }
 
-export function createEntityHitSfx(): EntityHitSfxController {
+export const createEntityHitSfx = (): EntityHitSfxController => {
   const sampleUrls = Array.from(ENTITY_HIT_SAMPLE_URLS)
   const playersByUrl = new Map(sampleUrls.map((url) => [
     url,
@@ -114,13 +114,13 @@ export function createEntityHitSfx(): EntityHitSfxController {
   }
 }
 
-function createPlayer(url: string): HTMLAudioElement {
+const createPlayer = (url: string): HTMLAudioElement => {
   const audio = new Audio(url)
   audio.preload = "auto"
   return audio
 }
 
-async function primePlayer(audio: HTMLAudioElement): Promise<void> {
+const primePlayer = async (audio: HTMLAudioElement): Promise<void> => {
   audio.volume = 0
   audio.muted = true
 
@@ -135,10 +135,10 @@ async function primePlayer(audio: HTMLAudioElement): Promise<void> {
   audio.muted = false
 }
 
-function takePlayer(
+const takePlayer = (
   players: HTMLAudioElement[],
   preferredIndex: number,
-): HTMLAudioElement | null {
+): HTMLAudioElement | null => {
   if (players.length === 0) {
     return null
   }

@@ -1,4 +1,4 @@
-import { sample } from "jsr:@std/random@0.1.5/sample"
+import { sample } from "@std/random/sample"
 
 import { clampAudioLevel } from "./settings.ts"
 
@@ -28,16 +28,18 @@ export type ExplosionSfxController = {
   dispose: () => void
 }
 
-export function getExplosionSampleChoices(distance: number): readonly string[] {
+export const getExplosionSampleChoices = (
+  distance: number,
+): readonly string[] => {
   return explosionPaletteForDistance(distance)
 }
 
-export function pickExplosionSampleUrl(distance: number): string {
+export const pickExplosionSampleUrl = (distance: number): string => {
   const palette = getExplosionSampleChoices(distance)
   return sample(palette) ?? FAR_EXPLOSION_URLS[0]
 }
 
-export function getExplosionVolume(distance: number): number {
+export const getExplosionVolume = (distance: number): number => {
   const clampedDistance = Math.max(0, distance)
 
   if (clampedDistance >= MAX_AUDIBLE_DISTANCE) {
@@ -47,7 +49,7 @@ export function getExplosionVolume(distance: number): number {
   return Number(MAX_EXPLOSION_VOLUME.toFixed(3))
 }
 
-export function createExplosionSfx(): ExplosionSfxController {
+export const createExplosionSfx = (): ExplosionSfxController => {
   const sampleUrls: string[] = Array.from(
     new Set([
       ...NEAR_EXPLOSION_URLS,
@@ -149,7 +151,7 @@ export function createExplosionSfx(): ExplosionSfxController {
   }
 }
 
-function explosionPaletteForDistance(distance: number): readonly string[] {
+const explosionPaletteForDistance = (distance: number): readonly string[] => {
   if (distance <= 4) {
     return NEAR_EXPLOSION_URLS
   }
@@ -161,13 +163,13 @@ function explosionPaletteForDistance(distance: number): readonly string[] {
   return FAR_EXPLOSION_URLS
 }
 
-function createExplosionPlayer(url: string): HTMLAudioElement {
+const createExplosionPlayer = (url: string): HTMLAudioElement => {
   const audio = new Audio(url)
   audio.preload = "auto"
   return audio
 }
 
-async function primeExplosionPlayer(audio: HTMLAudioElement): Promise<void> {
+const primeExplosionPlayer = async (audio: HTMLAudioElement): Promise<void> => {
   audio.volume = 0
   audio.muted = true
 
@@ -182,10 +184,10 @@ async function primeExplosionPlayer(audio: HTMLAudioElement): Promise<void> {
   audio.muted = false
 }
 
-function takeExplosionPlayer(
+const takeExplosionPlayer = (
   players: HTMLAudioElement[],
   preferredIndex: number,
-): HTMLAudioElement | null {
+): HTMLAudioElement | null => {
   if (players.length === 0) {
     return null
   }

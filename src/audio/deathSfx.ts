@@ -25,15 +25,15 @@ type ActiveDeathPlayback = {
   convolver: ConvolverNode
 }
 
-export function getDeathSampleChoices(): readonly string[] {
+export const getDeathSampleChoices = (): readonly string[] => {
   return DEATH_SAMPLE_URLS
 }
 
-export function getDeathVolume(volume: number): number {
+export const getDeathVolume = (volume: number): number => {
   return clampAudioLevel(volume) * DEATH_VOLUME
 }
 
-export function createDeathSfx(): DeathSfxController {
+export const createDeathSfx = (): DeathSfxController => {
   const state = {
     enabled: true,
     volume: 1,
@@ -168,9 +168,9 @@ export function createDeathSfx(): DeathSfxController {
   }
 }
 
-async function loadDeathAudio(
+const loadDeathAudio = async (
   audioContext: AudioContext,
-): Promise<AudioBuffer> {
+): Promise<AudioBuffer> => {
   const response = await fetch(DEATH_SAMPLE_URLS[0])
 
   if (!response.ok) {
@@ -181,11 +181,11 @@ async function loadDeathAudio(
   return await audioContext.decodeAudioData(encoded)
 }
 
-function createImpulseResponse(
+const createImpulseResponse = (
   audioContext: AudioContext,
   durationSeconds: number,
   decay: number,
-): AudioBuffer {
+): AudioBuffer => {
   const frameCount = Math.max(
     1,
     Math.floor(audioContext.sampleRate * durationSeconds),
@@ -209,7 +209,7 @@ function createImpulseResponse(
   return impulse
 }
 
-function disconnectPlayback(playback: ActiveDeathPlayback): void {
+const disconnectPlayback = (playback: ActiveDeathPlayback): void => {
   playback.source.disconnect()
   playback.convolver.disconnect()
   playback.dry.disconnect()

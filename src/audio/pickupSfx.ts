@@ -24,15 +24,15 @@ type ActivePickupPlayback = {
   convolver: ConvolverNode
 }
 
-export function getPickupSampleChoices(): readonly string[] {
+export const getPickupSampleChoices = (): readonly string[] => {
   return PICKUP_SAMPLE_URLS
 }
 
-export function getPickupVolume(volume: number): number {
+export const getPickupVolume = (volume: number): number => {
   return clampAudioLevel(volume) * PICKUP_VOLUME
 }
 
-export function createPickupSfx(): PickupSfxController {
+export const createPickupSfx = (): PickupSfxController => {
   const state = {
     enabled: true,
     volume: 1,
@@ -167,9 +167,9 @@ export function createPickupSfx(): PickupSfxController {
   }
 }
 
-async function loadPickupAudio(
+const loadPickupAudio = async (
   audioContext: AudioContext,
-): Promise<AudioBuffer> {
+): Promise<AudioBuffer> => {
   const response = await fetch(PICKUP_SAMPLE_URLS[0])
 
   if (!response.ok) {
@@ -180,11 +180,11 @@ async function loadPickupAudio(
   return await audioContext.decodeAudioData(encoded)
 }
 
-function createImpulseResponse(
+const createImpulseResponse = (
   audioContext: AudioContext,
   durationSeconds: number,
   decay: number,
-): AudioBuffer {
+): AudioBuffer => {
   const frameCount = Math.max(
     1,
     Math.floor(audioContext.sampleRate * durationSeconds),
@@ -208,7 +208,7 @@ function createImpulseResponse(
   return impulse
 }
 
-function disconnectPlayback(playback: ActivePickupPlayback): void {
+const disconnectPlayback = (playback: ActivePickupPlayback): void => {
   playback.source.disconnect()
   playback.convolver.disconnect()
   playback.dry.disconnect()

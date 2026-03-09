@@ -15,11 +15,14 @@ export type SonarLoopController = {
   dispose: () => void
 }
 
-export function getSonarLoopVolume(volume: number): number {
+export const getSonarLoopVolume = (volume: number): number => {
   return clampAudioLevel(volume) * SONAR_LOOP_VOLUME
 }
 
-export function stepSonarLoopVolume(current: number, target: number): number {
+export const stepSonarLoopVolume = (
+  current: number,
+  target: number,
+): number => {
   if (current === target) {
     return target
   }
@@ -31,7 +34,7 @@ export function stepSonarLoopVolume(current: number, target: number): number {
   return Math.max(target, roundToHundredth(current - SONAR_FADE_STEP))
 }
 
-export function createSonarLoop(): SonarLoopController {
+export const createSonarLoop = (): SonarLoopController => {
   const audio = new Audio(SONAR_LOOP_URL)
   audio.loop = true
   audio.preload = "auto"
@@ -71,7 +74,7 @@ export function createSonarLoop(): SonarLoopController {
       return
     }
 
-    window.clearInterval(tickerId)
+    globalThis.clearInterval(tickerId)
     tickerId = null
   }
 
@@ -80,16 +83,16 @@ export function createSonarLoop(): SonarLoopController {
       return
     }
 
-    tickerId = window.setInterval(syncVolume, SONAR_FADE_INTERVAL_MS)
+    tickerId = globalThis.setInterval(syncVolume, SONAR_FADE_INTERVAL_MS)
   }
 
   audio.volume = targetVolume()
 
   let startingPlayback: Promise<void> | null = null
 
-  const ensureStarted = async () => {
+  const ensureStarted = () => {
     if (!audio.paused) {
-      return
+      return Promise.resolve()
     }
 
     if (startingPlayback) {
@@ -103,7 +106,7 @@ export function createSonarLoop(): SonarLoopController {
         startingPlayback = null
       })
 
-    return startingPlayback
+    return startingPlayback ?? Promise.resolve()
   }
 
   const setEnabled = (enabled: boolean) => {
@@ -134,6 +137,6 @@ export function createSonarLoop(): SonarLoopController {
   }
 }
 
-function roundToHundredth(value: number): number {
+const roundToHundredth = (value: number): number => {
   return Math.round(value * 100) / 100
 }

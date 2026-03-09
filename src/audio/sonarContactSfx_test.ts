@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert@1"
+import { assertEquals } from "@std/assert"
 
 import {
   canPlaySonarContactPing,
@@ -45,6 +45,6 @@ Deno.test("sonar contact sfx enforces a two-second cooldown", () => {
   )
 })
 
-function fileNameFromUrl(url: string): string {
+const fileNameFromUrl = (url: string): string => {
   return url.slice(url.lastIndexOf("/") + 1)
 }

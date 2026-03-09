@@ -30,7 +30,7 @@ export const createBackgroundMusic = (): BackgroundMusicController => {
 
   let startingPlayback: Promise<void> | null = null
 
-  const ensureStarted = async () => {
+  const ensureStarted = () => {
     if (!audio.paused) {
       return
     }

@@ -14,7 +14,7 @@ export const DEFAULT_AUDIO_SETTINGS: AudioSettings = {
   sfxVolume: 1,
 }
 
-export function clampAudioLevel(value: number): number {
+export const clampAudioLevel = (value: number): number => {
   if (!Number.isFinite(value)) {
     return 0
   }
@@ -22,23 +22,23 @@ export function clampAudioLevel(value: number): number {
   return Math.min(1, Math.max(0, value))
 }
 
-export function sliderPercentToLevel(value: number): number {
+export const sliderPercentToLevel = (value: number): number => {
   return clampAudioLevel(value / 100)
 }
 
-export function levelToSliderPercent(value: number): number {
+export const levelToSliderPercent = (value: number): number => {
   return Math.round(clampAudioLevel(value) * 100)
 }
 
-export function isDocumentAudioAllowed(
+export const isDocumentAudioAllowed = (
   documentState: Pick<Document, "hidden" | "hasFocus">,
-): boolean {
+): boolean => {
   return !documentState.hidden && documentState.hasFocus()
 }
 
-export function normalizeAudioSettings(
+export const normalizeAudioSettings = (
   value: Partial<AudioSettings> | null | undefined,
-): AudioSettings {
+): AudioSettings => {
   return {
     musicEnabled: value?.musicEnabled ?? DEFAULT_AUDIO_SETTINGS.musicEnabled,
     musicVolume: clampAudioLevel(
@@ -51,9 +51,9 @@ export function normalizeAudioSettings(
   }
 }
 
-export function readAudioSettings(
+export const readAudioSettings = (
   storage: Pick<Storage, "getItem"> | null,
-): AudioSettings {
+): AudioSettings => {
   if (!storage) {
     return DEFAULT_AUDIO_SETTINGS
   }
@@ -77,10 +77,10 @@ export function readAudioSettings(
   }
 }
 
-export function writeAudioSettings(
+export const writeAudioSettings = (
   storage: Pick<Storage, "setItem"> | null,
   settings: AudioSettings,
-): void {
+): void => {
   if (!storage) {
     return
   }

@@ -1,4 +1,4 @@
-import { assertEquals } from "jsr:@std/assert@1"
+import { assertEquals } from "@std/assert"
 
 import { getPickupSampleChoices, getPickupVolume } from "./pickupSfx.ts"
 
@@ -18,6 +18,6 @@ Deno.test("pickup sfx volume clamps invalid values", () => {
   assertEquals(getPickupVolume(-1), 0)
 })
 
-function fileNameFromUrl(url: string): string {
+const fileNameFromUrl = (url: string): string => {
   return url.slice(url.lastIndexOf("/") + 1)
 }

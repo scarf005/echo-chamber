@@ -18,14 +18,14 @@ export type MovementLoopController = {
   dispose: () => void
 }
 
-export function getMovementTargetVolume(
+export const getMovementTargetVolume = (
   now: number,
   lastMovementAt: number,
-): number {
+): number => {
   return now - lastMovementAt <= MOVEMENT_HOLD_MS ? MOVING_VOLUME : IDLE_VOLUME
 }
 
-export function stepVolumeTowards(current: number, target: number): number {
+export const stepVolumeTowards = (current: number, target: number): number => {
   if (current === target) {
     return target
   }
@@ -65,7 +65,7 @@ export const createMovementLoop = (): MovementLoopController => {
       return
     }
 
-    window.clearInterval(tickerId)
+    globalThis.clearInterval(tickerId)
     tickerId = null
   }
 
@@ -94,12 +94,12 @@ export const createMovementLoop = (): MovementLoopController => {
       return
     }
 
-    tickerId = window.setInterval(syncVolume, VOLUME_STEP_INTERVAL_MS)
+    tickerId = globalThis.setInterval(syncVolume, VOLUME_STEP_INTERVAL_MS)
   }
 
-  const ensureStarted = async () => {
+  const ensureStarted = () => {
     if (!audio.paused) {
-      return
+      return Promise.resolve()
     }
 
     if (startingPlayback) {
@@ -113,7 +113,7 @@ export const createMovementLoop = (): MovementLoopController => {
         startingPlayback = null
       })
 
-    return startingPlayback
+    return startingPlayback ?? Promise.resolve()
   }
 
   const markMovement = () => {
@@ -150,6 +150,6 @@ export const createMovementLoop = (): MovementLoopController => {
   }
 }
 
-function roundToTenth(value: number): number {
+const roundToTenth = (value: number): number => {
   return Math.round(value * 10) / 10
 }
