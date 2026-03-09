@@ -179,14 +179,14 @@ const pointFromMouseEvent = (
 ): Point | null => {
   const rect = canvas.getBoundingClientRect()
   const shake = screenShakeOffset(game)
-  const viewport = resolveViewportMetrics(
+  const viewport = resolveViewportMetrics({
     game,
-    {
+    viewportSize: {
       width: rect.width,
       height: rect.height,
     },
     renderOptions,
-  )
+  })
 
   if (
     event.clientX < rect.left ||

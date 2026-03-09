@@ -2,5 +2,6 @@
 set -eu
 
 deno fmt
+bash -lc 'shopt -s globstar nullglob; deno check src/**/*.ts src/**/*.tsx'
 deno lint
 deno test --parallel --allow-env=NODE_ENV

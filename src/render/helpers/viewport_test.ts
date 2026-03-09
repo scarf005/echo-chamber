@@ -1,3 +1,5 @@
+/// <reference lib="deno.ns" />
+
 import { assertEquals } from "@std/assert"
 
 import type { GeneratedMap } from "../../game/mapgen.ts"

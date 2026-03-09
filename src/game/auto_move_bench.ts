@@ -14,23 +14,6 @@ const game = createGame({
   hostileSubmarineCount: 0,
 })
 
-const destination = pickDestination()
-
-Deno.bench("auto-move path baseline astar", () => {
-  findPath(
-    game.map,
-    game.player,
-    destination,
-    (point) => isAutoMoveNavigable(game, point),
-  )
-})
-
-findAutoMovePath(game, destination)
-
-Deno.bench("auto-move path cached lookup", () => {
-  findAutoMovePath(game, destination)
-})
-
 const pickDestination = () => {
   for (let y = game.map.height - 1; y >= 0; y -= 1) {
     for (let x = game.map.width - 1; x >= 0; x -= 1) {
@@ -47,3 +30,20 @@ const pickDestination = () => {
 
   return { ...game.player }
 }
+
+const destination = pickDestination()
+
+Deno.bench("auto-move path baseline astar", () => {
+  findPath(
+    game.map,
+    game.player,
+    destination,
+    (point) => isAutoMoveNavigable(game, point),
+  )
+})
+
+findAutoMovePath(game, destination)
+
+Deno.bench("auto-move path cached lookup", () => {
+  findAutoMovePath(game, destination)
+})

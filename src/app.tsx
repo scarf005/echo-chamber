@@ -1,6 +1,8 @@
 import { t } from "@lingui/core/macro"
 /// <reference path="./vite-env.d.ts" />
 
+/// <reference types="vite/client" />
+
 import "./app.css"
 import { effect as signalEffect, signal } from "@preact/signals"
 import { debounce } from "@std/async/debounce"
