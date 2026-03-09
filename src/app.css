@@ -245,7 +245,13 @@
   width: 1.6rem;
   height: 1.6rem;
   display: block;
-  color: currentColor;
+  background-color: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
 }
 
 .mobile-control-button:disabled {

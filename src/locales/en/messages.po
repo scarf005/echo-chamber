@@ -559,261 +559,261 @@ msgstr "holding near {target}"
 msgid "{id}: will {mode}{targetSuffix}"
 msgstr "{id}: will {mode}{targetSuffix}"
 
-#: src/app.tsx:935
+#: src/app.tsx:905
 msgid "action controls"
 msgstr "action controls"
 
-#: src/app.tsx:1253
+#: src/app.tsx:1223
 msgid "active seed modes"
 msgstr "active seed modes"
 
-#: src/app.tsx:1346
+#: src/app.tsx:1316
 msgid "audio"
 msgstr "audio"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:476
+#: src/app.tsx:446
 msgid "Auto-nav engaged to {0}."
 msgstr "Auto-nav engaged to {0}."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1657
+#: src/app.tsx:1627
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "Auto-nav halted: {localizedReason} at {0}{1}."
 
-#: src/app.tsx:1224
-#: src/app.tsx:1628
+#: src/app.tsx:1194
+#: src/app.tsx:1598
 msgid "close"
 msgstr "close"
 
-#: src/app.tsx:1053
+#: src/app.tsx:1023
 msgid "close mobile helm"
 msgstr "close mobile helm"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:495
+#: src/app.tsx:465
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "Course plotted to {0}. Click again to engage."
 
-#: src/app.tsx:1496
+#: src/app.tsx:1466
 msgid "credits"
 msgstr "credits"
 
-#: src/app.tsx:1010
-#: src/app.tsx:1131
+#: src/app.tsx:980
+#: src/app.tsx:1101
 msgid "depth charges"
 msgstr "depth charges"
 
-#: src/app.tsx:1440
+#: src/app.tsx:1410
 msgid "dev"
 msgstr "dev"
 
-#: src/app.tsx:1290
-#: src/app.tsx:1294
+#: src/app.tsx:1260
+#: src/app.tsx:1264
 msgid "difficulty"
 msgstr "difficulty"
 
-#: src/app.tsx:970
+#: src/app.tsx:940
 msgid "disable sonar"
 msgstr "disable sonar"
 
-#: src/app.tsx:1022
-#: src/app.tsx:1143
+#: src/app.tsx:992
+#: src/app.tsx:1113
 msgid "display"
 msgstr "display"
 
-#: src/app.tsx:429
+#: src/app.tsx:399
 msgid "Display set to full map."
 msgstr "Display set to full map."
 
-#: src/app.tsx:430
+#: src/app.tsx:400
 msgid "Display set to tracking camera."
 msgstr "Display set to tracking camera."
 
-#: src/app.tsx:959
+#: src/app.tsx:929
 msgid "drop depth charge"
 msgstr "drop depth charge"
 
-#: src/app.tsx:1302
-#: src/app.tsx:1310
+#: src/app.tsx:1272
+#: src/app.tsx:1280
 msgid "easy"
 msgstr "easy"
 
-#: src/app.tsx:1376
+#: src/app.tsx:1346
 msgid "enable music"
 msgstr "enable music"
 
-#: src/app.tsx:1420
+#: src/app.tsx:1390
 msgid "enable sfx"
 msgstr "enable sfx"
 
-#: src/app.tsx:970
+#: src/app.tsx:940
 msgid "enable sonar"
 msgstr "enable sonar"
 
-#: src/app.tsx:1271
+#: src/app.tsx:1241
 msgid "English"
 msgstr "English"
 
-#: src/app.tsx:940
+#: src/app.tsx:910
 msgid "fire torpedo forward"
 msgstr "fire torpedo forward"
 
-#: src/app.tsx:949
+#: src/app.tsx:919
 msgid "fire torpedo upward"
 msgstr "fire torpedo upward"
 
-#: src/app.tsx:917
+#: src/app.tsx:887
 msgid "FULL MAP (M)"
 msgstr "FULL MAP (M)"
 
-#: src/app.tsx:1472
-#: src/app.tsx:1478
+#: src/app.tsx:1442
+#: src/app.tsx:1448
 msgid "god mode"
 msgstr "god mode"
 
-#: src/app.tsx:1334
-#: src/app.tsx:1342
+#: src/app.tsx:1304
+#: src/app.tsx:1312
 msgid "hard"
 msgstr "hard"
 
-#: src/app.tsx:1198
+#: src/app.tsx:1168
 msgid "hover any tile to inspect terrain and contacts."
 msgstr "hover any tile to inspect terrain and contacts."
 
-#: src/app.tsx:1179
+#: src/app.tsx:1149
 msgid "hover tile"
 msgstr "hover tile"
 
-#: src/app.tsx:1177
+#: src/app.tsx:1147
 msgid "inspector"
 msgstr "inspector"
 
-#: src/app.tsx:1282
+#: src/app.tsx:1252
 msgid "Korean"
 msgstr "Korean"
 
-#: src/app.tsx:1259
-#: src/app.tsx:1263
+#: src/app.tsx:1229
+#: src/app.tsx:1233
 msgid "language"
 msgstr "language"
 
-#: src/app.tsx:1469
+#: src/app.tsx:1439
 msgid "map overlay"
 msgstr "map overlay"
 
-#: src/app.tsx:1443
+#: src/app.tsx:1413
 msgid "map visibility"
 msgstr "map visibility"
 
-#: src/app.tsx:1318
-#: src/app.tsx:1326
+#: src/app.tsx:1288
+#: src/app.tsx:1296
 msgid "medium"
 msgstr "medium"
 
-#: src/app.tsx:1101
+#: src/app.tsx:1071
 msgid "mission status"
 msgstr "mission status"
 
-#: src/app.tsx:1349
+#: src/app.tsx:1319
 msgid "music"
 msgstr "music"
 
-#: src/app.tsx:1358
+#: src/app.tsx:1328
 msgid "music volume"
 msgstr "music volume"
 
-#: src/app.tsx:930
+#: src/app.tsx:900
 msgid "OFF"
 msgstr "OFF"
 
-#: src/app.tsx:930
+#: src/app.tsx:900
 msgid "ON"
 msgstr "ON"
 
-#: src/app.tsx:1153
+#: src/app.tsx:1123
 msgid "open full order log"
 msgstr "open full order log"
 
-#: src/app.tsx:1054
+#: src/app.tsx:1024
 msgid "open mobile helm"
 msgstr "open mobile helm"
 
-#: src/app.tsx:1070
-#: src/app.tsx:1105
+#: src/app.tsx:1040
+#: src/app.tsx:1075
 msgid "open options"
 msgstr "open options"
 
-#: src/app.tsx:1214
-#: src/app.tsx:1218
+#: src/app.tsx:1184
+#: src/app.tsx:1188
 msgid "options"
 msgstr "options"
 
-#: src/app.tsx:1161
-#: src/app.tsx:1618
-#: src/app.tsx:1622
+#: src/app.tsx:1131
+#: src/app.tsx:1588
+#: src/app.tsx:1592
 msgid "orders"
 msgstr "orders"
 
-#: src/app.tsx:1014
-#: src/app.tsx:1135
+#: src/app.tsx:984
+#: src/app.tsx:1105
 msgid "position"
 msgstr "position"
 
-#: src/app.tsx:1247
+#: src/app.tsx:1217
 msgid "restart"
 msgstr "restart"
 
-#: src/app.tsx:1445
-#: src/app.tsx:1450
+#: src/app.tsx:1415
+#: src/app.tsx:1420
 msgid "reveal map"
 msgstr "reveal map"
 
-#: src/app.tsx:1235
+#: src/app.tsx:1205
 msgid "run seed"
 msgstr "run seed"
 
-#: src/app.tsx:1234
+#: src/app.tsx:1204
 msgid "seed"
 msgstr "seed"
 
-#: src/app.tsx:1393
+#: src/app.tsx:1363
 msgid "sfx"
 msgstr "sfx"
 
-#: src/app.tsx:1402
+#: src/app.tsx:1372
 msgid "sfx volume"
 msgstr "sfx volume"
 
-#: src/app.tsx:1002
-#: src/app.tsx:1123
+#: src/app.tsx:972
+#: src/app.tsx:1093
 msgid "sonar in"
 msgstr "sonar in"
 
-#: src/app.tsx:984
+#: src/app.tsx:954
 msgid "switch to full map"
 msgstr "switch to full map"
 
-#: src/app.tsx:983
+#: src/app.tsx:953
 msgid "switch to tracking view"
 msgstr "switch to tracking view"
 
-#: src/app.tsx:1018
-#: src/app.tsx:1139
+#: src/app.tsx:988
+#: src/app.tsx:1109
 msgid "target"
 msgstr "target"
 
-#: src/app.tsx:1006
-#: src/app.tsx:1127
+#: src/app.tsx:976
+#: src/app.tsx:1097
 msgid "torpedoes"
 msgstr "torpedoes"
 
-#: src/app.tsx:918
+#: src/app.tsx:888
 msgid "TRACKING (M)"
 msgstr "TRACKING (M)"
 
-#: src/app.tsx:998
-#: src/app.tsx:1119
+#: src/app.tsx:968
+#: src/app.tsx:1089
 msgid "turn"
 msgstr "turn"
