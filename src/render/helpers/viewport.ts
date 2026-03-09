@@ -8,6 +8,12 @@ export const COMPACT_CAMERA_TILE_WIDTH = 18
 export const COMPACT_CAMERA_TILE_HEIGHT = 14
 export const NARROW_CAMERA_TILE_WIDTH = 14
 export const NARROW_CAMERA_TILE_HEIGHT = 10
+export const MIN_CAMERA_TILE_WIDTH = 8
+export const MIN_CAMERA_TILE_HEIGHT = 6
+export const MAX_CAMERA_TILE_WIDTH = 42
+export const MAX_CAMERA_TILE_HEIGHT = 28
+export const CAMERA_ZOOM_STEP_WIDTH = 2
+export const CAMERA_ZOOM_STEP_HEIGHT = 2
 
 export type ViewportMetrics = {
   mode: ViewportMode
@@ -56,6 +62,28 @@ export const resolveResponsiveCameraTileCounts = (
   return {
     width: COMPACT_CAMERA_TILE_WIDTH,
     height: COMPACT_CAMERA_TILE_HEIGHT,
+  }
+}
+
+export type ApplyCameraZoomOptions = {
+  cameraTiles: ResponsiveCameraTileCounts
+  zoomLevel: number
+}
+
+export const applyCameraZoom = (
+  { cameraTiles, zoomLevel }: ApplyCameraZoomOptions,
+): ResponsiveCameraTileCounts => {
+  return {
+    width: clamp(
+      cameraTiles.width - zoomLevel * CAMERA_ZOOM_STEP_WIDTH,
+      MIN_CAMERA_TILE_WIDTH,
+      MAX_CAMERA_TILE_WIDTH,
+    ),
+    height: clamp(
+      cameraTiles.height - zoomLevel * CAMERA_ZOOM_STEP_HEIGHT,
+      MIN_CAMERA_TILE_HEIGHT,
+      MAX_CAMERA_TILE_HEIGHT,
+    ),
   }
 }
 
