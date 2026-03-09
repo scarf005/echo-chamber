@@ -1078,7 +1078,9 @@ export const App = () => {
                       }))
                     }}
                   />
-                  <strong>{onOffLabel(crtEnabled)}</strong>
+                  <strong style={{ width: "3em" }}>
+                    {onOffLabel(crtEnabled)}
+                  </strong>
                 </div>
               </div>
               <div class="sidebar-heading">{t`audio`}</div>
