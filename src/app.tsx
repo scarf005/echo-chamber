@@ -862,7 +862,7 @@ export const App = () => {
           </div>
         </section>
 
-        <section class="sidebar-panel orders-panel">
+        <section class="sidebar-panel log-panel">
           <div class="panel-header">
             <button
               type="button"
@@ -875,7 +875,7 @@ export const App = () => {
                 isOptionsOpenSignal.value = false
               }}
             >
-              <span class="sidebar-heading">{t`orders`}</span>
+              <span class="sidebar-heading">{t`log`}</span>
             </button>
           </div>
           <div class="sidebar-text-block sidebar-log-list">
@@ -1355,11 +1355,11 @@ export const App = () => {
               class="modal-panel message-modal"
               role="dialog"
               aria-modal="true"
-              aria-label={t`orders`}
+              aria-label={t`log`}
               onClick={(event) => event.stopPropagation()}
             >
               <div class="panel-header">
-                <div class="sidebar-heading">{t`orders`}</div>
+                <div class="sidebar-heading">{t`log`}</div>
                 <button
                   type="button"
                   class="modal-close"

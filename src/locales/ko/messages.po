@@ -726,8 +726,8 @@ msgstr "옵션"
 #: src/app.tsx:878
 #: src/app.tsx:1358
 #: src/app.tsx:1362
-msgid "orders"
-msgstr "명령"
+msgid "log"
+msgstr "기록"
 
 #: src/app.tsx:852
 msgid "position"

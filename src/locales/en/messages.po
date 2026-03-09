@@ -726,8 +726,8 @@ msgstr "options"
 #: src/app.tsx:878
 #: src/app.tsx:1358
 #: src/app.tsx:1362
-msgid "orders"
-msgstr "orders"
+msgid "log"
+msgstr "log"
 
 #: src/app.tsx:852
 msgid "position"

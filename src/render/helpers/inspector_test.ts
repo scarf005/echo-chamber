@@ -217,7 +217,7 @@ Deno.test("god mode inspector shows detailed hostile ai state", () => {
   assertEquals(rows?.find((row) => row.label === "guessed shot")?.value, "3,2")
 })
 
-Deno.test("hostile ai helpers only expose notable targeted decisions to orders", () => {
+Deno.test("hostile ai helpers only expose notable targeted decisions to log", () => {
   const targetedHostile = createInspectorHostileGame().hostileSubmarines[0]
   const patrollingHostile = {
     ...targetedHostile,

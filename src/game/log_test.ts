@@ -34,7 +34,7 @@ Deno.test("groupLogMessages groups consecutive duplicates", () => {
   assertEquals(grouped, ["Advance. (x2)", "Holding position. (x2)", "Advance."])
 })
 
-Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
+Deno.test("createInitialLogs seeds the log panel with mission help", () => {
   activateLocale(defaultLocale)
 
   try {
