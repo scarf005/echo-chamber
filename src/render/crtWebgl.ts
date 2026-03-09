@@ -504,7 +504,7 @@ export const renderCrtFrame = (
   const previousBurnTarget = renderer.burnInTargets[renderer.burnInIndex]
   const nextBurnIndex = renderer.burnInIndex === 0 ? 1 : 0
   const nextBurnTarget = renderer.burnInTargets[nextBurnIndex]
-  const burnDecay = Math.min(0.25, options.deltaTime * 4.8)
+  const burnDecay = Math.min(0.125, options.deltaTime * 2.4)
 
   renderBlurPass(
     renderer,

@@ -97,10 +97,10 @@ const drawCrtViewport = (deltaTime: number) => {
 const runCrtAnimation = (timestamp: number) => {
   const { lastFrameTime } = fastilesViewportRuntime
   const elapsedTime = lastFrameTime === null
-    ? 1000 / 30
+    ? 1000 / 60
     : timestamp - lastFrameTime
 
-  if (elapsedTime < 1000 / 30) {
+  if (elapsedTime < 1000 / 60) {
     fastilesViewportRuntime.animationFrame = globalThis.requestAnimationFrame(
       runCrtAnimation,
     )
