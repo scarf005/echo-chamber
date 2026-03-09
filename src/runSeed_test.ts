@@ -8,6 +8,7 @@ import {
   formatRunSeed,
   parseRunSeed,
   randomizeRunSeed,
+  resolveInitialRunSeed,
 } from "./runSeed.ts"
 
 Deno.test("parseRunSeed keeps a plain seed unchanged", () => {
@@ -70,6 +71,36 @@ Deno.test("createRestartRunSeed rerolls the base seed while preserving prefixes"
       nextSeedFactory: () => "trench-42",
     }),
     "god:map:trench-42",
+  )
+})
+
+Deno.test("resolveInitialRunSeed prefers the seed query parameter", () => {
+  assertEquals(
+    resolveInitialRunSeed({
+      fallbackSeed: "fallback",
+      search: "?seed=map%3Agod%3Aabyss",
+    }),
+    "god:map:abyss",
+  )
+})
+
+Deno.test("resolveInitialRunSeed falls back when the seed query parameter is blank", () => {
+  assertEquals(
+    resolveInitialRunSeed({
+      fallbackSeed: "fallback",
+      search: "?seed=",
+    }),
+    "fallback",
+  )
+})
+
+Deno.test("resolveInitialRunSeed falls back when the seed query parameter is missing", () => {
+  assertEquals(
+    resolveInitialRunSeed({
+      fallbackSeed: "fallback",
+      search: "?difficulty=hard",
+    }),
+    "fallback",
   )
 })
 

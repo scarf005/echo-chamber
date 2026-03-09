@@ -66,6 +66,11 @@ interface CreateRestartRunSeedOptions {
   nextSeedFactory?: () => string
 }
 
+interface ResolveInitialRunSeedOptions {
+  fallbackSeed: string
+  search?: string
+}
+
 const GOD_MODE_PREFIX = "god:"
 const MAP_MODE_PREFIX = "map:"
 
@@ -138,6 +143,24 @@ export const createRestartRunSeed = (
   })
 }
 
+export const resolveInitialRunSeed = (
+  options: ResolveInitialRunSeedOptions,
+): string => {
+  const search = options.search ?? readLocationSearch()
+
+  if (!search) {
+    return options.fallbackSeed
+  }
+
+  const rawSeed = new URLSearchParams(search).get("seed")
+
+  if (rawSeed === null) {
+    return options.fallbackSeed
+  }
+
+  return parseRunSeed(rawSeed, options.fallbackSeed).rawSeed
+}
+
 export const createRandomSeed = (): string => {
   const tokens = Array.from(
     { length: RANDOM_SEED_TOKEN_COUNT },
@@ -173,6 +196,10 @@ const createRandomSeedToken = (): string => {
 
 const sanitizeRandomSeedToken = (token: string): string => {
   return token.toLowerCase().replace(/[^a-z]/g, "")
+}
+
+const readLocationSearch = (): string => {
+  return "location" in globalThis ? globalThis.location.search : ""
 }
 
 const randomSeedGenerator = createRandomSeedGenerator()

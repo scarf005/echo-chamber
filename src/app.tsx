@@ -57,6 +57,7 @@ import {
   createRandomSeed,
   createRestartRunSeed,
   parseRunSeed,
+  resolveInitialRunSeed,
 } from "./runSeed.ts"
 import { FastilesViewport } from "./render/FastilesViewport.tsx"
 import {
@@ -68,7 +69,9 @@ import { activateLocale } from "./i18n.ts"
 import { languageSignal } from "./signals.ts"
 import { localizeAutoMoveReason } from "./game/localize.ts"
 
-const INITIAL_RUN_SEED = createRandomSeed()
+const INITIAL_RUN_SEED = resolveInitialRunSeed({
+  fallbackSeed: createRandomSeed(),
+})
 const AUTO_MOVE_DELAY_MS = 70
 const LOG_PANEL_LINES = 6
 const SETTINGS_PERSIST_DELAY_MS = 150
@@ -180,6 +183,15 @@ const resetAutoMoveSeenAnomalies = () => {
 
 const clearAutoMoveRoute = () => {
   appRuntime.autoMoveSeenTarget = null
+}
+
+const closeModalOnBackdropMouseDown = (
+  event: JSX.TargetedMouseEvent<HTMLDivElement>,
+  close: () => void,
+) => {
+  if (event.target === event.currentTarget) {
+    close()
+  }
 }
 
 const beginAutoMoveRoute = (point: Point) => {
@@ -922,14 +934,17 @@ export const App = () => {
         ? (
           <div
             class="modal-backdrop"
-            onClick={() => isOptionsOpenSignal.value = false}
+            onMouseDown={(event) =>
+              closeModalOnBackdropMouseDown(
+                event,
+                () => isOptionsOpenSignal.value = false,
+              )}
           >
             <section
               class="modal-panel"
               role="dialog"
               aria-modal="true"
               aria-label={t`options`}
-              onClick={(event) => event.stopPropagation()}
             >
               <div class="panel-header">
                 <div class="sidebar-heading">{t`options`}</div>
@@ -974,9 +989,8 @@ export const App = () => {
               </div>
               <div class="language-switch-row">
                 <span class="sidebar-heading">{t`language`}</span>
-                <div
+                <fieldset
                   class="language-switch"
-                  role="group"
                   aria-label={t`language`}
                 >
                   <button
@@ -1001,13 +1015,12 @@ export const App = () => {
                   >
                     Korean
                   </button>
-                </div>
+                </fieldset>
               </div>
               <div class="language-switch-row">
                 <span class="sidebar-heading">{t`difficulty`}</span>
-                <div
+                <fieldset
                   class="language-switch"
-                  role="group"
                   aria-label={t`difficulty`}
                 >
                   <button
@@ -1058,7 +1071,7 @@ export const App = () => {
                   >
                     {t`hard`} (4x)
                   </button>
-                </div>
+                </fieldset>
               </div>
               <div class="language-switch-row">
                 <span class="sidebar-heading">{t`graphics`}</span>
@@ -1349,7 +1362,11 @@ export const App = () => {
         ? (
           <div
             class="modal-backdrop"
-            onClick={() => isOrdersModalOpenSignal.value = false}
+            onMouseDown={(event) =>
+              closeModalOnBackdropMouseDown(
+                event,
+                () => isOrdersModalOpenSignal.value = false,
+              )}
           >
             <section
               class="modal-panel message-modal"
