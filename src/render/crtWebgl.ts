@@ -155,11 +155,17 @@ void main() {
   vec3 sourceColor = texture2D(u_source, warped).rgb;
   vec3 bloomColor = texture2D(u_bloom, warped).rgb;
   vec3 burnInColor = texture2D(u_burnIn, warped).rgb;
-  float rgbShift = 0.0008 + u_eventIntensity * 0.005;
+  vec2 aberrationDirection = warped - vec2(0.5);
+  float aberrationDistance = length(aberrationDirection);
+  vec2 aberrationUnit = aberrationDistance > 0.0
+    ? aberrationDirection / aberrationDistance
+    : vec2(0.0);
+  float rgbShift = (0.0004 + u_eventIntensity * 0.003) * aberrationDistance * aberrationDistance;
+  vec2 aberrationOffset = aberrationUnit * rgbShift;
   vec3 shiftedColor = vec3(
-    texture2D(u_source, warped + vec2(rgbShift, 0.0)).r,
+    texture2D(u_source, warped + aberrationOffset).r,
     sourceColor.g,
-    texture2D(u_source, warped - vec2(rgbShift, 0.0)).b
+    texture2D(u_source, warped - aberrationOffset).b
   );
   vec3 localGlow = shiftedColor * 0.05;
   localGlow += texture2D(u_source, warped + vec2(texel.x, 0.0)).rgb * 0.025;
