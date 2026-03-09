@@ -20,7 +20,7 @@ const isLocaleId = (value: string): value is LocaleId => {
 }
 
 const detectNavigatorLocale = (): LocaleId => {
-  if (typeof window === "undefined") {
+  if (!("navigator" in globalThis) || !("localStorage" in globalThis)) {
     return defaultLocale
   }
 
@@ -33,7 +33,7 @@ const detectNavigatorLocale = (): LocaleId => {
 }
 
 const readStoredLocale = (): LocaleId | null => {
-  if (typeof window === "undefined") {
+  if (!("localStorage" in globalThis)) {
     return null
   }
 
@@ -46,7 +46,7 @@ const readStoredLocale = (): LocaleId | null => {
 }
 
 const writeStoredLocale = (locale: LocaleId) => {
-  if (typeof window === "undefined") {
+  if (!("localStorage" in globalThis)) {
     return
   }
 

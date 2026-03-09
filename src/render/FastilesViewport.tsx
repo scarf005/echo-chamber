@@ -1,5 +1,3 @@
-import { useEffect, useRef } from "preact/hooks"
-
 import type { GameState } from "../game/game.ts"
 import type { Point } from "../game/mapgen.ts"
 import { TERMINAL_FONT_LOAD } from "./fontFamily.ts"
@@ -8,175 +6,177 @@ import { resolveViewportMetrics } from "./helpers/viewport.ts"
 import type { RenderOptions } from "./options.ts"
 import { drawGame } from "./renderer.ts"
 
-export function FastilesViewport(
-  props: {
-    game: GameState
-    selectedTarget: Point | null
-    previewPath: Point[]
-    onTileClick: (point: Point) => void
-    onTileHover: (point: Point | null) => void
-    renderOptions?: RenderOptions
-  },
-) {
-  const containerRef = useRef<HTMLDivElement | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement | null>(null)
-  const gameRef = useRef(props.game)
-  const selectedTargetRef = useRef<Point | null>(props.selectedTarget)
-  const previewPathRef = useRef<Point[]>(props.previewPath)
-  const onTileClickRef = useRef(props.onTileClick)
-  const onTileHoverRef = useRef(props.onTileHover)
-  const hoveredTileKeyRef = useRef<string | null>(null)
-  const renderOptionsRef = useRef<RenderOptions | undefined>(
-    props.renderOptions,
-  )
+type FastilesViewportProps = {
+  game: GameState
+  selectedTarget: Point | null
+  previewPath: Point[]
+  onTileClick: (point: Point) => void
+  onTileHover: (point: Point | null) => void
+  renderOptions?: RenderOptions
+}
 
-  useEffect(() => {
-    gameRef.current = props.game
-  }, [props.game])
+type FastilesViewportRuntime = {
+  container: HTMLDivElement | null
+  canvas: HTMLCanvasElement | null
+  hoveredTileKey: string | null
+  props: FastilesViewportProps | null
+}
 
-  useEffect(() => {
-    selectedTargetRef.current = props.selectedTarget
-  }, [props.selectedTarget])
+const fastilesViewportRuntime: FastilesViewportRuntime = {
+  container: null,
+  canvas: null,
+  hoveredTileKey: null,
+  props: null,
+}
 
-  useEffect(() => {
-    previewPathRef.current = props.previewPath
-  }, [props.previewPath])
+const drawFastilesViewport = () => {
+  const { canvas, container, props } = fastilesViewportRuntime
 
-  useEffect(() => {
-    onTileClickRef.current = props.onTileClick
-  }, [props.onTileClick])
+  if (!canvas || !container || !props) {
+    return
+  }
 
-  useEffect(() => {
-    onTileHoverRef.current = props.onTileHover
-  }, [props.onTileHover])
-
-  useEffect(() => {
-    renderOptionsRef.current = props.renderOptions
-  }, [props.renderOptions])
-
-  useEffect(() => {
-    const container = containerRef.current
-
-    if (!container) {
-      return
-    }
-
-    const canvas = document.createElement("canvas")
-    canvas.className = "game-canvas"
-    container.appendChild(canvas)
-    canvasRef.current = canvas
-
-    const resize = () => {
-      drawGame(
-        canvas,
-        container,
-        gameRef.current,
-        selectedTargetRef.current,
-        previewPathRef.current,
-        renderOptionsRef.current,
-      )
-    }
-
-    const onCanvasClick = (event: MouseEvent) => {
-      const point = pointFromMouseEvent(
-        canvas,
-        gameRef.current,
-        renderOptionsRef.current,
-        event,
-      )
-
-      if (point) {
-        onTileClickRef.current(point)
-      }
-    }
-
-    const onCanvasPointerMove = (event: PointerEvent) => {
-      const point = pointFromMouseEvent(
-        canvas,
-        gameRef.current,
-        renderOptionsRef.current,
-        event,
-      )
-      const nextHoveredTileKey = point ? `${point.x}:${point.y}` : null
-
-      if (nextHoveredTileKey === hoveredTileKeyRef.current) {
-        return
-      }
-
-      hoveredTileKeyRef.current = nextHoveredTileKey
-      onTileHoverRef.current(point)
-    }
-
-    const onCanvasPointerLeave = () => {
-      hoveredTileKeyRef.current = null
-      onTileHoverRef.current(null)
-    }
-
-    resize()
-    if ("fonts" in document) {
-      void document.fonts.load(TERMINAL_FONT_LOAD)
-        .then(() => {
-          if (
-            canvasRef.current === canvas && containerRef.current === container
-          ) {
-            resize()
-          }
-        })
-        .catch((error: unknown) => {
-          console.warn("Failed to load IBM3270 font", error)
-        })
-    }
-    window.addEventListener("resize", resize)
-    canvas.addEventListener("click", onCanvasClick)
-    canvas.addEventListener("pointermove", onCanvasPointerMove)
-    canvas.addEventListener("pointerleave", onCanvasPointerLeave)
-
-    return () => {
-      window.removeEventListener("resize", resize)
-      canvas.removeEventListener("click", onCanvasClick)
-      canvas.removeEventListener("pointermove", onCanvasPointerMove)
-      canvas.removeEventListener("pointerleave", onCanvasPointerLeave)
-      canvas.remove()
-      canvasRef.current = null
-    }
-  }, [])
-
-  useEffect(() => {
-    const canvas = canvasRef.current
-    const container = containerRef.current
-
-    if (!canvas || !container) {
-      return
-    }
-
-    drawGame(
-      canvas,
-      container,
-      props.game,
-      props.selectedTarget,
-      props.previewPath,
-      props.renderOptions,
-    )
-  }, [
+  drawGame(
+    canvas,
+    container,
     props.game,
     props.selectedTarget,
     props.previewPath,
-    props.renderOptions?.debugEntityOverlay,
-    props.renderOptions?.debugPlannedPaths,
-    props.renderOptions?.viewportMode,
-    props.renderOptions?.cameraTileWidth,
-    props.renderOptions?.cameraTileHeight,
-  ])
-
-  return <div class="viewport" ref={containerRef} />
+    props.renderOptions,
+  )
 }
 
-function pointFromMouseEvent(
+const handleCanvasClick = (event: MouseEvent) => {
+  const { canvas, props } = fastilesViewportRuntime
+
+  if (!canvas || !props) {
+    return
+  }
+
+  const point = pointFromMouseEvent(
+    canvas,
+    props.game,
+    props.renderOptions,
+    event,
+  )
+
+  if (point) {
+    props.onTileClick(point)
+  }
+}
+
+const handleCanvasPointerMove = (event: PointerEvent) => {
+  const { canvas, props } = fastilesViewportRuntime
+
+  if (!canvas || !props) {
+    return
+  }
+
+  const point = pointFromMouseEvent(
+    canvas,
+    props.game,
+    props.renderOptions,
+    event,
+  )
+  const nextHoveredTileKey = point ? `${point.x}:${point.y}` : null
+
+  if (nextHoveredTileKey === fastilesViewportRuntime.hoveredTileKey) {
+    return
+  }
+
+  fastilesViewportRuntime.hoveredTileKey = nextHoveredTileKey
+  props.onTileHover(point)
+}
+
+const handleCanvasPointerLeave = () => {
+  const { props } = fastilesViewportRuntime
+
+  if (!props) {
+    return
+  }
+
+  fastilesViewportRuntime.hoveredTileKey = null
+  props.onTileHover(null)
+}
+
+const detachViewport = () => {
+  const { canvas, props } = fastilesViewportRuntime
+
+  if (canvas) {
+    globalThis.removeEventListener("resize", drawFastilesViewport)
+    canvas.removeEventListener("click", handleCanvasClick)
+    canvas.removeEventListener("pointermove", handleCanvasPointerMove)
+    canvas.removeEventListener("pointerleave", handleCanvasPointerLeave)
+    canvas.remove()
+  }
+
+  fastilesViewportRuntime.hoveredTileKey = null
+  props?.onTileHover(null)
+  fastilesViewportRuntime.canvas = null
+  fastilesViewportRuntime.container = null
+}
+
+const attachViewport = (container: HTMLDivElement) => {
+  if (fastilesViewportRuntime.container === container) {
+    drawFastilesViewport()
+    return
+  }
+
+  detachViewport()
+
+  const canvas = document.createElement("canvas")
+  canvas.className = "game-canvas"
+  container.appendChild(canvas)
+
+  fastilesViewportRuntime.container = container
+  fastilesViewportRuntime.canvas = canvas
+  fastilesViewportRuntime.hoveredTileKey = null
+
+  globalThis.addEventListener("resize", drawFastilesViewport)
+  canvas.addEventListener("click", handleCanvasClick)
+  canvas.addEventListener("pointermove", handleCanvasPointerMove)
+  canvas.addEventListener("pointerleave", handleCanvasPointerLeave)
+
+  drawFastilesViewport()
+
+  if ("fonts" in document) {
+    void document.fonts.load(TERMINAL_FONT_LOAD)
+      .then(() => {
+        if (
+          fastilesViewportRuntime.canvas === canvas &&
+          fastilesViewportRuntime.container === container
+        ) {
+          drawFastilesViewport()
+        }
+      })
+      .catch((error: unknown) => {
+        console.warn("Failed to load IBM3270 font", error)
+      })
+  }
+}
+
+const setViewportContainer = (container: HTMLDivElement | null) => {
+  if (container) {
+    attachViewport(container)
+    return
+  }
+
+  detachViewport()
+}
+
+export const FastilesViewport = (props: FastilesViewportProps) => {
+  fastilesViewportRuntime.props = props
+  drawFastilesViewport()
+
+  return <div class="viewport" ref={setViewportContainer} />
+}
+
+const pointFromMouseEvent = (
   canvas: HTMLCanvasElement,
   game: GameState,
   renderOptions: RenderOptions | undefined,
   event: MouseEvent,
-): Point | null {
+): Point | null => {
   const rect = canvas.getBoundingClientRect()
   const shake = screenShakeOffset(game)
   const viewport = resolveViewportMetrics(
