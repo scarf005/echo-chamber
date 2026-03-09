@@ -1,3 +1,4 @@
+import { ensureAudioElementStarted, resetAudioElement } from "./htmlAudio.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const BACKGROUND_MUSIC_URL = new URL(
@@ -28,25 +29,10 @@ export const createBackgroundMusic = (): BackgroundMusicController => {
 
   syncVolume()
 
-  let startingPlayback: Promise<void> | null = null
+  const playbackState = { startingPlayback: null as Promise<void> | null }
 
   const ensureStarted = () => {
-    if (!audio.paused) {
-      return
-    }
-
-    if (startingPlayback) {
-      return startingPlayback
-    }
-
-    startingPlayback = audio.play()
-      .then(() => undefined)
-      .catch(() => undefined)
-      .finally(() => {
-        startingPlayback = null
-      })
-
-    return startingPlayback
+    return ensureAudioElementStarted(audio, playbackState)
   }
 
   const setEnabled = (enabled: boolean) => {
@@ -60,9 +46,7 @@ export const createBackgroundMusic = (): BackgroundMusicController => {
   }
 
   const dispose = () => {
-    audio.pause()
-    audio.src = ""
-    audio.load()
+    resetAudioElement(audio)
   }
 
   return {

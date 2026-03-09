@@ -1,3 +1,9 @@
+import {
+  createAudioPlayersByUrl,
+  primeAudioPlayersByUrl,
+  resetAudioPlayersByUrl,
+  takeAudioPlayer,
+} from "./htmlAudio.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const ENTITY_HIT_SAMPLE_URLS = [
@@ -24,10 +30,7 @@ export const getEntityHitVolume = (volume: number): number => {
 
 export const createEntityHitSfx = (): EntityHitSfxController => {
   const sampleUrls = Array.from(ENTITY_HIT_SAMPLE_URLS)
-  const playersByUrl = new Map(sampleUrls.map((url) => [
-    url,
-    Array.from({ length: CHANNELS_PER_SAMPLE }, () => createPlayer(url)),
-  ]))
+  const playersByUrl = createAudioPlayersByUrl(sampleUrls, CHANNELS_PER_SAMPLE)
   const nextPlayerIndexByUrl = new Map(sampleUrls.map((url) => [url, 0]))
   let unlocked = false
   const state = {
@@ -40,10 +43,7 @@ export const createEntityHitSfx = (): EntityHitSfxController => {
       return
     }
 
-    await Promise.all(sampleUrls.flatMap((url) => {
-      const players = playersByUrl.get(url) ?? []
-      return players.map(primePlayer)
-    }))
+    await primeAudioPlayersByUrl(playersByUrl)
     unlocked = true
   }
 
@@ -61,7 +61,7 @@ export const createEntityHitSfx = (): EntityHitSfxController => {
     const sampleUrl = ENTITY_HIT_SAMPLE_URLS[0]
     const players = playersByUrl.get(sampleUrl) ?? []
     const preferredIndex = nextPlayerIndexByUrl.get(sampleUrl) ?? 0
-    const audio = takePlayer(players, preferredIndex)
+    const audio = takeAudioPlayer(players, preferredIndex)
 
     if (!audio) {
       return
@@ -96,13 +96,7 @@ export const createEntityHitSfx = (): EntityHitSfxController => {
   const dispose = () => {
     unlocked = false
 
-    for (const players of playersByUrl.values()) {
-      for (const player of players) {
-        player.pause()
-        player.src = ""
-        player.load()
-      }
-    }
+    resetAudioPlayersByUrl(playersByUrl)
   }
 
   return {
@@ -112,37 +106,4 @@ export const createEntityHitSfx = (): EntityHitSfxController => {
     setVolume,
     dispose,
   }
-}
-
-const createPlayer = (url: string): HTMLAudioElement => {
-  const audio = new Audio(url)
-  audio.preload = "auto"
-  return audio
-}
-
-const primePlayer = async (audio: HTMLAudioElement): Promise<void> => {
-  audio.volume = 0
-  audio.muted = true
-
-  try {
-    await audio.play()
-  } catch {
-    return
-  }
-
-  audio.pause()
-  audio.currentTime = 0
-  audio.muted = false
-}
-
-const takePlayer = (
-  players: HTMLAudioElement[],
-  preferredIndex: number,
-): HTMLAudioElement | null => {
-  if (players.length === 0) {
-    return null
-  }
-
-  return players.find((player) => player.paused || player.ended) ??
-    players[preferredIndex % players.length]
 }

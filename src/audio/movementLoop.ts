@@ -1,3 +1,4 @@
+import { ensureAudioElementStarted, resetAudioElement } from "./htmlAudio.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const MOVEMENT_LOOP_URL = new URL(
@@ -56,7 +57,7 @@ export const createMovementLoop = (): MovementLoopController => {
 
   audio.volume = resolveTargetVolume(IDLE_VOLUME)
 
-  let startingPlayback: Promise<void> | null = null
+  const playbackState = { startingPlayback: null as Promise<void> | null }
   let lastMovementAt = Number.NEGATIVE_INFINITY
   let tickerId: number | null = null
 
@@ -98,22 +99,7 @@ export const createMovementLoop = (): MovementLoopController => {
   }
 
   const ensureStarted = () => {
-    if (!audio.paused) {
-      return Promise.resolve()
-    }
-
-    if (startingPlayback) {
-      return startingPlayback
-    }
-
-    startingPlayback = audio.play()
-      .then(() => undefined)
-      .catch(() => undefined)
-      .finally(() => {
-        startingPlayback = null
-      })
-
-    return startingPlayback ?? Promise.resolve()
+    return ensureAudioElementStarted(audio, playbackState)
   }
 
   const markMovement = () => {
@@ -136,9 +122,7 @@ export const createMovementLoop = (): MovementLoopController => {
 
   const dispose = () => {
     stopTicker()
-    audio.pause()
-    audio.src = ""
-    audio.load()
+    resetAudioElement(audio)
   }
 
   return {
