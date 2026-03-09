@@ -3,7 +3,21 @@
 import { assertEquals } from "@std/assert"
 
 import type { GeneratedMap } from "../../game/mapgen.ts"
-import { resolveViewportMetrics } from "./viewport.ts"
+import {
+  applyCameraZoom,
+  CAMERA_ZOOM_STEP_HEIGHT,
+  CAMERA_ZOOM_STEP_WIDTH,
+  COMPACT_CAMERA_TILE_HEIGHT,
+  COMPACT_CAMERA_TILE_WIDTH,
+  MAX_CAMERA_TILE_HEIGHT,
+  MAX_CAMERA_TILE_WIDTH,
+  MIN_CAMERA_TILE_HEIGHT,
+  MIN_CAMERA_TILE_WIDTH,
+  NARROW_CAMERA_TILE_HEIGHT,
+  NARROW_CAMERA_TILE_WIDTH,
+  resolveResponsiveCameraTileCounts,
+  resolveViewportMetrics,
+} from "./viewport.ts"
 
 Deno.test("camera viewport centers on the player when space allows", () => {
   const viewport = resolveViewportMetrics({
@@ -73,6 +87,86 @@ Deno.test("full map viewport always covers the entire map", () => {
   assertEquals(viewport.tileSize, 6)
   assertEquals(viewport.cssWidth, 864)
   assertEquals(viewport.cssHeight, 504)
+})
+
+Deno.test("responsive camera tiles keep the default view on desktop", () => {
+  const cameraTiles = resolveResponsiveCameraTileCounts({
+    viewportSize: { width: 1280, height: 800 },
+    isCompactLayout: false,
+  })
+
+  assertEquals(cameraTiles, {
+    width: 30,
+    height: 20,
+  })
+})
+
+Deno.test("responsive camera tiles reduce the camera on compact screens", () => {
+  const cameraTiles = resolveResponsiveCameraTileCounts({
+    viewportSize: { width: 768, height: 1024 },
+    isCompactLayout: true,
+  })
+
+  assertEquals(cameraTiles, {
+    width: COMPACT_CAMERA_TILE_WIDTH,
+    height: COMPACT_CAMERA_TILE_HEIGHT,
+  })
+})
+
+Deno.test("responsive camera tiles use the narrowest view on phones", () => {
+  const cameraTiles = resolveResponsiveCameraTileCounts({
+    viewportSize: { width: 390, height: 844 },
+    isCompactLayout: true,
+  })
+
+  assertEquals(cameraTiles, {
+    width: NARROW_CAMERA_TILE_WIDTH,
+    height: NARROW_CAMERA_TILE_HEIGHT,
+  })
+})
+
+Deno.test("camera zoom in reduces visible tile counts", () => {
+  const cameraTiles = applyCameraZoom({
+    cameraTiles: { width: 18, height: 14 },
+    zoomLevel: 2,
+  })
+
+  assertEquals(cameraTiles, {
+    width: 18 - CAMERA_ZOOM_STEP_WIDTH * 2,
+    height: 14 - CAMERA_ZOOM_STEP_HEIGHT * 2,
+  })
+})
+
+Deno.test("camera zoom out increases visible tile counts", () => {
+  const cameraTiles = applyCameraZoom({
+    cameraTiles: { width: 18, height: 14 },
+    zoomLevel: -2,
+  })
+
+  assertEquals(cameraTiles, {
+    width: 18 + CAMERA_ZOOM_STEP_WIDTH * 2,
+    height: 14 + CAMERA_ZOOM_STEP_HEIGHT * 2,
+  })
+})
+
+Deno.test("camera zoom clamps to supported bounds", () => {
+  const zoomedInTiles = applyCameraZoom({
+    cameraTiles: { width: 14, height: 10 },
+    zoomLevel: 99,
+  })
+  const zoomedOutTiles = applyCameraZoom({
+    cameraTiles: { width: 30, height: 20 },
+    zoomLevel: -99,
+  })
+
+  assertEquals(zoomedInTiles, {
+    width: MIN_CAMERA_TILE_WIDTH,
+    height: MIN_CAMERA_TILE_HEIGHT,
+  })
+  assertEquals(zoomedOutTiles, {
+    width: MAX_CAMERA_TILE_WIDTH,
+    height: MAX_CAMERA_TILE_HEIGHT,
+  })
 })
 
 const createGameStub = (options: {

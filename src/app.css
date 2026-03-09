@@ -12,6 +12,7 @@
 }
 
 .viewport-stage {
+  position: relative;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -35,6 +36,7 @@
 
 .game-canvas {
   image-rendering: pixelated;
+  touch-action: none;
 }
 
 .sidebar {
@@ -170,6 +172,7 @@
 }
 
 .sidebar button,
+.mobile-controls button,
 .modal-panel button {
   font: inherit;
   color: inherit;
@@ -182,11 +185,124 @@
 
 .sidebar button:hover,
 .sidebar button:focus-visible,
+.mobile-controls button:hover,
+.mobile-controls button:focus-visible,
 .modal-panel button:hover,
 .modal-panel button:focus-visible {
   border-color: rgba(186, 243, 247, 0.58);
   background: rgba(5, 27, 36, 0.96);
   outline: none;
+}
+
+.mobile-controls {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.mobile-helm-status,
+.mobile-action-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.mobile-helm-status {
+  gap: 0.45rem;
+}
+
+.mobile-control-hint {
+  color: rgba(217, 255, 249, 0.72);
+  font-size: 0.78rem;
+  text-align: right;
+}
+
+.mobile-action-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.mobile-control-button {
+  min-height: 3.15rem;
+  padding: 0.7rem;
+  touch-action: manipulation;
+}
+
+.mobile-action-button {
+  display: inline-grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  color: #f2fffd;
+}
+
+.mobile-action-button.is-active {
+  border-color: rgba(186, 243, 247, 0.72);
+  background: rgba(8, 40, 52, 0.98);
+}
+
+.mobile-action-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+  display: block;
+  background-color: currentColor;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+  -webkit-mask-position: center;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-size: contain;
+}
+
+.mobile-control-button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.mobile-helm-tab {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 3;
+  width: 2.85rem;
+  height: 2.85rem;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid rgba(124, 208, 214, 0.35);
+  border-right: 0;
+  background: rgba(3, 8, 12, 0.94);
+  color: #f2fffd;
+  display: inline-grid;
+  place-items: center;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.mobile-helm-tab.is-active {
+  border-color: rgba(186, 243, 247, 0.72);
+  background: rgba(8, 40, 52, 0.98);
+}
+
+.mobile-helm-drawer {
+  position: absolute;
+  top: 0.75rem;
+  right: 2.9rem;
+  bottom: 0.75rem;
+  z-index: 2;
+  width: min(16rem, calc(100% - 4.5rem));
+  align-content: start;
+  gap: 0.75rem;
+  overflow-y: auto;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(calc(100% + 1rem));
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.mobile-helm-drawer.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0);
 }
 
 .icon-button {
@@ -384,5 +500,30 @@
 
   .sidebar-panel {
     padding-inline: 0.8rem;
+  }
+
+  .mobile-control-hint {
+    text-align: left;
+  }
+
+  .mobile-action-icon {
+    width: 1.45rem;
+    height: 1.45rem;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 720px) {
+  .game-shell {
+    height: 100%;
+    min-height: 100%;
+    overflow: hidden;
+  }
+
+  .viewport-stage.is-compact-landscape {
+    min-height: 100%;
+  }
+
+  .sidebar.is-hidden-on-compact-landscape {
+    display: none;
   }
 }

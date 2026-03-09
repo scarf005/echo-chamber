@@ -30,6 +30,7 @@ import {
   togglePlayerSonar,
   withGameMessage,
 } from "./game/game.ts"
+import type { HorizontalDirection } from "./game/model.ts"
 import { pointsEqual } from "./game/helpers.ts"
 import { isPassableTile, type Point, tileAt } from "./game/mapgen.ts"
 import { createBackgroundMusic } from "./audio/backgroundMusic.ts"
@@ -64,10 +65,22 @@ import {
   describeHoveredInspectorRows,
   filterInspectorRows,
 } from "./render/helpers/inspector.ts"
+import {
+  applyCameraZoom,
+  resolveResponsiveCameraTileCounts,
+} from "./render/helpers/viewport.ts"
 import type { RenderOptions, ViewportMode } from "./render/options.ts"
 import { activateLocale } from "./i18n.ts"
 import { languageSignal } from "./signals.ts"
 import { localizeAutoMoveReason } from "./game/localize.ts"
+import torpedoIconUrl from "./assets/mobile-torpedo.svg"
+import upwardTorpedoIconUrl from "./assets/mobile-upward-torpedo.svg"
+import depthChargeIconUrl from "./assets/mobile-depth-charge.svg"
+import sonarIconUrl from "./assets/mobile-sonar.svg"
+import mapIconUrl from "./assets/mobile-map.svg"
+import optionsIconUrl from "./assets/mobile-options.svg"
+import openHelmIconUrl from "./assets/mobile-open-helm.svg"
+import closeHelmIconUrl from "./assets/mobile-close-helm.svg"
 
 const INITIAL_RUN_SEED = resolveInitialRunSeed({
   fallbackSeed: createRandomSeed(),
@@ -75,14 +88,69 @@ const INITIAL_RUN_SEED = resolveInitialRunSeed({
 const AUTO_MOVE_DELAY_MS = 70
 const LOG_PANEL_LINES = 6
 const SETTINGS_PERSIST_DELAY_MS = 150
+const MOBILE_LAYOUT_MAX_WIDTH = 920
+const MOBILE_LAYOUT_MAX_HEIGHT = 720
 const IS_DEV_BUILD = import.meta.env.DEV
 const getBrowserStorage = (): Storage | null => {
   return "localStorage" in globalThis ? globalThis.localStorage : null
 }
+const getViewportSize = (): { width: number; height: number } => {
+  return typeof globalThis.innerWidth === "number" &&
+      typeof globalThis.innerHeight === "number"
+    ? { width: globalThis.innerWidth, height: globalThis.innerHeight }
+    : { width: 1280, height: 720 }
+}
+const getHasTouchLayout = (): boolean => {
+  if (typeof globalThis.matchMedia === "function") {
+    return globalThis.matchMedia("(pointer: coarse)").matches ||
+      globalThis.matchMedia("(hover: none)").matches
+  }
+
+  return false
+}
+const iconImage = (
+  src: string,
+  options: { alt?: string; style?: JSX.CSSProperties } = {},
+) => {
+  const { alt = "", style } = options
+
+  return (
+    <span
+      aria-hidden="true"
+      class="mobile-action-icon"
+      title={alt}
+      style={{
+        maskImage: `url(${src})`,
+        WebkitMaskImage: `url(${src})`,
+        ...style,
+      }}
+    />
+  )
+}
+const torpedoActionIcon = (direction: HorizontalDirection) => {
+  const rotation = direction === "left" ? "0deg" : "180deg"
+
+  return iconImage(torpedoIconUrl, {
+    style: { transform: `rotate(${rotation})` },
+  })
+}
+const upwardTorpedoActionIcon = iconImage(upwardTorpedoIconUrl, {
+  style: { transform: "rotate(180deg)" },
+})
+const depthChargeActionIcon = iconImage(depthChargeIconUrl)
+const sonarActionIcon = iconImage(sonarIconUrl)
+const mapActionIcon = iconImage(mapIconUrl)
+const optionsActionIcon = iconImage(optionsIconUrl)
+const openHelmIcon = iconImage(openHelmIconUrl)
+const closeHelmIcon = iconImage(closeHelmIconUrl)
 const appSettingsSignal = signal<AppSettings>(
   readAppSettings(getBrowserStorage(), { isDevBuild: IS_DEV_BUILD }),
 )
+const viewportSizeSignal = signal(getViewportSize())
+const hasTouchLayoutSignal = signal(getHasTouchLayout())
+const cameraZoomSignal = signal(0)
 const viewportModeSignal = signal<ViewportMode>("camera")
+const isMobileHelmOpenSignal = signal(false)
 const isOptionsOpenSignal = signal(false)
 const isOrdersModalOpenSignal = signal(false)
 const runSeedSignal = signal(INITIAL_RUN_SEED)
@@ -185,12 +253,74 @@ const clearAutoMoveRoute = () => {
   appRuntime.autoMoveSeenTarget = null
 }
 
+const clearPlayerActionTargets = (
+  { resetSeenAnomalies = true }: { resetSeenAnomalies?: boolean } = {},
+) => {
+  previewTargetSignal.value = null
+  autoMoveTargetSignal.value = null
+  clearAutoMoveRoute()
+
+  if (resetSeenAnomalies) {
+    resetAutoMoveSeenAnomalies()
+  }
+}
+
 const closeModalOnBackdropMouseDown = (
   event: JSX.TargetedMouseEvent<HTMLDivElement>,
   close: () => void,
 ) => {
   if (event.target === event.currentTarget) {
     close()
+  }
+}
+
+const adjustCameraZoom = (step: number) => {
+  if (step === 0) {
+    return
+  }
+
+  cameraZoomSignal.value = Math.max(
+    -6,
+    Math.min(6, cameraZoomSignal.peek() + step),
+  )
+}
+
+const applyPlayerAction = (
+  update: (current: AppGame) => AppGame,
+  options: { markMovement?: boolean; resetSeenAnomalies?: boolean } = {},
+) => {
+  const { markMovement = false, resetSeenAnomalies = true } = options
+
+  startManagedAudio()
+  clearPlayerActionTargets({ resetSeenAnomalies })
+  updateGame((current) => {
+    const next = update(current)
+
+    if (
+      markMovement &&
+      (next.player.x !== current.player.x || next.player.y !== current.player.y)
+    ) {
+      appRuntime.movementLoop?.markMovement()
+    }
+
+    return next
+  })
+}
+
+const movePlayerInDirection = (direction: "up" | "down" | "left" | "right") => {
+  applyPlayerAction((current) => movePlayer(current, direction), {
+    markMovement: true,
+  })
+}
+
+const syncResponsiveState = () => {
+  viewportSizeSignal.value = getViewportSize()
+
+  const hasTouchLayout = getHasTouchLayout()
+  hasTouchLayoutSignal.value = hasTouchLayout
+
+  if (!hasTouchLayout) {
+    isMobileHelmOpenSignal.value = false
   }
 }
 
@@ -423,37 +553,25 @@ const handleGlobalKeyDown = (event: KeyboardEvent) => {
 
   if (event.key === "z" || event.key === "Z") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => fireTorpedo(current))
+    applyPlayerAction((current) => fireTorpedo(current))
     return
   }
 
   if (event.key === "c" || event.key === "C") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => fireTorpedo(current, "up"))
+    applyPlayerAction((current) => fireTorpedo(current, "up"))
     return
   }
 
   if (event.key === "x" || event.key === "X") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => dropDepthCharge(current))
+    applyPlayerAction((current) => dropDepthCharge(current))
     return
   }
 
   if (event.key === ".") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => holdPosition(current))
+    applyPlayerAction((current) => holdPosition(current))
     return
   }
 
@@ -464,21 +582,7 @@ const handleGlobalKeyDown = (event: KeyboardEvent) => {
   }
 
   event.preventDefault()
-  previewTargetSignal.value = null
-  autoMoveTargetSignal.value = null
-  resetAutoMoveSeenAnomalies()
-  updateGame((current) => {
-    const next = movePlayer(current, direction)
-
-    if (
-      next.player.x !== current.player.x ||
-      next.player.y !== current.player.y
-    ) {
-      appRuntime.movementLoop?.markMovement()
-    }
-
-    return next
-  })
+  movePlayerInDirection(direction)
 }
 
 const ensureAppRuntime = () => {
@@ -515,6 +619,7 @@ const ensureAppRuntime = () => {
   globalThis.addEventListener("pointerdown", startManagedAudio, {
     passive: true,
   })
+  globalThis.addEventListener("resize", syncResponsiveState, { passive: true })
   globalThis.addEventListener("focus", syncPageAudioEnabled, { passive: true })
   globalThis.addEventListener("blur", syncPageAudioEnabled, { passive: true })
   document.addEventListener("visibilitychange", syncPageAudioEnabled)
@@ -760,6 +865,16 @@ export const App = () => {
   const difficulty = appSettings.difficulty
   const crtEnabled = appSettings.crtEnabled
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
+  const viewportSize = viewportSizeSignal.value
+  const hasTouchLayout = hasTouchLayoutSignal.value
+  const isCompactLayout = viewportSize.width <= MOBILE_LAYOUT_MAX_WIDTH ||
+    viewportSize.height <= MOBILE_LAYOUT_MAX_HEIGHT
+  const isTouchLayout = isCompactLayout && hasTouchLayout
+  const isCompactLandscape = isTouchLayout &&
+    viewportSize.width > viewportSize.height
+  const isMobileHelmOpen = isCompactLandscape
+    ? isMobileHelmOpenSignal.value
+    : isTouchLayout
   const activeRunSeedConfig = parseRunSeed(activeRunSeed, INITIAL_RUN_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
     activeRunSeedConfig.enableMapMode
@@ -784,13 +899,21 @@ export const App = () => {
     ...game.logs,
   ], isGodMode)
   const visibleLogMessages = allLogMessages.slice(-LOG_PANEL_LINES)
+  const responsiveCameraTiles = resolveResponsiveCameraTileCounts({
+    viewportSize,
+    isCompactLayout,
+  })
+  const zoomedCameraTiles = applyCameraZoom({
+    cameraTiles: responsiveCameraTiles,
+    zoomLevel: cameraZoomSignal.value,
+  })
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,
     hoveredTile: null,
     viewportMode,
-    cameraTileWidth: 30,
-    cameraTileHeight: 20,
+    cameraTileWidth: zoomedCameraTiles.width,
+    cameraTileHeight: zoomedCameraTiles.height,
   }
   const viewportLabel = viewportMode === "full"
     ? t`FULL MAP (M)`
@@ -807,10 +930,110 @@ export const App = () => {
     isGodMode,
   )
   const onOffLabel = (enabled: boolean) => enabled ? t`ON` : t`OFF`
+  const mobileHelmActions = (
+    <div
+      class="mobile-action-grid"
+      role="group"
+      aria-label={t`action controls`}
+    >
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        aria-label={t`fire torpedo forward`}
+        disabled={game.status !== "playing"}
+        onClick={() => applyPlayerAction((current) => fireTorpedo(current))}
+      >
+        {torpedoActionIcon(game.facing)}
+      </button>
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        aria-label={t`fire torpedo upward`}
+        disabled={game.status !== "playing"}
+        onClick={() =>
+          applyPlayerAction((current) => fireTorpedo(current, "up"))}
+      >
+        {upwardTorpedoActionIcon}
+      </button>
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        aria-label={t`drop depth charge`}
+        disabled={game.status !== "playing"}
+        onClick={() => applyPlayerAction((current) => dropDepthCharge(current))}
+      >
+        {depthChargeActionIcon}
+      </button>
+      <button
+        type="button"
+        class={`mobile-control-button mobile-action-button${
+          playerSonarEnabled ? " is-active" : ""
+        }`}
+        aria-label={playerSonarEnabled ? t`disable sonar` : t`enable sonar`}
+        disabled={game.status !== "playing"}
+        onClick={() => {
+          startManagedAudio()
+          updateGame((current) => togglePlayerSonar(current))
+        }}
+      >
+        {sonarActionIcon}
+      </button>
+      <button
+        type="button"
+        class="mobile-control-button mobile-action-button"
+        aria-label={viewportMode === "full"
+          ? t`switch to tracking view`
+          : t`switch to full map`}
+        onClick={() => {
+          setViewportModeWithMessage(
+            viewportMode === "full" ? "camera" : "full",
+          )
+        }}
+      >
+        {mapActionIcon}
+      </button>
+    </div>
+  )
+  const mobileHelmStatus = (
+    <div class="mobile-helm-status">
+      <div class="stat-row">
+        <span>{t`turn`}</span>
+        <strong>{game.turn}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`sonar in`}</span>
+        <strong>{playerSonarEnabled ? sonarIn : onOffLabel(false)}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`torpedoes`}</span>
+        <strong>{game.torpedoAmmo}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`depth charges`}</span>
+        <strong>{game.depthChargeAmmo}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`position`}</span>
+        <strong>{playerCoordinates}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`target`}</span>
+        <strong>{targetCoordinates}</strong>
+      </div>
+      <div class="stat-row">
+        <span>{t`display`}</span>
+        <strong>{viewportLabel}</strong>
+      </div>
+    </div>
+  )
 
   return (
     <main class="game-shell">
-      <section class="viewport-stage">
+      <section
+        class={`viewport-stage${
+          isCompactLandscape ? " is-compact-landscape" : ""
+        }`}
+      >
         <FastilesViewport
           crtEnabled={crtEnabled}
           game={game}
@@ -820,11 +1043,63 @@ export const App = () => {
           onTileHover={(point) => {
             hoveredTileSignal.value = point
           }}
+          onZoomStep={adjustCameraZoom}
           renderOptions={renderOptions}
         />
+
+        {isCompactLandscape
+          ? (
+            <>
+              <button
+                type="button"
+                class={`mobile-helm-tab${isMobileHelmOpen ? " is-active" : ""}`}
+                aria-label={isMobileHelmOpen
+                  ? t`close mobile helm`
+                  : t`open mobile helm`}
+                aria-expanded={isMobileHelmOpen}
+                onClick={() => {
+                  isMobileHelmOpenSignal.value = !isMobileHelmOpenSignal.peek()
+                }}
+              >
+                {isMobileHelmOpen ? closeHelmIcon : openHelmIcon}
+              </button>
+              {isMobileHelmOpen
+                ? (
+                  <section class="mobile-helm-drawer sidebar-panel sidebar-panel-primary is-open">
+                    {mobileHelmStatus}
+                    {mobileHelmActions}
+                    <button
+                      type="button"
+                      class="mobile-control-button mobile-action-button"
+                      aria-label={t`open options`}
+                      onClick={() => {
+                        isOptionsOpenSignal.value = true
+                        isOrdersModalOpenSignal.value = false
+                      }}
+                    >
+                      {optionsActionIcon}
+                    </button>
+                  </section>
+                )
+                : null}
+            </>
+          )
+          : null}
       </section>
 
-      <aside class="sidebar">
+      {isTouchLayout && !isCompactLandscape
+        ? (
+          <section class="mobile-controls sidebar-panel sidebar-panel-primary">
+            {mobileHelmActions}
+          </section>
+        )
+        : null}
+
+      <aside
+        class={`sidebar${
+          isCompactLandscape ? " is-hidden-on-compact-landscape" : ""
+        }`}
+      >
         <section class="sidebar-panel sidebar-panel-primary">
           <div class="panel-header">
             <div class="sidebar-heading">{t`mission status`}</div>

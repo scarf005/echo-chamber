@@ -14,6 +14,28 @@ import { drawTileBackground } from "../helpers/draw.ts"
 import { drawGlyph } from "../helpers/draw.ts"
 import type { RenderOptions } from "../options.ts"
 
+const torpedoSvgUrl = new URL(
+  "../../assets/mobile-torpedo.svg",
+  import.meta.url,
+).href
+const depthChargeSvgUrl = new URL(
+  "../../assets/mobile-depth-charge.svg",
+  import.meta.url,
+).href
+
+type ProjectileIconCache = {
+  path: Path2D | null
+  status: "idle" | "loading" | "ready" | "error"
+}
+
+const projectileIconCaches: Record<
+  "torpedo" | "depthCharge",
+  ProjectileIconCache
+> = {
+  torpedo: { path: null, status: "idle" },
+  depthCharge: { path: null, status: "idle" },
+}
+
 export const colorForHostileSubmarine = (
   hostileSubmarine: HostileSubmarine,
 ): string => {
@@ -585,20 +607,24 @@ const drawTorpedoGlyph = (
   torpedo: Torpedo,
   alpha: number,
 ): void => {
-  drawGlyph({
+  const rotation = torpedo.direction === "left"
+    ? 0
+    : torpedo.direction === "right"
+    ? Math.PI
+    : torpedo.direction === "up"
+    ? Math.PI / 2
+    : -Math.PI / 2
+
+  drawProjectileIcon({
+    key: "torpedo",
+    url: torpedoSvgUrl,
     context,
-    x: screenX,
-    y: screenY,
+    screenX,
+    screenY,
     tileSize,
-    glyph: torpedo.direction === "left"
-      ? "⇐"
-      : torpedo.direction === "right"
-      ? "⇒"
-      : torpedo.direction === "up"
-      ? "⇑"
-      : "⇓",
     color: COLORS.torpedo,
     alpha,
+    rotation,
   })
 }
 
@@ -609,13 +635,111 @@ const drawDepthChargeGlyph = (
   tileSize: number,
   alpha: number,
 ): void => {
-  drawGlyph({
+  drawProjectileIcon({
+    key: "depthCharge",
+    url: depthChargeSvgUrl,
     context,
-    x: screenX,
-    y: screenY,
+    screenX,
+    screenY,
     tileSize,
-    glyph: "◉",
     color: COLORS.depthCharge,
     alpha,
+    rotation: 0,
   })
+}
+
+type DrawProjectileIconOptions = {
+  key: "torpedo" | "depthCharge"
+  url: string
+  context: CanvasRenderingContext2D
+  screenX: number
+  screenY: number
+  tileSize: number
+  color: string
+  alpha: number
+  rotation: number
+}
+
+const drawProjectileIcon = (
+  {
+    key,
+    url,
+    context,
+    screenX,
+    screenY,
+    tileSize,
+    color,
+    alpha,
+    rotation,
+  }: DrawProjectileIconOptions,
+) => {
+  const iconPath = getProjectileIconPath(key, url)
+
+  if (!iconPath) {
+    drawGlyph({
+      context,
+      x: screenX,
+      y: screenY,
+      tileSize,
+      glyph: key === "torpedo" ? "•" : "◉",
+      color,
+      alpha,
+    })
+    return
+  }
+
+  context.save()
+  context.globalAlpha = alpha
+  context.fillStyle = color
+  context.translate(screenX + tileSize / 2, screenY + tileSize / 2)
+  context.rotate(rotation)
+  context.scale(tileSize / 24, tileSize / 24)
+  context.translate(-12, -12)
+  context.fill(iconPath)
+  context.restore()
+}
+
+const getProjectileIconPath = (
+  key: "torpedo" | "depthCharge",
+  url: string,
+): Path2D | null => {
+  const cache = projectileIconCaches[key]
+
+  if (cache.status === "ready") {
+    return cache.path
+  }
+
+  if (
+    cache.status === "loading" || cache.status === "error" ||
+    typeof DOMParser === "undefined" || typeof Path2D === "undefined"
+  ) {
+    return null
+  }
+
+  cache.status = "loading"
+  void fetch(url)
+    .then((response) => response.text())
+    .then((svg) => {
+      const document = new DOMParser().parseFromString(svg, "image/svg+xml")
+      const nextPath = new Path2D()
+
+      for (const node of document.querySelectorAll("path")) {
+        const d = node.getAttribute("d")
+
+        if (!d) {
+          continue
+        }
+
+        nextPath.addPath(new Path2D(d))
+      }
+
+      cache.path = nextPath
+      cache.status = "ready"
+      globalThis.dispatchEvent(new Event("resize"))
+    })
+    .catch(() => {
+      cache.status = "error"
+    })
+
+  return null
 }
