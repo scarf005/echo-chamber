@@ -65,7 +65,10 @@ import {
   describeHoveredInspectorRows,
   filterInspectorRows,
 } from "./render/helpers/inspector.ts"
-import { resolveResponsiveCameraTileCounts } from "./render/helpers/viewport.ts"
+import {
+  applyCameraZoom,
+  resolveResponsiveCameraTileCounts,
+} from "./render/helpers/viewport.ts"
 import type { RenderOptions, ViewportMode } from "./render/options.ts"
 import { activateLocale } from "./i18n.ts"
 import { languageSignal } from "./signals.ts"
@@ -145,6 +148,7 @@ const appSettingsSignal = signal<AppSettings>(
 )
 const viewportSizeSignal = signal(getViewportSize())
 const hasTouchLayoutSignal = signal(getHasTouchLayout())
+const cameraZoomSignal = signal(0)
 const viewportModeSignal = signal<ViewportMode>("camera")
 const isMobileHelmOpenSignal = signal(false)
 const isOptionsOpenSignal = signal(false)
@@ -259,6 +263,17 @@ const clearPlayerActionTargets = (
   if (resetSeenAnomalies) {
     resetAutoMoveSeenAnomalies()
   }
+}
+
+const adjustCameraZoom = (step: number) => {
+  if (step === 0) {
+    return
+  }
+
+  cameraZoomSignal.value = Math.max(
+    -6,
+    Math.min(6, cameraZoomSignal.peek() + step),
+  )
 }
 
 const applyPlayerAction = (
@@ -879,13 +894,17 @@ export const App = () => {
     viewportSize,
     isCompactLayout,
   })
+  const zoomedCameraTiles = applyCameraZoom({
+    cameraTiles: responsiveCameraTiles,
+    zoomLevel: cameraZoomSignal.value,
+  })
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,
     hoveredTile: null,
     viewportMode,
-    cameraTileWidth: responsiveCameraTiles.width,
-    cameraTileHeight: responsiveCameraTiles.height,
+    cameraTileWidth: zoomedCameraTiles.width,
+    cameraTileHeight: zoomedCameraTiles.height,
   }
   const viewportLabel = viewportMode === "full"
     ? t`FULL MAP (M)`
@@ -1015,6 +1034,7 @@ export const App = () => {
           onTileHover={(point) => {
             hoveredTileSignal.value = point
           }}
+          onZoomStep={adjustCameraZoom}
           renderOptions={renderOptions}
         />
 

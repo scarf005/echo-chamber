@@ -559,261 +559,261 @@ msgstr "{target} 부근 대기 중"
 msgid "{id}: will {mode}{targetSuffix}"
 msgstr "{id}: {mode}{targetSuffix} 예정"
 
-#: src/app.tsx:905
+#: src/app.tsx:924
 msgid "action controls"
 msgstr ""
 
-#: src/app.tsx:1223
+#: src/app.tsx:1243
 msgid "active seed modes"
 msgstr "활성 시드 모드"
 
-#: src/app.tsx:1316
+#: src/app.tsx:1336
 msgid "audio"
 msgstr "오디오"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:446
+#: src/app.tsx:461
 msgid "Auto-nav engaged to {0}."
 msgstr "자동 항법 {0}로 활성화됨."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1627
+#: src/app.tsx:1647
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "자동 항법 중지: {localizedReason} @ {0}{1}."
 
-#: src/app.tsx:1194
-#: src/app.tsx:1598
+#: src/app.tsx:1214
+#: src/app.tsx:1618
 msgid "close"
 msgstr "닫기"
 
-#: src/app.tsx:1023
+#: src/app.tsx:1043
 msgid "close mobile helm"
 msgstr ""
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:465
+#: src/app.tsx:480
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "{0}로 항로 표시됨. 다시 클릭하여 시작하세요."
 
-#: src/app.tsx:1466
+#: src/app.tsx:1486
 msgid "credits"
 msgstr "크레딧"
 
-#: src/app.tsx:980
-#: src/app.tsx:1101
+#: src/app.tsx:999
+#: src/app.tsx:1121
 msgid "depth charges"
 msgstr "기뢰"
 
-#: src/app.tsx:1410
+#: src/app.tsx:1430
 msgid "dev"
 msgstr "개발"
 
-#: src/app.tsx:1260
-#: src/app.tsx:1264
+#: src/app.tsx:1280
+#: src/app.tsx:1284
 msgid "difficulty"
 msgstr "난이도"
 
-#: src/app.tsx:940
+#: src/app.tsx:959
 msgid "disable sonar"
 msgstr ""
 
-#: src/app.tsx:992
-#: src/app.tsx:1113
+#: src/app.tsx:1011
+#: src/app.tsx:1133
 msgid "display"
 msgstr "표시"
 
-#: src/app.tsx:399
+#: src/app.tsx:414
 msgid "Display set to full map."
 msgstr "전체 맵으로 표시 설정됨."
 
-#: src/app.tsx:400
+#: src/app.tsx:415
 msgid "Display set to tracking camera."
 msgstr "추적 카메라로 표시 설정됨."
 
-#: src/app.tsx:929
+#: src/app.tsx:948
 msgid "drop depth charge"
 msgstr ""
 
-#: src/app.tsx:1272
-#: src/app.tsx:1280
+#: src/app.tsx:1292
+#: src/app.tsx:1300
 msgid "easy"
 msgstr "쉬움"
 
-#: src/app.tsx:1346
+#: src/app.tsx:1366
 msgid "enable music"
 msgstr "음악 활성화"
 
-#: src/app.tsx:1390
+#: src/app.tsx:1410
 msgid "enable sfx"
 msgstr "효과음 활성화"
 
-#: src/app.tsx:940
+#: src/app.tsx:959
 msgid "enable sonar"
 msgstr ""
 
-#: src/app.tsx:1241
+#: src/app.tsx:1261
 msgid "English"
 msgstr "영어"
 
-#: src/app.tsx:910
+#: src/app.tsx:929
 msgid "fire torpedo forward"
 msgstr ""
 
-#: src/app.tsx:919
+#: src/app.tsx:938
 msgid "fire torpedo upward"
 msgstr ""
 
-#: src/app.tsx:887
+#: src/app.tsx:906
 msgid "FULL MAP (M)"
 msgstr "전체 맵 (M)"
 
-#: src/app.tsx:1442
-#: src/app.tsx:1448
+#: src/app.tsx:1462
+#: src/app.tsx:1468
 msgid "god mode"
 msgstr "신 모드"
 
-#: src/app.tsx:1304
-#: src/app.tsx:1312
+#: src/app.tsx:1324
+#: src/app.tsx:1332
 msgid "hard"
 msgstr "어려움"
 
-#: src/app.tsx:1168
+#: src/app.tsx:1188
 msgid "hover any tile to inspect terrain and contacts."
 msgstr "타일에 마우스를 올려 지형과 접촉을 검사하세요."
 
-#: src/app.tsx:1149
+#: src/app.tsx:1169
 msgid "hover tile"
 msgstr "마우스 오버 타일"
 
-#: src/app.tsx:1147
+#: src/app.tsx:1167
 msgid "inspector"
 msgstr "검사기"
 
-#: src/app.tsx:1252
+#: src/app.tsx:1272
 msgid "Korean"
 msgstr "한국어"
 
-#: src/app.tsx:1229
-#: src/app.tsx:1233
+#: src/app.tsx:1249
+#: src/app.tsx:1253
 msgid "language"
 msgstr "언어"
 
-#: src/app.tsx:1439
+#: src/app.tsx:1459
 msgid "map overlay"
 msgstr "맵 오버레이"
 
-#: src/app.tsx:1413
+#: src/app.tsx:1433
 msgid "map visibility"
 msgstr "맵 가시성"
 
-#: src/app.tsx:1288
-#: src/app.tsx:1296
+#: src/app.tsx:1308
+#: src/app.tsx:1316
 msgid "medium"
 msgstr "보통"
 
-#: src/app.tsx:1071
+#: src/app.tsx:1091
 msgid "mission status"
 msgstr "임무 상태"
 
-#: src/app.tsx:1319
+#: src/app.tsx:1339
 msgid "music"
 msgstr "음악"
 
-#: src/app.tsx:1328
+#: src/app.tsx:1348
 msgid "music volume"
 msgstr "음악 볼륨"
 
-#: src/app.tsx:900
+#: src/app.tsx:919
 msgid "OFF"
 msgstr "끔"
 
-#: src/app.tsx:900
+#: src/app.tsx:919
 msgid "ON"
 msgstr "켬"
 
-#: src/app.tsx:1123
+#: src/app.tsx:1143
 msgid "open full order log"
 msgstr "전체 명령 로그 열기"
 
-#: src/app.tsx:1024
+#: src/app.tsx:1044
 msgid "open mobile helm"
 msgstr ""
 
-#: src/app.tsx:1040
-#: src/app.tsx:1075
+#: src/app.tsx:1060
+#: src/app.tsx:1095
 msgid "open options"
 msgstr "옵션 열기"
 
-#: src/app.tsx:1184
-#: src/app.tsx:1188
+#: src/app.tsx:1204
+#: src/app.tsx:1208
 msgid "options"
 msgstr "옵션"
 
-#: src/app.tsx:1131
-#: src/app.tsx:1588
-#: src/app.tsx:1592
+#: src/app.tsx:1151
+#: src/app.tsx:1608
+#: src/app.tsx:1612
 msgid "orders"
 msgstr "명령"
 
-#: src/app.tsx:984
-#: src/app.tsx:1105
+#: src/app.tsx:1003
+#: src/app.tsx:1125
 msgid "position"
 msgstr "위치"
 
-#: src/app.tsx:1217
+#: src/app.tsx:1237
 msgid "restart"
 msgstr "재시작"
 
-#: src/app.tsx:1415
-#: src/app.tsx:1420
+#: src/app.tsx:1435
+#: src/app.tsx:1440
 msgid "reveal map"
 msgstr "맵 공개"
 
-#: src/app.tsx:1205
+#: src/app.tsx:1225
 msgid "run seed"
 msgstr "실행 시드"
 
-#: src/app.tsx:1204
+#: src/app.tsx:1224
 msgid "seed"
 msgstr "시드"
 
-#: src/app.tsx:1363
+#: src/app.tsx:1383
 msgid "sfx"
 msgstr "효과음"
 
-#: src/app.tsx:1372
+#: src/app.tsx:1392
 msgid "sfx volume"
 msgstr "효과음 볼륨"
 
-#: src/app.tsx:972
-#: src/app.tsx:1093
+#: src/app.tsx:991
+#: src/app.tsx:1113
 msgid "sonar in"
 msgstr "소나 입력"
 
-#: src/app.tsx:954
+#: src/app.tsx:973
 msgid "switch to full map"
 msgstr ""
 
-#: src/app.tsx:953
+#: src/app.tsx:972
 msgid "switch to tracking view"
 msgstr ""
 
-#: src/app.tsx:988
-#: src/app.tsx:1109
+#: src/app.tsx:1007
+#: src/app.tsx:1129
 msgid "target"
 msgstr "목표"
 
-#: src/app.tsx:976
-#: src/app.tsx:1097
+#: src/app.tsx:995
+#: src/app.tsx:1117
 msgid "torpedoes"
 msgstr "어뢰"
 
-#: src/app.tsx:888
+#: src/app.tsx:907
 msgid "TRACKING (M)"
 msgstr "추적 화면 (M)"
 
-#: src/app.tsx:968
-#: src/app.tsx:1089
+#: src/app.tsx:987
+#: src/app.tsx:1109
 msgid "turn"
 msgstr "턴"
