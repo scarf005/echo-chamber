@@ -2,6 +2,7 @@
 
 - NEVER remove existing `/// <reference lib="deno.ns" />`
 - **MUST** Commit after given task is finished
+- UI **MUST** be EXTREMELY TERSE
 - setup repo git hooks and keep them running `deno fmt`, `deno lint`, and
   `deno test --parallel`
 - never use `function`; use arrow functions instead
