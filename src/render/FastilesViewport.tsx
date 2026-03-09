@@ -18,6 +18,7 @@ type FastilesViewportProps = {
   previewPath: Point[]
   onTileClick: (point: Point) => void
   onTileHover: (point: Point | null) => void
+  onZoomStep?: (step: number) => void
   renderOptions?: RenderOptions
 }
 
@@ -28,6 +29,8 @@ type FastilesViewportRuntime = {
   sourceCanvas: HTMLCanvasElement | null
   crtRenderer: ReturnType<typeof createCrtRenderer> | null
   hoveredTileKey: string | null
+  activePointers: Map<number, { x: number; y: number }>
+  pinchDistance: number | null
   props: FastilesViewportProps | null
   animationFrame: number | null
   lastFrameTime: number | null
@@ -46,6 +49,8 @@ const fastilesViewportRuntime: FastilesViewportRuntime = {
   sourceCanvas: null,
   crtRenderer: null,
   hoveredTileKey: null,
+  activePointers: new Map(),
+  pinchDistance: null,
   props: null,
   animationFrame: null,
   lastFrameTime: null,
@@ -263,6 +268,18 @@ const handleCanvasPointerMove = (event: PointerEvent) => {
     return
   }
 
+  if (fastilesViewportRuntime.activePointers.has(event.pointerId)) {
+    fastilesViewportRuntime.activePointers.set(event.pointerId, {
+      x: event.clientX,
+      y: event.clientY,
+    })
+
+    if (fastilesViewportRuntime.activePointers.size > 1) {
+      handlePinchZoom(props)
+      return
+    }
+  }
+
   const point = pointFromMouseEvent(
     canvas,
     props.game,
@@ -277,6 +294,36 @@ const handleCanvasPointerMove = (event: PointerEvent) => {
 
   fastilesViewportRuntime.hoveredTileKey = nextHoveredTileKey
   props.onTileHover(point)
+}
+
+const handleCanvasPointerDown = (event: PointerEvent) => {
+  fastilesViewportRuntime.activePointers.set(event.pointerId, {
+    x: event.clientX,
+    y: event.clientY,
+  })
+
+  if (fastilesViewportRuntime.activePointers.size > 1) {
+    fastilesViewportRuntime.pinchDistance = getPinchDistance()
+  }
+}
+
+const handleCanvasPointerUp = (event: PointerEvent) => {
+  fastilesViewportRuntime.activePointers.delete(event.pointerId)
+
+  if (fastilesViewportRuntime.activePointers.size < 2) {
+    fastilesViewportRuntime.pinchDistance = null
+  }
+}
+
+const handleCanvasWheel = (event: WheelEvent) => {
+  const { props } = fastilesViewportRuntime
+
+  if (!props?.onZoomStep || event.deltaY === 0) {
+    return
+  }
+
+  event.preventDefault()
+  props.onZoomStep(event.deltaY < 0 ? 1 : -1)
 }
 
 const handleCanvasPointerLeave = () => {
@@ -299,13 +346,19 @@ const detachViewport = () => {
   if (canvas) {
     globalThis.removeEventListener("resize", drawFastilesViewport)
     canvas.removeEventListener("click", handleCanvasClick)
+    canvas.removeEventListener("pointerdown", handleCanvasPointerDown)
     canvas.removeEventListener("pointermove", handleCanvasPointerMove)
+    canvas.removeEventListener("pointerup", handleCanvasPointerUp)
+    canvas.removeEventListener("pointercancel", handleCanvasPointerUp)
     canvas.removeEventListener("pointerleave", handleCanvasPointerLeave)
+    canvas.removeEventListener("wheel", handleCanvasWheel)
     canvas.remove()
   }
 
   destroyCrtRenderer(fastilesViewportRuntime.crtRenderer)
   fastilesViewportRuntime.hoveredTileKey = null
+  fastilesViewportRuntime.activePointers.clear()
+  fastilesViewportRuntime.pinchDistance = null
   props?.onTileHover(null)
   fastilesViewportRuntime.canvas = null
   fastilesViewportRuntime.canvasContext = null
@@ -350,17 +403,13 @@ const attachViewport = (container: HTMLDivElement) => {
   fastilesViewportRuntime.sourceDirty = true
 
   globalThis.addEventListener("resize", drawFastilesViewport)
-  displayCanvas.addEventListener("click", handleCanvasClick)
-  displayCanvas.addEventListener("pointermove", handleCanvasPointerMove)
-  displayCanvas.addEventListener("pointerleave", handleCanvasPointerLeave)
-
-  if ("ResizeObserver" in globalThis) {
-    const resizeObserver = new globalThis.ResizeObserver(() => {
-      drawFastilesViewport()
-    })
-    resizeObserver.observe(container)
-    fastilesViewportRuntime.resizeObserver = resizeObserver
-  }
+  canvas.addEventListener("click", handleCanvasClick)
+  canvas.addEventListener("pointerdown", handleCanvasPointerDown)
+  canvas.addEventListener("pointermove", handleCanvasPointerMove)
+  canvas.addEventListener("pointerup", handleCanvasPointerUp)
+  canvas.addEventListener("pointercancel", handleCanvasPointerUp)
+  canvas.addEventListener("pointerleave", handleCanvasPointerLeave)
+  canvas.addEventListener("wheel", handleCanvasWheel, { passive: false })
 
   drawFastilesViewport()
 
@@ -455,6 +504,43 @@ export const FastilesViewport = (props: FastilesViewportProps) => {
   }
 
   return <div class="viewport" ref={setViewportContainer} />
+}
+
+const getPinchDistance = (): number | null => {
+  const pointers = [...fastilesViewportRuntime.activePointers.values()]
+
+  if (pointers.length < 2) {
+    return null
+  }
+
+  const [first, second] = pointers
+
+  return Math.hypot(second.x - first.x, second.y - first.y)
+}
+
+const handlePinchZoom = (props: FastilesViewportProps) => {
+  const distance = getPinchDistance()
+
+  if (!props.onZoomStep || distance === null) {
+    return
+  }
+
+  const previousDistance = fastilesViewportRuntime.pinchDistance
+
+  if (previousDistance === null) {
+    fastilesViewportRuntime.pinchDistance = distance
+    return
+  }
+
+  const delta = distance - previousDistance
+  const PINCH_STEP_THRESHOLD = 24
+
+  if (Math.abs(delta) < PINCH_STEP_THRESHOLD) {
+    return
+  }
+
+  props.onZoomStep(delta > 0 ? 1 : -1)
+  fastilesViewportRuntime.pinchDistance = distance
 }
 
 const pointFromMouseEvent = (
