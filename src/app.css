@@ -216,8 +216,8 @@
 }
 
 .mobile-action-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
 }
 
 .mobile-control-button {
@@ -227,12 +227,24 @@
 }
 
 .mobile-action-button {
-  font-size: 0.88rem;
+  display: inline-grid;
+  place-items: center;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 0;
+  color: #f2fffd;
 }
 
 .mobile-action-button.is-active {
   border-color: rgba(186, 243, 247, 0.72);
   background: rgba(8, 40, 52, 0.98);
+}
+
+.mobile-action-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: block;
+  color: currentColor;
 }
 
 .mobile-control-button:disabled {
@@ -245,14 +257,16 @@
   top: 50%;
   right: 0;
   z-index: 3;
+  width: 2.85rem;
+  height: 2.85rem;
   min-width: 0;
-  padding: 0.7rem 0.55rem;
+  padding: 0;
   border: 1px solid rgba(124, 208, 214, 0.35);
   border-right: 0;
   background: rgba(3, 8, 12, 0.94);
-  color: #d9fff9;
-  text-transform: lowercase;
-  writing-mode: vertical-rl;
+  color: #f2fffd;
+  display: inline-grid;
+  place-items: center;
   transform: translateY(-50%);
   cursor: pointer;
 }
@@ -483,6 +497,11 @@
 
   .mobile-control-hint {
     text-align: left;
+  }
+
+  .mobile-action-icon {
+    width: 1.2rem;
+    height: 1.2rem;
   }
 }
 

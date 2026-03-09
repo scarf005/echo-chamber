@@ -96,6 +96,62 @@ const getHasTouchLayout = (): boolean => {
 
   return false
 }
+const torpedoActionIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path d="M3 10h10l4-4h2l-1 4 3 2-3 2 1 4h-2l-4-4H3z" fill="currentColor" />
+  </svg>
+)
+const upwardTorpedoActionIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path d="M10 21V11L6 7V5l4 1 2-3 2 3 4-1v2l-4 4v10z" fill="currentColor" />
+  </svg>
+)
+const depthChargeActionIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path
+      d="M9 3h6v3h2v5c0 2.87-1.72 5.45-4.37 6.56L12 18l-.63-.44A7.13 7.13 0 0 1 7 11V6h2z"
+      fill="currentColor"
+    />
+    <path d="M11 18h2v3h-2z" fill="currentColor" />
+  </svg>
+)
+const sonarActionIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path d="M12 9a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z" fill="currentColor" />
+    <path d="M12 3a9 9 0 0 1 0 18v-3a6 6 0 0 0 0-12z" fill="currentColor" />
+    <path
+      d="M12 3v3a6 6 0 0 0 0 12v3A9 9 0 0 1 12 3Z"
+      fill="currentColor"
+      opacity="0.4"
+    />
+  </svg>
+)
+const mapActionIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path
+      d="M3 6.5 8.5 4l7 2.5L21 4v13.5L15.5 20l-7-2.5L3 20zm7 0v11l4 1.43v-11z"
+      fill="currentColor"
+    />
+  </svg>
+)
+const optionsActionIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path
+      d="m9.6 3 .52 2.08a7.64 7.64 0 0 1 3.76 0L14.4 3h2.2l.53 2.15c.56.23 1.08.54 1.55.92l2.04-.63 1.1 1.9-1.53 1.46c.12.3.21.6.28.91l1.99.85v2.2l-2 .85a8 8 0 0 1-.27.9l1.53 1.47-1.1 1.9-2.04-.64c-.47.39-.99.7-1.55.93L16.6 21h-2.2l-.52-2.08a7.64 7.64 0 0 1-3.76 0L9.6 21H7.4l-.53-2.15a7.4 7.4 0 0 1-1.55-.93l-2.04.64-1.1-1.9 1.53-1.47a8 8 0 0 1-.27-.9l-2-.85v-2.2l2-.85c.06-.31.15-.61.27-.91L2.18 7.34l1.1-1.9 2.04.63c.47-.38.99-.69 1.55-.92L7.4 3zM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6"
+      fill="currentColor"
+    />
+  </svg>
+)
+const openHelmIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path d="m8 5 8 7-8 7z" fill="currentColor" />
+  </svg>
+)
+const closeHelmIcon = (
+  <svg viewBox="0 0 24 24" aria-hidden="true" class="mobile-action-icon">
+    <path d="m16 5-8 7 8 7z" fill="currentColor" />
+  </svg>
+)
 const appSettingsSignal = signal<AppSettings>(
   readAppSettings(getBrowserStorage(), { isDevBuild: IS_DEV_BUILD }),
 )
@@ -867,51 +923,58 @@ export const App = () => {
       <button
         type="button"
         class="mobile-control-button mobile-action-button"
+        aria-label={t`fire torpedo forward`}
         disabled={game.status !== "playing"}
         onClick={() => applyPlayerAction((current) => fireTorpedo(current))}
       >
-        {t`torpedo`}
+        {torpedoActionIcon}
       </button>
       <button
         type="button"
         class="mobile-control-button mobile-action-button"
+        aria-label={t`fire torpedo upward`}
         disabled={game.status !== "playing"}
         onClick={() =>
           applyPlayerAction((current) => fireTorpedo(current, "up"))}
       >
-        {t`launch up`}
+        {upwardTorpedoActionIcon}
       </button>
       <button
         type="button"
         class="mobile-control-button mobile-action-button"
+        aria-label={t`drop depth charge`}
         disabled={game.status !== "playing"}
         onClick={() => applyPlayerAction((current) => dropDepthCharge(current))}
       >
-        {t`depth`}
+        {depthChargeActionIcon}
       </button>
       <button
         type="button"
         class={`mobile-control-button mobile-action-button${
           playerSonarEnabled ? " is-active" : ""
         }`}
+        aria-label={playerSonarEnabled ? t`disable sonar` : t`enable sonar`}
         disabled={game.status !== "playing"}
         onClick={() => {
           startManagedAudio()
           updateGame((current) => togglePlayerSonar(current))
         }}
       >
-        {t`sonar`}
+        {sonarActionIcon}
       </button>
       <button
         type="button"
         class="mobile-control-button mobile-action-button"
+        aria-label={viewportMode === "full"
+          ? t`switch to tracking view`
+          : t`switch to full map`}
         onClick={() => {
           setViewportModeWithMessage(
             viewportMode === "full" ? "camera" : "full",
           )
         }}
       >
-        {viewportMode === "full" ? t`tracking` : t`map`}
+        {mapActionIcon}
       </button>
     </div>
   )
@@ -981,7 +1044,7 @@ export const App = () => {
                   isMobileHelmOpenSignal.value = !isMobileHelmOpenSignal.peek()
                 }}
               >
-                {isMobileHelmOpen ? t`close` : t`helm`}
+                {isMobileHelmOpen ? closeHelmIcon : openHelmIcon}
               </button>
               {isMobileHelmOpen
                 ? (
@@ -997,12 +1060,13 @@ export const App = () => {
                     <button
                       type="button"
                       class="mobile-control-button mobile-action-button"
+                      aria-label={t`open options`}
                       onClick={() => {
                         isOptionsOpenSignal.value = true
                         isOrdersModalOpenSignal.value = false
                       }}
                     >
-                      {t`options`}
+                      {optionsActionIcon}
                     </button>
                   </section>
                 )
