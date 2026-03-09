@@ -181,7 +181,7 @@ void main() {
   float ambientTop = smoothstep(1.05, -0.08, warped.y) * 0.05;
   float ambientCurve = smoothstep(0.98, 0.12, distance(warped, vec2(0.5))) * 0.018;
   vec3 ambientLight = (bloomColor * 0.08 + vec3(0.012, 0.018, 0.016)) * (ambientTop + ambientCurve);
-  float glowLine = exp(-pow((warped.y - u_eventLineY) / 0.03, 2.0)) * (0.04 + u_eventIntensity * 0.25);
+  float glowLine = exp(-pow((warped.y - u_eventLineY) / 0.03, 2.0)) * (u_eventIntensity * 0.29);
   float staticNoise = (hash(floor(warped * u_resolution * 0.33) + vec2(u_time * 23.0, u_time * 17.0)) - 0.5) * 0.018;
   float flicker = 0.992 + 0.008 * sin(u_time * 42.0);
 
