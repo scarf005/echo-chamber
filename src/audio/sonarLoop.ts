@@ -54,7 +54,6 @@ export const createSonarLoop = (): SonarLoopController => {
     state.enabled ? getSonarLoopVolume(state.volume) : 0
   const startState = {
     soundId: null as number | null,
-    starting: null as Promise<void> | null,
   }
   let currentVolume = targetVolume()
 

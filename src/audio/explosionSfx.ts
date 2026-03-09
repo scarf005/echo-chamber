@@ -1,7 +1,7 @@
 import { sample } from "@std/random/sample"
 import { Howl } from "howler"
 
-import { loadHowls, playHowl, resetHowl } from "./howlerHelpers.ts"
+import { playHowl, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const NEAR_EXPLOSION_URLS = [
@@ -68,23 +68,15 @@ export const createExplosionSfx = (): ExplosionSfxController => {
       volume: 0,
     }),
   ]))
-  let loaded = false
   const state = {
     enabled: true,
     volume: 1,
   }
 
-  const ensureStarted = async () => {
-    if (loaded) {
-      return
-    }
-
-    await loadHowls(Array.from(howlsByUrl.values()))
-    loaded = true
-  }
+  const ensureStarted = () => Promise.resolve()
 
   const playExplosion = (distance: number): Promise<void> => {
-    if (!loaded || !state.enabled) {
+    if (!state.enabled) {
       return Promise.resolve()
     }
 
@@ -114,8 +106,6 @@ export const createExplosionSfx = (): ExplosionSfxController => {
   }
 
   const dispose = () => {
-    loaded = false
-
     for (const howl of howlsByUrl.values()) {
       resetHowl(howl)
     }

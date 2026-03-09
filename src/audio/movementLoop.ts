@@ -53,7 +53,6 @@ export const createMovementLoop = (): MovementLoopController => {
   }
   const startState = {
     soundId: null as number | null,
-    starting: null as Promise<void> | null,
   }
   let currentVolume = clampAudioLevel(IDLE_VOLUME)
 

@@ -1,6 +1,6 @@
 import { Howl } from "howler"
 
-import { loadHowl, playHowl, resetHowl } from "./howlerHelpers.ts"
+import { playHowl, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const ENTITY_HIT_SAMPLE_URLS = [
@@ -32,23 +32,15 @@ export const createEntityHitSfx = (): EntityHitSfxController => {
     pool: CHANNELS_PER_SAMPLE,
     volume: 0,
   })
-  let loaded = false
   const state = {
     enabled: true,
     volume: 1,
   }
 
-  const ensureStarted = async () => {
-    if (loaded) {
-      return
-    }
-
-    await loadHowl(howl)
-    loaded = true
-  }
+  const ensureStarted = () => Promise.resolve()
 
   const playHit = (): Promise<void> => {
-    if (!loaded || !state.enabled) {
+    if (!state.enabled) {
       return Promise.resolve()
     }
 
@@ -71,7 +63,6 @@ export const createEntityHitSfx = (): EntityHitSfxController => {
   }
 
   const dispose = () => {
-    loaded = false
     resetHowl(howl)
   }
 

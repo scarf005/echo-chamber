@@ -29,7 +29,6 @@ export const createBackgroundMusic = (): BackgroundMusicController => {
   }
   const startState = {
     soundId: null as number | null,
-    starting: null as Promise<void> | null,
   }
 
   const syncVolume = () => {

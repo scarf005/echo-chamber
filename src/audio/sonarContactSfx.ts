@@ -1,7 +1,7 @@
 import type { SonarContactAudioVariant } from "../game/model.ts"
 import { Howl } from "howler"
 
-import { loadHowls, playHowl, resetHowl } from "./howlerHelpers.ts"
+import { playHowl, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const SONAR_CONTACT_SAMPLE_URLS = {
@@ -60,26 +60,18 @@ export const createSonarContactSfx = (): SonarContactSfxController => {
       volume: 0,
     }),
   ]))
-  let loaded = false
   let lastPlayedAt: number | null = null
   const state = {
     enabled: true,
     volume: 1,
   }
 
-  const ensureStarted = async () => {
-    if (loaded) {
-      return
-    }
-
-    await loadHowls(Array.from(howlsByUrl.values()))
-    loaded = true
-  }
+  const ensureStarted = () => Promise.resolve()
 
   const playContactPing = (
     variant: SonarContactAudioVariant = "kizilsungur",
   ): Promise<void> => {
-    if (!loaded || !state.enabled) {
+    if (!state.enabled) {
       return Promise.resolve()
     }
 
@@ -117,7 +109,6 @@ export const createSonarContactSfx = (): SonarContactSfxController => {
   }
 
   const dispose = () => {
-    loaded = false
     lastPlayedAt = null
 
     for (const howl of howlsByUrl.values()) {
