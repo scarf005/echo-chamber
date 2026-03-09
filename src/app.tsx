@@ -64,6 +64,7 @@ import {
   describeHoveredInspectorRows,
   filterInspectorRows,
 } from "./render/helpers/inspector.ts"
+import { resolveResponsiveCameraTileCounts } from "./render/helpers/viewport.ts"
 import type { RenderOptions, ViewportMode } from "./render/options.ts"
 import { activateLocale } from "./i18n.ts"
 import { languageSignal } from "./signals.ts"
@@ -75,13 +76,22 @@ const INITIAL_RUN_SEED = resolveInitialRunSeed({
 const AUTO_MOVE_DELAY_MS = 70
 const LOG_PANEL_LINES = 6
 const SETTINGS_PERSIST_DELAY_MS = 150
+const MOBILE_LAYOUT_MAX_WIDTH = 920
+const MOBILE_LAYOUT_MAX_HEIGHT = 720
 const IS_DEV_BUILD = import.meta.env.DEV
 const getBrowserStorage = (): Storage | null => {
   return "localStorage" in globalThis ? globalThis.localStorage : null
 }
+const getViewportSize = (): { width: number; height: number } => {
+  return typeof globalThis.innerWidth === "number" &&
+      typeof globalThis.innerHeight === "number"
+    ? { width: globalThis.innerWidth, height: globalThis.innerHeight }
+    : { width: 1280, height: 720 }
+}
 const appSettingsSignal = signal<AppSettings>(
   readAppSettings(getBrowserStorage(), { isDevBuild: IS_DEV_BUILD }),
 )
+const viewportSizeSignal = signal(getViewportSize())
 const viewportModeSignal = signal<ViewportMode>("camera")
 const isOptionsOpenSignal = signal(false)
 const isOrdersModalOpenSignal = signal(false)
@@ -185,13 +195,48 @@ const clearAutoMoveRoute = () => {
   appRuntime.autoMoveSeenTarget = null
 }
 
-const closeModalOnBackdropMouseDown = (
-  event: JSX.TargetedMouseEvent<HTMLDivElement>,
-  close: () => void,
+const clearPlayerActionTargets = (
+  { resetSeenAnomalies = true }: { resetSeenAnomalies?: boolean } = {},
 ) => {
-  if (event.target === event.currentTarget) {
-    close()
+  previewTargetSignal.value = null
+  autoMoveTargetSignal.value = null
+  clearAutoMoveRoute()
+
+  if (resetSeenAnomalies) {
+    resetAutoMoveSeenAnomalies()
   }
+}
+
+const applyPlayerAction = (
+  update: (current: AppGame) => AppGame,
+  options: { markMovement?: boolean; resetSeenAnomalies?: boolean } = {},
+) => {
+  const { markMovement = false, resetSeenAnomalies = true } = options
+
+  startManagedAudio()
+  clearPlayerActionTargets({ resetSeenAnomalies })
+  updateGame((current) => {
+    const next = update(current)
+
+    if (
+      markMovement &&
+      (next.player.x !== current.player.x || next.player.y !== current.player.y)
+    ) {
+      appRuntime.movementLoop?.markMovement()
+    }
+
+    return next
+  })
+}
+
+const movePlayerInDirection = (direction: "up" | "down" | "left" | "right") => {
+  applyPlayerAction((current) => movePlayer(current, direction), {
+    markMovement: true,
+  })
+}
+
+const syncViewportSize = () => {
+  viewportSizeSignal.value = getViewportSize()
 }
 
 const beginAutoMoveRoute = (point: Point) => {
@@ -423,37 +468,25 @@ const handleGlobalKeyDown = (event: KeyboardEvent) => {
 
   if (event.key === "z" || event.key === "Z") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => fireTorpedo(current))
+    applyPlayerAction((current) => fireTorpedo(current))
     return
   }
 
   if (event.key === "c" || event.key === "C") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => fireTorpedo(current, "up"))
+    applyPlayerAction((current) => fireTorpedo(current, "up"))
     return
   }
 
   if (event.key === "x" || event.key === "X") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => dropDepthCharge(current))
+    applyPlayerAction((current) => dropDepthCharge(current))
     return
   }
 
   if (event.key === ".") {
     event.preventDefault()
-    previewTargetSignal.value = null
-    autoMoveTargetSignal.value = null
-    clearAutoMoveRoute()
-    updateGame((current) => holdPosition(current))
+    applyPlayerAction((current) => holdPosition(current))
     return
   }
 
@@ -464,21 +497,7 @@ const handleGlobalKeyDown = (event: KeyboardEvent) => {
   }
 
   event.preventDefault()
-  previewTargetSignal.value = null
-  autoMoveTargetSignal.value = null
-  resetAutoMoveSeenAnomalies()
-  updateGame((current) => {
-    const next = movePlayer(current, direction)
-
-    if (
-      next.player.x !== current.player.x ||
-      next.player.y !== current.player.y
-    ) {
-      appRuntime.movementLoop?.markMovement()
-    }
-
-    return next
-  })
+  movePlayerInDirection(direction)
 }
 
 const ensureAppRuntime = () => {
@@ -515,6 +534,7 @@ const ensureAppRuntime = () => {
   globalThis.addEventListener("pointerdown", startManagedAudio, {
     passive: true,
   })
+  globalThis.addEventListener("resize", syncViewportSize, { passive: true })
   globalThis.addEventListener("focus", syncPageAudioEnabled, { passive: true })
   globalThis.addEventListener("blur", syncPageAudioEnabled, { passive: true })
   document.addEventListener("visibilitychange", syncPageAudioEnabled)
@@ -760,6 +780,9 @@ export const App = () => {
   const difficulty = appSettings.difficulty
   const crtEnabled = appSettings.crtEnabled
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
+  const viewportSize = viewportSizeSignal.value
+  const isCompactLayout = viewportSize.width <= MOBILE_LAYOUT_MAX_WIDTH ||
+    viewportSize.height <= MOBILE_LAYOUT_MAX_HEIGHT
   const activeRunSeedConfig = parseRunSeed(activeRunSeed, INITIAL_RUN_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
     activeRunSeedConfig.enableMapMode
@@ -784,13 +807,17 @@ export const App = () => {
     ...game.logs,
   ], isGodMode)
   const visibleLogMessages = allLogMessages.slice(-LOG_PANEL_LINES)
+  const responsiveCameraTiles = resolveResponsiveCameraTileCounts({
+    viewportSize,
+    isCompactLayout,
+  })
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,
     hoveredTile: null,
     viewportMode,
-    cameraTileWidth: 30,
-    cameraTileHeight: 20,
+    cameraTileWidth: responsiveCameraTiles.width,
+    cameraTileHeight: responsiveCameraTiles.height,
   }
   const viewportLabel = viewportMode === "full"
     ? t`FULL MAP (M)`
@@ -823,6 +850,152 @@ export const App = () => {
           renderOptions={renderOptions}
         />
       </section>
+
+      {isCompactLayout
+        ? (
+          <section class="mobile-controls sidebar-panel sidebar-panel-primary">
+            <div class="panel-header">
+              <div class="sidebar-heading">{t`mobile helm`}</div>
+              <div class="mobile-control-hint">
+                {t`Tap a tile to plot auto-nav. Tap again to engage.`}
+              </div>
+            </div>
+            <div class="mobile-controls-grid">
+              <div class="mobile-control-group">
+                <div class="sidebar-heading">{t`movement controls`}</div>
+                <div
+                  class="mobile-dpad"
+                  role="group"
+                  aria-label={t`movement controls`}
+                >
+                  <div class="mobile-control-spacer" />
+                  <button
+                    type="button"
+                    class="mobile-control-button"
+                    aria-label={t`move north`}
+                    disabled={game.status !== "playing"}
+                    onClick={() => movePlayerInDirection("up")}
+                  >
+                    ↑
+                  </button>
+                  <div class="mobile-control-spacer" />
+                  <button
+                    type="button"
+                    class="mobile-control-button"
+                    aria-label={t`move west`}
+                    disabled={game.status !== "playing"}
+                    onClick={() => movePlayerInDirection("left")}
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    class="mobile-control-button"
+                    aria-label={t`hold position`}
+                    disabled={game.status !== "playing"}
+                    onClick={() =>
+                      applyPlayerAction((current) => holdPosition(current))}
+                  >
+                    ·
+                  </button>
+                  <button
+                    type="button"
+                    class="mobile-control-button"
+                    aria-label={t`move east`}
+                    disabled={game.status !== "playing"}
+                    onClick={() => movePlayerInDirection("right")}
+                  >
+                    →
+                  </button>
+                  <div class="mobile-control-spacer" />
+                  <button
+                    type="button"
+                    class="mobile-control-button"
+                    aria-label={t`move south`}
+                    disabled={game.status !== "playing"}
+                    onClick={() => movePlayerInDirection("down")}
+                  >
+                    ↓
+                  </button>
+                  <div class="mobile-control-spacer" />
+                </div>
+              </div>
+              <div class="mobile-control-group">
+                <div class="sidebar-heading">{t`action controls`}</div>
+                <div
+                  class="mobile-action-grid"
+                  role="group"
+                  aria-label={t`action controls`}
+                >
+                  <button
+                    type="button"
+                    class="mobile-control-button mobile-action-button"
+                    disabled={game.status !== "playing"}
+                    onClick={() =>
+                      applyPlayerAction((current) => fireTorpedo(current))}
+                  >
+                    {t`torpedo`}
+                  </button>
+                  <button
+                    type="button"
+                    class="mobile-control-button mobile-action-button"
+                    disabled={game.status !== "playing"}
+                    onClick={() =>
+                      applyPlayerAction((current) =>
+                        fireTorpedo(current, "up")
+                      )}
+                  >
+                    {t`launch up`}
+                  </button>
+                  <button
+                    type="button"
+                    class="mobile-control-button mobile-action-button"
+                    disabled={game.status !== "playing"}
+                    onClick={() =>
+                      applyPlayerAction((current) => dropDepthCharge(current))}
+                  >
+                    {t`depth`}
+                  </button>
+                  <button
+                    type="button"
+                    class={`mobile-control-button mobile-action-button${
+                      playerSonarEnabled ? " is-active" : ""
+                    }`}
+                    disabled={game.status !== "playing"}
+                    onClick={() => {
+                      startManagedAudio()
+                      updateGame((current) => togglePlayerSonar(current))
+                    }}
+                  >
+                    {t`sonar`}
+                  </button>
+                  <button
+                    type="button"
+                    class="mobile-control-button mobile-action-button"
+                    onClick={() => {
+                      setViewportModeWithMessage(
+                        viewportMode === "full" ? "camera" : "full",
+                      )
+                    }}
+                  >
+                    {viewportMode === "full" ? t`tracking` : t`map`}
+                  </button>
+                  <button
+                    type="button"
+                    class="mobile-control-button mobile-action-button"
+                    onClick={() => {
+                      isOptionsOpenSignal.value = true
+                      isOrdersModalOpenSignal.value = false
+                    }}
+                  >
+                    {t`options`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )
+        : null}
 
       <aside class="sidebar">
         <section class="sidebar-panel sidebar-panel-primary">
