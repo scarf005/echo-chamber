@@ -1067,12 +1067,6 @@ export const App = () => {
               {isMobileHelmOpen
                 ? (
                   <section class="mobile-helm-drawer sidebar-panel sidebar-panel-primary is-open">
-                    <div class="panel-header">
-                      <div class="sidebar-heading">{t`mobile helm`}</div>
-                      <div class="mobile-control-hint">
-                        {t`Tap nearby tiles to move. Tap a distant tile twice to auto-nav.`}
-                      </div>
-                    </div>
                     {mobileHelmStatus}
                     {mobileHelmActions}
                     <button
@@ -1097,12 +1091,6 @@ export const App = () => {
       {isTouchLayout && !isCompactLandscape
         ? (
           <section class="mobile-controls sidebar-panel sidebar-panel-primary">
-            <div class="panel-header">
-              <div class="sidebar-heading">{t`mobile helm`}</div>
-              <div class="mobile-control-hint">
-                {t`Tap nearby tiles to move. Tap a distant tile twice to auto-nav.`}
-              </div>
-            </div>
             {mobileHelmActions}
           </section>
         )
