@@ -3,6 +3,11 @@ import { messages as enMessages } from "./locales/en/messages.ts"
 import { messages as koMessages } from "./locales/ko/messages.ts"
 
 export type LocaleId = "en" | "ko"
+export type ResolvePreferredLocaleOptions = {
+  storedLocale: LocaleId | null
+  navigatorLanguage: string | null
+  hasDocument: boolean
+}
 
 export const defaultLocale: LocaleId = "en"
 const LOCALE_STORAGE_KEY = "echo-chamber.locale"
@@ -19,12 +24,30 @@ const isLocaleId = (value: string): value is LocaleId => {
   return value === "en" || value === "ko"
 }
 
-const detectNavigatorLocale = (): LocaleId => {
-  if (!("navigator" in globalThis) || !("localStorage" in globalThis)) {
+const readNavigatorLanguage = (): string | null => {
+  if (
+    !("document" in globalThis) || !("navigator" in globalThis) ||
+    !("localStorage" in globalThis)
+  ) {
+    return null
+  }
+
+  return globalThis.navigator.language
+}
+
+export const resolvePreferredLocale = (
+  { storedLocale, navigatorLanguage, hasDocument }:
+    ResolvePreferredLocaleOptions,
+): LocaleId => {
+  if (storedLocale) {
+    return storedLocale
+  }
+
+  if (!hasDocument || !navigatorLanguage) {
     return defaultLocale
   }
 
-  const language = globalThis.navigator.language.toLowerCase()
+  const language = navigatorLanguage.toLowerCase()
   if (language.startsWith("ko")) {
     return "ko"
   }
@@ -46,7 +69,7 @@ const readStoredLocale = (): LocaleId | null => {
 }
 
 const writeStoredLocale = (locale: LocaleId) => {
-  if (!("localStorage" in globalThis)) {
+  if (!("document" in globalThis) || !("localStorage" in globalThis)) {
     return
   }
 
@@ -58,7 +81,11 @@ const writeStoredLocale = (locale: LocaleId) => {
 }
 
 const storedLocale = readStoredLocale()
-export const preferredLocale = storedLocale ?? detectNavigatorLocale()
+export const preferredLocale = resolvePreferredLocale({
+  storedLocale,
+  navigatorLanguage: readNavigatorLanguage(),
+  hasDocument: "document" in globalThis,
+})
 
 if (!storedLocale) {
   writeStoredLocale(preferredLocale)
