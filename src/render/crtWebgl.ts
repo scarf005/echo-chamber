@@ -21,6 +21,7 @@ type CompositeProgram = ProgramBundle & {
   burnInLocation: WebGLUniformLocation
   resolutionLocation: WebGLUniformLocation
   sourceResolutionLocation: WebGLUniformLocation
+  timeLocation: WebGLUniformLocation
   eventIntensityLocation: WebGLUniformLocation
   eventLineLocation: WebGLUniformLocation
 }
@@ -49,6 +50,7 @@ type CrtRenderer = {
 
 type RenderCrtFrameOptions = {
   deltaTime: number
+  time: number
   eventIntensity: number
   eventLineY: number
   uploadSource?: boolean
@@ -121,6 +123,7 @@ uniform sampler2D u_bloom;
 uniform sampler2D u_burnIn;
 uniform vec2 u_resolution;
 uniform vec2 u_sourceResolution;
+uniform float u_time;
 uniform float u_eventIntensity;
 uniform float u_eventLineY;
 
@@ -160,7 +163,7 @@ void main() {
   vec2 aberrationUnit = aberrationDistance > 0.0
     ? aberrationDirection / aberrationDistance
     : vec2(0.0);
-  float rgbShift = (0.0012 + u_eventIntensity * 0.0085) * (0.2 + aberrationDistance * 1.8);
+  float rgbShift = u_eventIntensity * 0.01 * (0.2 + aberrationDistance * 1.8);
   vec2 aberrationOffset = aberrationUnit * rgbShift;
   vec3 shiftedColor = vec3(
     texture2D(u_source, warped + aberrationOffset).r,
@@ -179,7 +182,8 @@ void main() {
   float ambientCurve = smoothstep(0.98, 0.12, distance(warped, vec2(0.5))) * 0.018;
   vec3 ambientLight = (bloomColor * 0.08 + vec3(0.012, 0.018, 0.016)) * (ambientTop + ambientCurve);
   float glowLine = exp(-pow((warped.y - u_eventLineY) / 0.03, 2.0)) * (0.04 + u_eventIntensity * 0.25);
-  float staticNoise = (hash(floor(warped * u_resolution * 0.33)) - 0.5) * 0.018;
+  float staticNoise = (hash(floor(warped * u_resolution * 0.33) + vec2(u_time * 23.0, u_time * 17.0)) - 0.5) * 0.018;
+  float flicker = 0.992 + 0.008 * sin(u_time * 42.0);
 
   vec3 color = shiftedColor;
   color = max(color, max(burnInColor - vec3(0.03), vec3(0.0)) * burnInAlpha * 0.65);
@@ -189,7 +193,7 @@ void main() {
   color += vec3(0.05, 0.08, 0.06) * glowLine;
   color += staticNoise;
   color *= vec3(0.985, 1.01, 0.99);
-  color *= scanline * vignette;
+  color *= scanline * vignette * flicker;
 
   gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
 }
@@ -400,6 +404,11 @@ export const createCrtRenderer = (canvas: HTMLCanvasElement): CrtRenderer => {
       compositeBase.program,
       "u_sourceResolution",
     ),
+    timeLocation: getUniformLocation(
+      gl,
+      compositeBase.program,
+      "u_time",
+    ),
     eventIntensityLocation: getUniformLocation(
       gl,
       compositeBase.program,
@@ -526,6 +535,7 @@ const renderCompositePass = (
     renderer.sourceWidth,
     renderer.sourceHeight,
   )
+  gl.uniform1f(compositeProgram.timeLocation, options.time)
   gl.uniform1f(compositeProgram.eventIntensityLocation, options.eventIntensity)
   gl.uniform1f(compositeProgram.eventLineLocation, options.eventLineY)
   gl.clearColor(0, 0, 0, 1)

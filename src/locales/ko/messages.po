@@ -563,7 +563,7 @@ msgstr "{id}: {mode}{targetSuffix} 예정"
 msgid "active seed modes"
 msgstr "활성 시드 모드"
 
-#: src/app.tsx:1084
+#: src/app.tsx:1086
 msgid "audio"
 msgstr "오디오"
 
@@ -574,12 +574,12 @@ msgstr "자동 항법 {0}로 활성화됨."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1395
+#: src/app.tsx:1397
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "자동 항법 중지: {localizedReason} @ {0}{1}."
 
 #: src/app.tsx:941
-#: src/app.tsx:1366
+#: src/app.tsx:1368
 msgid "close"
 msgstr "닫기"
 
@@ -588,7 +588,7 @@ msgstr "닫기"
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "{0}로 항로 표시됨. 다시 클릭하여 시작하세요."
 
-#: src/app.tsx:1234
+#: src/app.tsx:1236
 msgid "credits"
 msgstr "크레딧"
 
@@ -600,7 +600,7 @@ msgstr ""
 msgid "depth charges"
 msgstr "기뢰"
 
-#: src/app.tsx:1178
+#: src/app.tsx:1180
 msgid "dev"
 msgstr "개발"
 
@@ -626,11 +626,11 @@ msgstr "추적 카메라로 표시 설정됨."
 msgid "easy"
 msgstr "쉬움"
 
-#: src/app.tsx:1114
+#: src/app.tsx:1116
 msgid "enable music"
 msgstr "음악 활성화"
 
-#: src/app.tsx:1158
+#: src/app.tsx:1160
 msgid "enable sfx"
 msgstr "효과음 활성화"
 
@@ -642,8 +642,8 @@ msgstr "영어"
 msgid "FULL MAP (M)"
 msgstr "전체 맵 (M)"
 
-#: src/app.tsx:1210
-#: src/app.tsx:1216
+#: src/app.tsx:1212
+#: src/app.tsx:1218
 msgid "god mode"
 msgstr "신 모드"
 
@@ -677,11 +677,11 @@ msgstr "한국어"
 msgid "language"
 msgstr "언어"
 
-#: src/app.tsx:1207
+#: src/app.tsx:1209
 msgid "map overlay"
 msgstr "맵 오버레이"
 
-#: src/app.tsx:1181
+#: src/app.tsx:1183
 msgid "map visibility"
 msgstr "맵 가시성"
 
@@ -694,11 +694,11 @@ msgstr "보통"
 msgid "mission status"
 msgstr "임무 상태"
 
-#: src/app.tsx:1087
+#: src/app.tsx:1089
 msgid "music"
 msgstr "음악"
 
-#: src/app.tsx:1096
+#: src/app.tsx:1098
 msgid "music volume"
 msgstr "음악 볼륨"
 
@@ -724,8 +724,8 @@ msgid "options"
 msgstr "옵션"
 
 #: src/app.tsx:878
-#: src/app.tsx:1356
-#: src/app.tsx:1360
+#: src/app.tsx:1358
+#: src/app.tsx:1362
 msgid "orders"
 msgstr "명령"
 
@@ -737,8 +737,8 @@ msgstr "위치"
 msgid "restart"
 msgstr "재시작"
 
-#: src/app.tsx:1183
-#: src/app.tsx:1188
+#: src/app.tsx:1185
+#: src/app.tsx:1190
 msgid "reveal map"
 msgstr "맵 공개"
 
@@ -750,11 +750,11 @@ msgstr "실행 시드"
 msgid "seed"
 msgstr "시드"
 
-#: src/app.tsx:1131
+#: src/app.tsx:1133
 msgid "sfx"
 msgstr "효과음"
 
-#: src/app.tsx:1140
+#: src/app.tsx:1142
 msgid "sfx volume"
 msgstr "효과음 볼륨"
 

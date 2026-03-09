@@ -31,6 +31,7 @@ type FastilesViewportRuntime = {
   props: FastilesViewportProps | null
   animationFrame: number | null
   lastFrameTime: number | null
+  passiveFrameInterval: number
   effectActiveUntil: number
   crtEventIntensity: number
   crtEventLineY: number
@@ -48,6 +49,7 @@ const fastilesViewportRuntime: FastilesViewportRuntime = {
   props: null,
   animationFrame: null,
   lastFrameTime: null,
+  passiveFrameInterval: 1000 / 15,
   effectActiveUntil: 0,
   crtEventIntensity: 0,
   crtEventLineY: 0.5,
@@ -102,7 +104,7 @@ const resolveCrtEventState = (
   const shakeContribution = Math.pow(Math.max(game.screenShake, 0), 2) * 0.12
   const eventIntensity = Math.min(
     1,
-    0.04 + shakeContribution + accumulatedContribution * 2.8,
+    shakeContribution + accumulatedContribution * 2.8,
   )
 
   return {
@@ -139,11 +141,12 @@ const drawCrtViewport = (deltaTime: number) => {
 
   syncDisplayCanvas()
   fastilesViewportRuntime.crtEventIntensity = Math.max(
-    0.035,
+    0,
     crtEventIntensity * Math.exp(-deltaTime * 5.5),
   )
   renderCrtFrame(fastilesViewportRuntime.crtRenderer!, sourceCanvas, {
     deltaTime,
+    time: globalThis.performance.now() * 0.001,
     eventIntensity: fastilesViewportRuntime.crtEventIntensity,
     eventLineY: crtEventLineY,
     uploadSource: sourceDirty,
@@ -158,7 +161,13 @@ const runCrtAnimation = (timestamp: number) => {
     ? 1000 / 60
     : timestamp - lastFrameTime
 
-  if (elapsedTime < 1000 / 60) {
+  const targetInterval = fastilesViewportRuntime.sourceDirty ||
+      timestamp < fastilesViewportRuntime.effectActiveUntil ||
+      fastilesViewportRuntime.crtEventIntensity > 0.001
+    ? 1000 / 60
+    : fastilesViewportRuntime.passiveFrameInterval
+
+  if (elapsedTime < targetInterval) {
     fastilesViewportRuntime.animationFrame = globalThis.requestAnimationFrame(
       runCrtAnimation,
     )
@@ -166,15 +175,6 @@ const runCrtAnimation = (timestamp: number) => {
   }
 
   const deltaTime = elapsedTime / 1000
-
-  if (
-    !fastilesViewportRuntime.sourceDirty &&
-    timestamp >= fastilesViewportRuntime.effectActiveUntil &&
-    fastilesViewportRuntime.crtEventIntensity <= 0.036
-  ) {
-    stopCrtAnimation()
-    return
-  }
 
   fastilesViewportRuntime.lastFrameTime = timestamp
   drawCrtViewport(deltaTime)
@@ -247,13 +247,17 @@ const drawFastilesViewport = () => {
   }
 
   fastilesViewportRuntime.sourceDirty = true
-  fastilesViewportRuntime.crtEventIntensity = Math.max(
-    fastilesViewportRuntime.crtEventIntensity,
-    eventState.eventIntensity,
-  )
-  fastilesViewportRuntime.crtEventLineY = eventState.lineY
-  fastilesViewportRuntime.effectActiveUntil = globalThis.performance.now() +
-    Math.max(220, 1200 + eventState.eventIntensity * 900)
+
+  if (eventState.eventIntensity > 0.001) {
+    fastilesViewportRuntime.crtEventIntensity = Math.max(
+      fastilesViewportRuntime.crtEventIntensity,
+      eventState.eventIntensity,
+    )
+    fastilesViewportRuntime.crtEventLineY = eventState.lineY
+    fastilesViewportRuntime.effectActiveUntil = globalThis.performance.now() +
+      Math.max(220, 1200 + eventState.eventIntensity * 900)
+  }
+
   startCrtAnimation()
 }
 

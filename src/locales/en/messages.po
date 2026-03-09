@@ -563,7 +563,7 @@ msgstr "{id}: will {mode}{targetSuffix}"
 msgid "active seed modes"
 msgstr "active seed modes"
 
-#: src/app.tsx:1084
+#: src/app.tsx:1086
 msgid "audio"
 msgstr "audio"
 
@@ -574,12 +574,12 @@ msgstr "Auto-nav engaged to {0}."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1395
+#: src/app.tsx:1397
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "Auto-nav halted: {localizedReason} at {0}{1}."
 
 #: src/app.tsx:941
-#: src/app.tsx:1366
+#: src/app.tsx:1368
 msgid "close"
 msgstr "close"
 
@@ -588,7 +588,7 @@ msgstr "close"
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "Course plotted to {0}. Click again to engage."
 
-#: src/app.tsx:1234
+#: src/app.tsx:1236
 msgid "credits"
 msgstr "credits"
 
@@ -600,7 +600,7 @@ msgstr "CRT effect"
 msgid "depth charges"
 msgstr "depth charges"
 
-#: src/app.tsx:1178
+#: src/app.tsx:1180
 msgid "dev"
 msgstr "dev"
 
@@ -626,11 +626,11 @@ msgstr "Display set to tracking camera."
 msgid "easy"
 msgstr "easy"
 
-#: src/app.tsx:1114
+#: src/app.tsx:1116
 msgid "enable music"
 msgstr "enable music"
 
-#: src/app.tsx:1158
+#: src/app.tsx:1160
 msgid "enable sfx"
 msgstr "enable sfx"
 
@@ -642,8 +642,8 @@ msgstr "English"
 msgid "FULL MAP (M)"
 msgstr "FULL MAP (M)"
 
-#: src/app.tsx:1210
-#: src/app.tsx:1216
+#: src/app.tsx:1212
+#: src/app.tsx:1218
 msgid "god mode"
 msgstr "god mode"
 
@@ -677,11 +677,11 @@ msgstr "Korean"
 msgid "language"
 msgstr "language"
 
-#: src/app.tsx:1207
+#: src/app.tsx:1209
 msgid "map overlay"
 msgstr "map overlay"
 
-#: src/app.tsx:1181
+#: src/app.tsx:1183
 msgid "map visibility"
 msgstr "map visibility"
 
@@ -694,11 +694,11 @@ msgstr "medium"
 msgid "mission status"
 msgstr "mission status"
 
-#: src/app.tsx:1087
+#: src/app.tsx:1089
 msgid "music"
 msgstr "music"
 
-#: src/app.tsx:1096
+#: src/app.tsx:1098
 msgid "music volume"
 msgstr "music volume"
 
@@ -724,8 +724,8 @@ msgid "options"
 msgstr "options"
 
 #: src/app.tsx:878
-#: src/app.tsx:1356
-#: src/app.tsx:1360
+#: src/app.tsx:1358
+#: src/app.tsx:1362
 msgid "orders"
 msgstr "orders"
 
@@ -737,8 +737,8 @@ msgstr "position"
 msgid "restart"
 msgstr "restart"
 
-#: src/app.tsx:1183
-#: src/app.tsx:1188
+#: src/app.tsx:1185
+#: src/app.tsx:1190
 msgid "reveal map"
 msgstr "reveal map"
 
@@ -750,11 +750,11 @@ msgstr "run seed"
 msgid "seed"
 msgstr "seed"
 
-#: src/app.tsx:1131
+#: src/app.tsx:1133
 msgid "sfx"
 msgstr "sfx"
 
-#: src/app.tsx:1140
+#: src/app.tsx:1142
 msgid "sfx volume"
 msgstr "sfx volume"
 
