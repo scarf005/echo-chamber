@@ -1,4 +1,6 @@
-import { ensureAudioElementStarted, resetAudioElement } from "./htmlAudio.ts"
+import { Howl } from "howler"
+
+import { ensureLoopStarted, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const BACKGROUND_MUSIC_URL = new URL(
@@ -15,24 +17,35 @@ export type BackgroundMusicController = {
 }
 
 export const createBackgroundMusic = (): BackgroundMusicController => {
-  const audio = new Audio(BACKGROUND_MUSIC_URL)
-  audio.loop = true
-  audio.preload = "auto"
+  const howl = new Howl({
+    src: [BACKGROUND_MUSIC_URL],
+    loop: true,
+    preload: true,
+    volume: 0,
+  })
   const state = {
     enabled: true,
     volume: BACKGROUND_MUSIC_VOLUME,
   }
+  const startState = {
+    soundId: null as number | null,
+    starting: null as Promise<void> | null,
+  }
 
   const syncVolume = () => {
-    audio.volume = state.enabled ? state.volume : 0
+    if (startState.soundId === null) {
+      return
+    }
+
+    howl.volume(state.enabled ? state.volume : 0, startState.soundId)
   }
 
   syncVolume()
 
-  const playbackState = { startingPlayback: null as Promise<void> | null }
-
   const ensureStarted = () => {
-    return ensureAudioElementStarted(audio, playbackState)
+    return ensureLoopStarted(howl, startState).then(() => {
+      syncVolume()
+    })
   }
 
   const setEnabled = (enabled: boolean) => {
@@ -46,7 +59,7 @@ export const createBackgroundMusic = (): BackgroundMusicController => {
   }
 
   const dispose = () => {
-    resetAudioElement(audio)
+    resetHowl(howl)
   }
 
   return {

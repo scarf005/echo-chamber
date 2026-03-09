@@ -1,4 +1,6 @@
-import { ensureAudioElementStarted, resetAudioElement } from "./htmlAudio.ts"
+import { Howl } from "howler"
+
+import { ensureLoopStarted, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const MOVEMENT_LOOP_URL = new URL(
@@ -39,13 +41,21 @@ export const stepVolumeTowards = (current: number, target: number): number => {
 }
 
 export const createMovementLoop = (): MovementLoopController => {
-  const audio = new Audio(MOVEMENT_LOOP_URL)
-  audio.loop = true
-  audio.preload = "auto"
+  const howl = new Howl({
+    src: [MOVEMENT_LOOP_URL],
+    loop: true,
+    preload: true,
+    volume: 0,
+  })
   const state = {
     enabled: true,
     volume: 1,
   }
+  const startState = {
+    soundId: null as number | null,
+    starting: null as Promise<void> | null,
+  }
+  let currentVolume = clampAudioLevel(IDLE_VOLUME)
 
   const resolveTargetVolume = (baseVolume: number): number => {
     if (!state.enabled) {
@@ -55,9 +65,6 @@ export const createMovementLoop = (): MovementLoopController => {
     return clampAudioLevel(baseVolume * state.volume)
   }
 
-  audio.volume = resolveTargetVolume(IDLE_VOLUME)
-
-  const playbackState = { startingPlayback: null as Promise<void> | null }
   let lastMovementAt = Number.NEGATIVE_INFINITY
   let tickerId: number | null = null
 
@@ -76,14 +83,18 @@ export const createMovementLoop = (): MovementLoopController => {
       lastMovementAt,
     )
     const targetVolume = resolveTargetVolume(baseTargetVolume)
-    const nextVolume = stepVolumeTowards(audio.volume, targetVolume)
+    const nextVolume = stepVolumeTowards(currentVolume, targetVolume)
 
-    if (nextVolume !== audio.volume) {
-      audio.volume = nextVolume
+    if (nextVolume !== currentVolume) {
+      currentVolume = nextVolume
+    }
+
+    if (startState.soundId !== null) {
+      howl.volume(currentVolume, startState.soundId)
     }
 
     if (
-      audio.volume === targetVolume &&
+      currentVolume === targetVolume &&
       (targetVolume === 0 || baseTargetVolume === IDLE_VOLUME)
     ) {
       stopTicker()
@@ -99,11 +110,16 @@ export const createMovementLoop = (): MovementLoopController => {
   }
 
   const ensureStarted = () => {
-    return ensureAudioElementStarted(audio, playbackState)
+    return ensureLoopStarted(howl, startState).then(() => {
+      if (startState.soundId !== null) {
+        howl.volume(currentVolume, startState.soundId)
+      }
+    })
   }
 
   const markMovement = () => {
     lastMovementAt = performance.now()
+    void ensureStarted()
     ensureTicker()
     syncVolume()
   }
@@ -122,7 +138,7 @@ export const createMovementLoop = (): MovementLoopController => {
 
   const dispose = () => {
     stopTicker()
-    resetAudioElement(audio)
+    resetHowl(howl)
   }
 
   return {

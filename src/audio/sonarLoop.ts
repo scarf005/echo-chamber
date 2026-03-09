@@ -1,4 +1,6 @@
-import { ensureAudioElementStarted, resetAudioElement } from "./htmlAudio.ts"
+import { Howl } from "howler"
+
+import { ensureLoopStarted, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const SONAR_LOOP_URL = new URL(
@@ -36,9 +38,12 @@ export const stepSonarLoopVolume = (
 }
 
 export const createSonarLoop = (): SonarLoopController => {
-  const audio = new Audio(SONAR_LOOP_URL)
-  audio.loop = true
-  audio.preload = "auto"
+  const howl = new Howl({
+    src: [SONAR_LOOP_URL],
+    loop: true,
+    preload: true,
+    volume: 0,
+  })
   const state = {
     enabled: true,
     volume: 1,
@@ -47,19 +52,31 @@ export const createSonarLoop = (): SonarLoopController => {
 
   const targetVolume = () =>
     state.enabled ? getSonarLoopVolume(state.volume) : 0
+  const startState = {
+    soundId: null as number | null,
+    starting: null as Promise<void> | null,
+  }
+  let currentVolume = targetVolume()
 
   const syncVolume = () => {
-    const nextVolume = stepSonarLoopVolume(audio.volume, targetVolume())
+    const nextVolume = stepSonarLoopVolume(currentVolume, targetVolume())
 
-    if (nextVolume !== audio.volume) {
-      audio.volume = nextVolume
+    if (nextVolume !== currentVolume) {
+      currentVolume = nextVolume
     }
 
-    if (!state.enabled && audio.volume === 0 && !audio.paused) {
-      audio.pause()
+    if (startState.soundId !== null) {
+      howl.volume(currentVolume, startState.soundId)
     }
 
-    if (audio.volume === targetVolume()) {
+    if (
+      !state.enabled && currentVolume === 0 && startState.soundId !== null &&
+      howl.playing(startState.soundId)
+    ) {
+      howl.pause(startState.soundId)
+    }
+
+    if (currentVolume === targetVolume()) {
       stopTicker()
     }
   }
@@ -87,12 +104,12 @@ export const createSonarLoop = (): SonarLoopController => {
     tickerId = globalThis.setInterval(syncVolume, SONAR_FADE_INTERVAL_MS)
   }
 
-  audio.volume = targetVolume()
-
-  const playbackState = { startingPlayback: null as Promise<void> | null }
-
   const ensureStarted = () => {
-    return ensureAudioElementStarted(audio, playbackState)
+    return ensureLoopStarted(howl, startState).then(() => {
+      if (startState.soundId !== null) {
+        howl.volume(currentVolume, startState.soundId)
+      }
+    })
   }
 
   const setEnabled = (enabled: boolean) => {
@@ -104,13 +121,14 @@ export const createSonarLoop = (): SonarLoopController => {
 
   const setVolume = (volume: number) => {
     state.volume = clampAudioLevel(volume)
+    syncPlayback()
     ensureTicker()
     syncVolume()
   }
 
   const dispose = () => {
     stopTicker()
-    resetAudioElement(audio)
+    resetHowl(howl)
   }
 
   return {

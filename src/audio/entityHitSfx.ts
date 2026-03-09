@@ -1,9 +1,6 @@
-import {
-  createAudioPlayersByUrl,
-  primeAudioPlayersByUrl,
-  resetAudioPlayersByUrl,
-  takeAudioPlayer,
-} from "./htmlAudio.ts"
+import { Howl } from "howler"
+
+import { loadHowl, playHowl, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const ENTITY_HIT_SAMPLE_URLS = [
@@ -29,60 +26,40 @@ export const getEntityHitVolume = (volume: number): number => {
 }
 
 export const createEntityHitSfx = (): EntityHitSfxController => {
-  const sampleUrls = Array.from(ENTITY_HIT_SAMPLE_URLS)
-  const playersByUrl = createAudioPlayersByUrl(sampleUrls, CHANNELS_PER_SAMPLE)
-  const nextPlayerIndexByUrl = new Map(sampleUrls.map((url) => [url, 0]))
-  let unlocked = false
+  const howl = new Howl({
+    src: Array.from(ENTITY_HIT_SAMPLE_URLS),
+    preload: true,
+    pool: CHANNELS_PER_SAMPLE,
+    volume: 0,
+  })
+  let loaded = false
   const state = {
     enabled: true,
     volume: 1,
   }
 
   const ensureStarted = async () => {
-    if (unlocked) {
+    if (loaded) {
       return
     }
 
-    await primeAudioPlayersByUrl(playersByUrl)
-    unlocked = true
+    await loadHowl(howl)
+    loaded = true
   }
 
-  const playHit = async () => {
-    if (!unlocked || !state.enabled) {
-      return
+  const playHit = (): Promise<void> => {
+    if (!loaded || !state.enabled) {
+      return Promise.resolve()
     }
 
     const volume = getEntityHitVolume(state.volume)
 
     if (volume <= 0) {
-      return
+      return Promise.resolve()
     }
 
-    const sampleUrl = ENTITY_HIT_SAMPLE_URLS[0]
-    const players = playersByUrl.get(sampleUrl) ?? []
-    const preferredIndex = nextPlayerIndexByUrl.get(sampleUrl) ?? 0
-    const audio = takeAudioPlayer(players, preferredIndex)
-
-    if (!audio) {
-      return
-    }
-
-    nextPlayerIndexByUrl.set(
-      sampleUrl,
-      (preferredIndex + 1) % CHANNELS_PER_SAMPLE,
-    )
-
-    audio.pause()
-    audio.currentTime = 0
-    audio.volume = volume
-    audio.muted = false
-
-    try {
-      await audio.play()
-    } catch {
-      audio.pause()
-      audio.currentTime = 0
-    }
+    playHowl(howl, volume)
+    return Promise.resolve()
   }
 
   const setEnabled = (enabled: boolean) => {
@@ -94,9 +71,8 @@ export const createEntityHitSfx = (): EntityHitSfxController => {
   }
 
   const dispose = () => {
-    unlocked = false
-
-    resetAudioPlayersByUrl(playersByUrl)
+    loaded = false
+    resetHowl(howl)
   }
 
   return {

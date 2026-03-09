@@ -1,11 +1,7 @@
 import { sample } from "@std/random/sample"
+import { Howl } from "howler"
 
-import {
-  createAudioPlayersByUrl,
-  primeAudioPlayersByUrl,
-  resetAudioPlayersByUrl,
-  takeAudioPlayer,
-} from "./htmlAudio.ts"
+import { loadHowls, playHowl, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const NEAR_EXPLOSION_URLS = [
@@ -63,60 +59,50 @@ export const createExplosionSfx = (): ExplosionSfxController => {
       ...FAR_EXPLOSION_URLS,
     ]),
   )
-  const playersByUrl = createAudioPlayersByUrl(sampleUrls, CHANNELS_PER_SAMPLE)
-  const nextPlayerIndexByUrl = new Map(sampleUrls.map((url) => [url, 0]))
-  let unlocked = false
+  const howlsByUrl = new Map(sampleUrls.map((url) => [
+    url,
+    new Howl({
+      src: [url],
+      preload: true,
+      pool: CHANNELS_PER_SAMPLE,
+      volume: 0,
+    }),
+  ]))
+  let loaded = false
   const state = {
     enabled: true,
     volume: 1,
   }
 
   const ensureStarted = async () => {
-    if (unlocked) {
+    if (loaded) {
       return
     }
 
-    await primeAudioPlayersByUrl(playersByUrl)
-    unlocked = true
+    await loadHowls(Array.from(howlsByUrl.values()))
+    loaded = true
   }
 
-  const playExplosion = async (distance: number) => {
-    if (!unlocked || !state.enabled) {
-      return
+  const playExplosion = (distance: number): Promise<void> => {
+    if (!loaded || !state.enabled) {
+      return Promise.resolve()
     }
 
     const volume = getExplosionVolume(distance) * state.volume
 
     if (volume <= 0) {
-      return
+      return Promise.resolve()
     }
 
     const sampleUrl = pickExplosionSampleUrl(distance)
-    const audio = takeAudioPlayer(
-      playersByUrl.get(sampleUrl) ?? [],
-      nextPlayerIndexByUrl.get(sampleUrl) ?? 0,
-    )
+    const howl = howlsByUrl.get(sampleUrl)
 
-    if (!audio) {
-      return
+    if (!howl) {
+      return Promise.resolve()
     }
 
-    nextPlayerIndexByUrl.set(
-      sampleUrl,
-      ((nextPlayerIndexByUrl.get(sampleUrl) ?? 0) + 1) % CHANNELS_PER_SAMPLE,
-    )
-
-    audio.pause()
-    audio.currentTime = 0
-    audio.volume = volume
-    audio.muted = false
-
-    try {
-      await audio.play()
-    } catch {
-      audio.pause()
-      audio.currentTime = 0
-    }
+    playHowl(howl, volume)
+    return Promise.resolve()
   }
 
   const setEnabled = (enabled: boolean) => {
@@ -128,9 +114,11 @@ export const createExplosionSfx = (): ExplosionSfxController => {
   }
 
   const dispose = () => {
-    unlocked = false
+    loaded = false
 
-    resetAudioPlayersByUrl(playersByUrl)
+    for (const howl of howlsByUrl.values()) {
+      resetHowl(howl)
+    }
   }
 
   return {

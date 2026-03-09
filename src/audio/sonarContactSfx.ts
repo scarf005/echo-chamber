@@ -1,11 +1,7 @@
 import type { SonarContactAudioVariant } from "../game/model.ts"
+import { Howl } from "howler"
 
-import {
-  createAudioPlayersByUrl,
-  primeAudioPlayersByUrl,
-  resetAudioPlayersByUrl,
-  takeAudioPlayer,
-} from "./htmlAudio.ts"
+import { loadHowls, playHowl, resetHowl } from "./howlerHelpers.ts"
 import { clampAudioLevel } from "./settings.ts"
 
 const SONAR_CONTACT_SAMPLE_URLS = {
@@ -55,9 +51,16 @@ export const canPlaySonarContactPing = (
 
 export const createSonarContactSfx = (): SonarContactSfxController => {
   const sampleUrls = Array.from(getSonarContactSampleChoices())
-  const playersByUrl = createAudioPlayersByUrl(sampleUrls, CHANNELS_PER_SAMPLE)
-  const nextPlayerIndexByUrl = new Map(sampleUrls.map((url) => [url, 0]))
-  let unlocked = false
+  const howlsByUrl = new Map(sampleUrls.map((url) => [
+    url,
+    new Howl({
+      src: [url],
+      preload: true,
+      pool: CHANNELS_PER_SAMPLE,
+      volume: 0,
+    }),
+  ]))
+  let loaded = false
   let lastPlayedAt: number | null = null
   const state = {
     enabled: true,
@@ -65,60 +68,44 @@ export const createSonarContactSfx = (): SonarContactSfxController => {
   }
 
   const ensureStarted = async () => {
-    if (unlocked) {
+    if (loaded) {
       return
     }
 
-    await primeAudioPlayersByUrl(playersByUrl)
-    unlocked = true
+    await loadHowls(Array.from(howlsByUrl.values()))
+    loaded = true
   }
 
-  const playContactPing = async (
+  const playContactPing = (
     variant: SonarContactAudioVariant = "kizilsungur",
-  ) => {
-    if (!unlocked || !state.enabled) {
-      return
+  ): Promise<void> => {
+    if (!loaded || !state.enabled) {
+      return Promise.resolve()
     }
 
     const volume = getSonarContactVolume(state.volume)
 
     if (volume <= 0) {
-      return
+      return Promise.resolve()
     }
 
     const playedAt = Date.now()
 
     if (!canPlaySonarContactPing(lastPlayedAt, playedAt)) {
-      return
+      return Promise.resolve()
     }
 
     const sampleUrl = getSonarContactSampleUrl(variant)
-    const players = playersByUrl.get(sampleUrl) ?? []
-    const preferredIndex = nextPlayerIndexByUrl.get(sampleUrl) ?? 0
-    const audio = takeAudioPlayer(players, preferredIndex)
+    const howl = howlsByUrl.get(sampleUrl)
 
-    if (!audio) {
-      return
+    if (!howl) {
+      return Promise.resolve()
     }
 
-    nextPlayerIndexByUrl.set(
-      sampleUrl,
-      (preferredIndex + 1) % CHANNELS_PER_SAMPLE,
-    )
-
-    audio.pause()
-    audio.currentTime = 0
-    audio.volume = volume
-    audio.muted = false
     lastPlayedAt = playedAt
 
-    try {
-      await audio.play()
-    } catch {
-      lastPlayedAt = null
-      audio.pause()
-      audio.currentTime = 0
-    }
+    playHowl(howl, volume)
+    return Promise.resolve()
   }
 
   const setEnabled = (enabled: boolean) => {
@@ -130,10 +117,12 @@ export const createSonarContactSfx = (): SonarContactSfxController => {
   }
 
   const dispose = () => {
-    unlocked = false
+    loaded = false
     lastPlayedAt = null
 
-    resetAudioPlayersByUrl(playersByUrl)
+    for (const howl of howlsByUrl.values()) {
+      resetHowl(howl)
+    }
   }
 
   return {
