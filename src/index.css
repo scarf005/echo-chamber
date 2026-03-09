@@ -7,26 +7,13 @@
 }
 
 :root {
-  --crt-phosphor: #3cff7a;
-  --crt-phosphor-strong: #9affb4;
-  --crt-phosphor-dim: rgba(60, 255, 122, 0.72);
-  --crt-text: #f1f8fb;
-  --crt-text-soft: rgba(241, 248, 251, 0.84);
-  --crt-border: rgba(60, 255, 122, 0.3);
-  --crt-border-strong: rgba(154, 255, 180, 0.58);
-  --crt-shadow: rgba(16, 255, 105, 0.18);
-  --crt-shadow-soft: rgba(16, 255, 105, 0.08);
-  --crt-panel: rgba(2, 11, 7, 0.86);
-  --crt-panel-strong: rgba(0, 8, 4, 0.94);
-  --crt-screen: #000000;
-  --crt-screen-soft: #020904;
   --font-terminal:
     "IBM3270", "IBM Plex Mono", "Fira Mono", "SFMono-Regular", monospace;
   font-family: var(--font-terminal);
   line-height: 1.4;
   font-weight: 400;
-  color: var(--crt-text);
-  background: var(--crt-screen);
+  color: #d9fff9;
+  background: #02070c;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -49,11 +36,6 @@ body {
   margin: 0;
   min-width: 320px;
   overflow: hidden;
-  color: var(--crt-text);
-  background:
-    radial-gradient(circle at top, rgba(60, 255, 122, 0.08), transparent 28%),
-    radial-gradient(circle at bottom, rgba(14, 95, 46, 0.18), transparent 36%),
-    linear-gradient(180deg, var(--crt-screen-soft) 0%, var(--crt-screen) 100%);
 }
 
 button,
