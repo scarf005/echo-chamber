@@ -34,23 +34,29 @@ Deno.test("groupLogMessages groups consecutive duplicates", () => {
   assertEquals(grouped, ["Advance. (x2)", "Holding position. (x2)", "Advance."])
 })
 
-Deno.test("createInitialLogs seeds the orders panel with mission help", () => {
-  assertEquals(createInitialLogs(), [
-    createLogMessage(
-      "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
-    ),
-    createLogMessage("Move with WASD or arrows."),
-    createLogMessage("Click once to plot a course."),
-    createLogMessage("Click the same tile again to engage auto-nav."),
-    createLogMessage("Wait with ."),
-    createLogMessage("Launch torpedo with Z."),
-    createLogMessage("Launch torpedo upwards with C."),
-    createLogMessage("Drop depth charge with X."),
-    createLogMessage("Toggle display with M."),
-    createLogMessage(
-      "When sunk, press R to restart. Use Options for restart or random run anytime.",
-    ),
-  ])
+Deno.test("createInitialLogs seeds the log panel with mission help", () => {
+  activateLocale(defaultLocale)
+
+  try {
+    assertEquals(createInitialLogs(), [
+      createLogMessage(
+        "Recover the capsule and return it to the dock. Hostile subs stalk the caverns. Sonar cycles every 5 turns.",
+      ),
+      createLogMessage("Move with WASD or arrows."),
+      createLogMessage("Click once to plot a course."),
+      createLogMessage("Click the same tile again to engage auto-nav."),
+      createLogMessage("Wait with ."),
+      createLogMessage("Launch torpedo with Z."),
+      createLogMessage("Launch torpedo upwards with C."),
+      createLogMessage("Drop depth charge with X."),
+      createLogMessage("Toggle display with M."),
+      createLogMessage(
+        "When sunk, press R to restart. Use Options for restart or random run anytime.",
+      ),
+    ])
+  } finally {
+    activateLocale(defaultLocale)
+  }
 })
 
 Deno.test("groupLogMessages keeps differently typed messages separate", () => {

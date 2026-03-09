@@ -2,6 +2,7 @@
 
 import { assert, assertEquals } from "@std/assert"
 
+import { activateLocale, defaultLocale } from "../i18n.ts"
 import { type GameState, holdPosition } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
 
@@ -51,16 +52,22 @@ Deno.test("falling boulders send bubbles upward until they hit a wall", () => {
 })
 
 Deno.test("falling boulders crush the player instead of only logging impact text", () => {
-  const game = createBoulderLandingGame({ player: { x: 3, y: 3 } })
+  activateLocale(defaultLocale)
 
-  const next = holdPosition(game)
+  try {
+    const game = createBoulderLandingGame({ player: { x: 3, y: 3 } })
 
-  assertEquals(next.status, "lost")
-  assertEquals(next.fallingBoulders.length, 0)
-  assertEquals(
-    next.message,
-    "Cave-in debris crushes your hull. Press R for a new run.",
-  )
+    const next = holdPosition(game)
+
+    assertEquals(next.status, "lost")
+    assertEquals(next.fallingBoulders.length, 0)
+    assertEquals(
+      next.message,
+      "Cave-in debris crushes your hull. Press R for a new run.",
+    )
+  } finally {
+    activateLocale(defaultLocale)
+  }
 })
 
 Deno.test("falling boulders crush hostile submarines in their path", () => {

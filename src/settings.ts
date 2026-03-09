@@ -33,6 +33,7 @@ export const difficultyToHostileSubmarineCount = (
 
 export type AppSettings = {
   audio: AudioSettings
+  crtEnabled: boolean
   difficulty: DifficultySetting
   revealMap: boolean
   showDevEntityOverlay: boolean
@@ -52,6 +53,7 @@ export const DEV_ENTITY_OVERLAY_STORAGE_KEY = "echo-chamber:dev-entity-overlay"
 export const defaultAppSettings = (isDevBuild: boolean): AppSettings => {
   return {
     audio: DEFAULT_AUDIO_SETTINGS,
+    crtEnabled: true,
     difficulty: DEFAULT_DIFFICULTY_SETTING,
     revealMap: false,
     showDevEntityOverlay: isDevBuild,
@@ -64,6 +66,7 @@ export const normalizeAppSettings = (
 ): AppSettings => {
   return {
     audio: normalizeAudioSettings(value?.audio),
+    crtEnabled: value?.crtEnabled ?? true,
     difficulty: normalizeDifficultySetting(value?.difficulty),
     revealMap: isDevBuild ? (value?.revealMap ?? false) : false,
     showDevEntityOverlay: value?.showDevEntityOverlay ?? isDevBuild,
@@ -96,6 +99,7 @@ export const readAppSettings = (
   } catch {
     return {
       audio: readAudioSettings(storage),
+      crtEnabled: defaults.crtEnabled,
       difficulty: defaults.difficulty,
       revealMap: defaults.revealMap,
       showDevEntityOverlay: readLegacyDevEntityOverlaySetting(
@@ -107,6 +111,7 @@ export const readAppSettings = (
 
   return {
     audio: readAudioSettings(storage),
+    crtEnabled: defaults.crtEnabled,
     difficulty: defaults.difficulty,
     revealMap: defaults.revealMap,
     showDevEntityOverlay: readLegacyDevEntityOverlaySetting(

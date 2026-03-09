@@ -746,6 +746,7 @@ export const App = () => {
   const viewportMode = viewportModeSignal.value
   const audioSettings = appSettings.audio
   const difficulty = appSettings.difficulty
+  const crtEnabled = appSettings.crtEnabled
   const showDevEntityOverlay = appSettings.showDevEntityOverlay
   const activeRunSeedConfig = parseRunSeed(activeRunSeed, INITIAL_RUN_SEED)
   const isRevealMapEnabled = shouldRevealDevMap(appSettings) ||
@@ -774,7 +775,7 @@ export const App = () => {
   const renderOptions: RenderOptions = {
     debugEntityOverlay: isGodMode,
     debugPlannedPaths: isGodMode,
-    hoveredTile: isGodMode ? hoveredTile : null,
+    hoveredTile: null,
     viewportMode,
     cameraTileWidth: 30,
     cameraTileHeight: 20,
@@ -799,6 +800,7 @@ export const App = () => {
     <main class="game-shell">
       <section class="viewport-stage">
         <FastilesViewport
+          crtEnabled={crtEnabled}
           game={game}
           selectedTarget={previewTarget}
           previewPath={previewPath}
@@ -860,7 +862,7 @@ export const App = () => {
           </div>
         </section>
 
-        <section class="sidebar-panel orders-panel">
+        <section class="sidebar-panel log-panel">
           <div class="panel-header">
             <button
               type="button"
@@ -873,7 +875,7 @@ export const App = () => {
                 isOptionsOpenSignal.value = false
               }}
             >
-              <span class="sidebar-heading">{t`orders`}</span>
+              <span class="sidebar-heading">{t`log`}</span>
             </button>
           </div>
           <div class="sidebar-text-block sidebar-log-list">
@@ -1056,6 +1058,29 @@ export const App = () => {
                   >
                     {t`hard`} (4x)
                   </button>
+                </div>
+              </div>
+              <div class="language-switch-row">
+                <span class="sidebar-heading">{t`graphics`}</span>
+                <div class="language-switch">
+                  <span>{t`CRT effect`}</span>
+                  <input
+                    class="audio-toggle"
+                    type="checkbox"
+                    checked={crtEnabled}
+                    aria-label={t`toggle CRT effect`}
+                    onChange={(
+                      event: JSX.TargetedEvent<HTMLInputElement>,
+                    ) => {
+                      updateAppSettings((current) => ({
+                        ...current,
+                        crtEnabled: event.currentTarget.checked,
+                      }))
+                    }}
+                  />
+                  <strong style={{ width: "3em" }}>
+                    {onOffLabel(crtEnabled)}
+                  </strong>
                 </div>
               </div>
               <div class="sidebar-heading">{t`audio`}</div>
@@ -1330,11 +1355,11 @@ export const App = () => {
               class="modal-panel message-modal"
               role="dialog"
               aria-modal="true"
-              aria-label={t`orders`}
+              aria-label={t`log`}
               onClick={(event) => event.stopPropagation()}
             >
               <div class="panel-header">
-                <div class="sidebar-heading">{t`orders`}</div>
+                <div class="sidebar-heading">{t`log`}</div>
                 <button
                   type="button"
                   class="modal-close"

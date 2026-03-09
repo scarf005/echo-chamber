@@ -1,28 +1,8 @@
-# Vite + Deno + Preact + TypeScript
+# Echo Chamber
 
-## Running
+<img width="2266" height="1325" alt="image" src="https://github.com/user-attachments/assets/1cf4f1f6-528e-4773-a6fa-78a809a3933a" />
 
-You need to have Deno v2.0.0 or later installed to run this repo.
-
-Start a dev server:
-
-```
-$ deno task dev
-```
-
-## Deploy
-
-Build production assets locally:
-
-```
-$ deno task build
-```
-
-Every push to `main` also triggers GitHub Actions deployment to itch.io via
-`KikimoraGames/itch-publish@v0.0.3`. The workflow uses the `deploy` environment
-and expects `BUTLER_API_KEY` and `ITCH_USERNAME` to be defined there. The
-itch.io game id defaults to the repository name, so this repository publishes to
-`echo-chamber` on the configured account.
+submission for [7drl 2026](https://itch.io/jam/7drl-challenge-2026).
 
 ## Asset Credits
 
