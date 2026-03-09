@@ -265,6 +265,15 @@ const clearPlayerActionTargets = (
   }
 }
 
+const closeModalOnBackdropMouseDown = (
+  event: JSX.TargetedMouseEvent<HTMLDivElement>,
+  close: () => void,
+) => {
+  if (event.target === event.currentTarget) {
+    close()
+  }
+}
+
 const adjustCameraZoom = (step: number) => {
   if (step === 0) {
     return

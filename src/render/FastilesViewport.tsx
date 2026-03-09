@@ -403,13 +403,13 @@ const attachViewport = (container: HTMLDivElement) => {
   fastilesViewportRuntime.sourceDirty = true
 
   globalThis.addEventListener("resize", drawFastilesViewport)
-  canvas.addEventListener("click", handleCanvasClick)
-  canvas.addEventListener("pointerdown", handleCanvasPointerDown)
-  canvas.addEventListener("pointermove", handleCanvasPointerMove)
-  canvas.addEventListener("pointerup", handleCanvasPointerUp)
-  canvas.addEventListener("pointercancel", handleCanvasPointerUp)
-  canvas.addEventListener("pointerleave", handleCanvasPointerLeave)
-  canvas.addEventListener("wheel", handleCanvasWheel, { passive: false })
+  displayCanvas.addEventListener("click", handleCanvasClick)
+  displayCanvas.addEventListener("pointerdown", handleCanvasPointerDown)
+  displayCanvas.addEventListener("pointermove", handleCanvasPointerMove)
+  displayCanvas.addEventListener("pointerup", handleCanvasPointerUp)
+  displayCanvas.addEventListener("pointercancel", handleCanvasPointerUp)
+  displayCanvas.addEventListener("pointerleave", handleCanvasPointerLeave)
+  displayCanvas.addEventListener("wheel", handleCanvasWheel, { passive: false })
 
   drawFastilesViewport()
 
