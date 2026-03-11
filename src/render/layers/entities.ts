@@ -270,7 +270,22 @@ export const drawEntitiesLayer = (
   }
 
   if (depthCharge) {
-    drawDepthChargeGlyph(context, screenX, screenY, tileSize, 1)
+    const exact = visibility >= 3 || depthCharge.senderId === "player"
+    if (exact) {
+      drawDepthChargeGlyph(context, screenX, screenY, tileSize, 1)
+    } else {
+      drawEntityMemory(context, screenX, screenY, tileSize, "enemy")
+    }
+
+    if (!exact && debugOverlayAlpha > 0) {
+      drawDepthChargeGlyph(
+        context,
+        screenX,
+        screenY,
+        tileSize,
+        debugOverlayAlpha,
+      )
+    }
   }
 
   const boulder = entityMaps.boulders.get(index)

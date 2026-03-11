@@ -71,6 +71,7 @@ export interface EntityReveal {
 export interface RevealableEntity {
   position: Point
   kind: RevealableEntityKind
+  senderId?: string
 }
 
 export interface FadeCell {

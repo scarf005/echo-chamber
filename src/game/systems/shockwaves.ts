@@ -11,7 +11,6 @@ import type {
   EntityRevealKind,
   FadeCell,
   RevealableEntity,
-  RevealableEntityKind,
   Shockwave,
   TileReveal,
 } from "../model.ts"
@@ -187,7 +186,7 @@ const advanceShockwave = (
   map: GeneratedMap,
   wave: Shockwave,
   dustByIndex: Map<number, number>,
-  entitiesByIndex: Map<number, RevealableEntityKind[]>,
+  entitiesByIndex: Map<number, RevealableEntity[]>,
   blockerIndexes: Set<number>,
   front: Map<number, FadeCell>,
   revealedTiles: Map<number, TileKind>,
@@ -211,7 +210,9 @@ const advanceShockwave = (
     mergeFrontCell(front, index, alpha, wave.senderId !== "player")
   }
 
-  trace.revealedTiles.forEach((tile, index) => revealedTiles.set(index, tile))
+  trace.revealedTiles.forEach((tile, index) => {
+    revealedTiles.set(index, tile)
+  })
 
   trace.revealedEntities.forEach((kind, key) => {
     const [indexText] = key.split(":")
@@ -233,7 +234,7 @@ const traceWaveBand = (
   previousRadius: number,
   nextRadius: number,
   dustByIndex: Map<number, number>,
-  entitiesByIndex: Map<number, RevealableEntityKind[]>,
+  entitiesByIndex: Map<number, RevealableEntity[]>,
   blockerIndexes: Set<number>,
 ): {
   front: Map<number, number>
@@ -353,27 +354,27 @@ const buildBlockerIndexes = (
 const buildEntitiesByIndex = (
   width: number,
   revealableEntities: RevealableEntity[],
-): Map<number, RevealableEntityKind[]> => {
+): Map<number, RevealableEntity[]> => {
   return revealableEntities.reduce((lookup, entity) => {
     const index = indexForPoint(width, entity.position)
     const current = lookup.get(index) ?? []
-    lookup.set(index, [...current, entity.kind])
+    lookup.set(index, [...current, entity])
     return lookup
-  }, new Map<number, RevealableEntityKind[]>())
+  }, new Map<number, RevealableEntity[]>())
 }
 
 const revealEntitiesAtIndex = (
   reveals: Map<string, EntityRevealKind>,
-  kinds: RevealableEntityKind[] | undefined,
+  entities: RevealableEntity[] | undefined,
   index: number,
   distance: number,
 ): void => {
-  if (!kinds || distance >= SONAR_ENTITY_IDENTIFY_RADIUS) {
+  if (!entities || distance >= SONAR_ENTITY_IDENTIFY_RADIUS) {
     return
   }
 
-  for (const kind of kinds) {
-    const revealedKind = toEntityRevealKind(kind)
+  for (const entity of entities) {
+    const revealedKind = toEntityRevealKind(entity)
 
     if (!revealedKind) {
       continue
@@ -384,15 +385,19 @@ const revealEntitiesAtIndex = (
 }
 
 const toEntityRevealKind = (
-  kind: RevealableEntityKind,
+  entity: RevealableEntity,
 ): EntityRevealKind | null => {
-  switch (kind) {
+  switch (entity.kind) {
     case "player":
       return "player"
     case "capsule":
       return "capsule"
     case "item":
       return "item"
+    case "torpedo":
+      return entity.senderId === "player" ? null : "enemy"
+    case "depth-charge":
+      return entity.senderId === "player" ? null : "enemy"
     case "hostile-submarine":
       return "enemy"
     case "fish":

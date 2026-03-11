@@ -910,10 +910,12 @@ const collectRevealableEntities = (
     ...torpedoes.map((torpedo) => ({
       kind: "torpedo" as const,
       position: { ...torpedo.position },
+      senderId: torpedo.senderId,
     })),
     ...depthCharges.map((depthCharge) => ({
       kind: "depth-charge" as const,
       position: { ...depthCharge.position },
+      senderId: depthCharge.senderId,
     })),
     ...pickups.map((pickup) => ({
       kind: "item" as const,

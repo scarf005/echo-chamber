@@ -3,7 +3,9 @@
 import { assertEquals } from "@std/assert"
 
 import { type GameState, holdPosition } from "./game.ts"
+import type { RevealableEntity, Shockwave } from "./model.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
+import { previewShockwaveEntityReveals } from "./systems/shockwaves.ts"
 
 Deno.test("sonar keeps hostile and item contacts as fog-of-war markers", () => {
   const game = createSonarEntityMemoryGame()
@@ -81,6 +83,63 @@ Deno.test("passive detection radius distinguishes fish as non-hostile", () => {
 
   assertEquals(next.visibility[fishIndex], 2)
   assertEquals(next.entityMemory?.[fishIndex], "non-hostile")
+})
+
+Deno.test("player sonar reveals hostile projectiles as enemy contacts", () => {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 2, y: 2 },
+    { x: 10, y: 2 },
+  )
+  const wave: Shockwave = {
+    origin: { x: 2, y: 2 },
+    radius: 2,
+    senderId: "player",
+    damaging: false,
+    revealTerrain: true,
+    revealEntities: true,
+  }
+  const revealableEntities: RevealableEntity[] = [
+    { kind: "player", position: { x: 2, y: 2 } },
+    {
+      kind: "torpedo",
+      position: { x: 5, y: 2 },
+      senderId: "hostile-1",
+    },
+    {
+      kind: "depth-charge",
+      position: { x: 4, y: 4 },
+      senderId: "hostile-2",
+    },
+  ]
+
+  const reveals = previewShockwaveEntityReveals(
+    map,
+    [wave],
+    [],
+    [],
+    [],
+    revealableEntities,
+  )
+
+  assertEquals(reveals, [
+    {
+      index: map.width * 2 + 5,
+      kind: "enemy",
+      sourceSenderId: "player",
+    },
+    {
+      index: map.width * 4 + 4,
+      kind: "enemy",
+      sourceSenderId: "player",
+    },
+  ])
 })
 
 const createSonarEntityMemoryGame = (): GameState => {
