@@ -139,52 +139,52 @@ msgstr "침몰 시 R을 눌러 재시작하세요. 언제든지 옵션에서 재
 
 #. js-lingui-explicit-id
 #: src/game/turn.ts:109
-#: src/game/turn.ts:321
+#: src/game/turn.ts:325
 msgid "A hostile submarine rams your hull. Press R for a new run."
 msgstr "적 잠수함이 선체를 들이받았습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:171
+#: src/game/turn.ts:173
 msgid "A hostile torpedo tears through your hull. Press R for a new run."
 msgstr "적 어뢰가 선체를 관통했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:203
+#: src/game/turn.ts:207
 msgid "A hostile blast caves in your hull. Press R for a new run."
 msgstr "적의 폭발로 선체가 붕괴했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:227
+#: src/game/turn.ts:231
 msgid "Cave-in debris crushes your hull. Press R for a new run."
 msgstr "낙반 잔해가 선체를 짓눌렀습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:350
+#: src/game/turn.ts:354
 msgid "hostile sonar from {direction}"
 msgstr "{direction}에서 적 소나"
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:429
+#: src/game/turn.ts:433
 msgid "Capsule retrieved. Return to dock."
 msgstr "캡슐 회수 완료. 도크로 복귀하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:437
+#: src/game/turn.ts:441
 msgid "Your submarine is destroyed. Press R for a new run."
 msgstr "잠수함이 파괴되었습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:442
+#: src/game/turn.ts:446
 msgid "Capsule delivered to dock. Press R for a new run."
 msgstr "캡슐을 도크에 인도했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:453
+#: src/game/turn.ts:457
 msgid "You paste a fish against the bow."
 msgstr "선수로 물고기 한 마리를 짓이겼다."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:454
+#: src/game/turn.ts:458
 msgid "You paste {rammedFishCount} fish against the bow."
 msgstr "선수로 물고기 {rammedFishCount}마리를 짓이겼다."
 

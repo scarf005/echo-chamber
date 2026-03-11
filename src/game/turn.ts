@@ -145,6 +145,7 @@ export const advanceTurn = (
   const torpedoStep = stepTorpedoes(
     map,
     torpedoes,
+    depthCharges,
     trails,
     cracks,
     structuralDamage,
@@ -156,6 +157,7 @@ export const advanceTurn = (
     nextTurn,
   )
   torpedoes = torpedoStep.torpedoes
+  depthCharges = torpedoStep.depthCharges
   trails = torpedoStep.trails
   cracks = torpedoStep.cracks
   structuralDamage = torpedoStep.structuralDamage
@@ -176,6 +178,7 @@ export const advanceTurn = (
   const depthChargeStep = stepDepthCharges(
     map,
     depthCharges,
+    torpedoes,
     trails,
     cracks,
     structuralDamage,
@@ -187,6 +190,7 @@ export const advanceTurn = (
     nextTurn,
   )
   depthCharges = depthChargeStep.depthCharges
+  torpedoes = depthChargeStep.torpedoes
   trails = depthChargeStep.trails
   cracks = depthChargeStep.cracks
   structuralDamage = depthChargeStep.structuralDamage

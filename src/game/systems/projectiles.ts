@@ -20,8 +20,10 @@ import {
 } from "../effects.ts"
 import {
   chebyshevDistance,
+  cloneDepthCharge,
   cloneFish,
   cloneHostileSubmarine,
+  cloneTorpedo,
   deltaForDirection,
   indexForPoint,
 } from "../helpers.ts"
@@ -52,9 +54,32 @@ interface ExplosionResolution {
   screenShake: number
 }
 
+const orderProjectilesByPrecedence = <Projectile extends { senderId: string }>(
+  projectiles: Projectile[],
+): Projectile[] => {
+  const playerProjectiles = projectiles.filter((projectile) =>
+    projectile.senderId === "player"
+  )
+  const hostileProjectiles = projectiles.filter((projectile) =>
+    projectile.senderId !== "player"
+  )
+
+  return [...playerProjectiles, ...hostileProjectiles]
+}
+
+const hasActiveProjectileSender = (
+  senderId: string,
+  hostileSubmarines: HostileSubmarine[],
+): boolean => {
+  return senderId === "player" || hostileSubmarines.some((hostileSubmarine) =>
+    hostileSubmarine.id === senderId
+  )
+}
+
 export const stepTorpedoes = (
   map: GeneratedMap,
   torpedoes: Torpedo[],
+  depthCharges: DepthCharge[],
   trails: FadeCell[],
   cracks: CrackCell[],
   structuralDamage: number[],
@@ -66,6 +91,7 @@ export const stepTorpedoes = (
   turn: number,
 ): {
   torpedoes: Torpedo[]
+  depthCharges: DepthCharge[]
   trails: FadeCell[]
   cracks: CrackCell[]
   structuralDamage: number[]
@@ -81,11 +107,15 @@ export const stepTorpedoes = (
   playerEntityHits: number
   playerDestroyed: boolean
 } => {
-  const nextTorpedoes: Torpedo[] = []
   let nextTrails = trails
   let nextCracks = cracks
   let nextStructuralDamage = structuralDamage
   let nextDust = dust
+  const orderedTorpedoes = orderProjectilesByPrecedence(torpedoes).map(
+    cloneTorpedo,
+  )
+  let activeTorpedoes = orderedTorpedoes
+  let activeDepthCharges = depthCharges.map(cloneDepthCharge)
   const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
   const fallingBoulders: FallingBoulder[] = []
@@ -97,7 +127,16 @@ export const stepTorpedoes = (
   let playerEntityHits = 0
   let playerDestroyed = false
 
-  for (const torpedo of torpedoes) {
+  for (const torpedo of orderedTorpedoes) {
+    if (!activeTorpedoes.includes(torpedo)) {
+      continue
+    }
+
+    if (!hasActiveProjectileSender(torpedo.senderId, nextHostileSubmarines)) {
+      activeTorpedoes = activeTorpedoes.filter((candidate) => candidate !== torpedo)
+      continue
+    }
+
     let current = { ...torpedo.position }
     let exploded = false
 
@@ -148,6 +187,17 @@ export const stepTorpedoes = (
         impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        activeTorpedoes = resolveProjectileBlastDamage(
+          impactPoint,
+          torpedo.senderId,
+          activeTorpedoes,
+          torpedo,
+        )
+        activeDepthCharges = resolveProjectileBlastDamage(
+          impactPoint,
+          torpedo.senderId,
+          activeDepthCharges,
+        )
         if (torpedo.senderId === "player") {
           playerEntityHits += explosion.entityHits
         }
@@ -166,6 +216,10 @@ export const stepTorpedoes = (
           nextFish,
           nextHostileSubmarines,
           player,
+          activeTorpedoes,
+          activeDepthCharges,
+          torpedo,
+          null,
         )
       ) {
         const impactPoint = { ...nextPoint }
@@ -197,6 +251,17 @@ export const stepTorpedoes = (
         impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        activeTorpedoes = resolveProjectileBlastDamage(
+          impactPoint,
+          torpedo.senderId,
+          activeTorpedoes,
+          torpedo,
+        )
+        activeDepthCharges = resolveProjectileBlastDamage(
+          impactPoint,
+          torpedo.senderId,
+          activeDepthCharges,
+        )
         if (torpedo.senderId === "player") {
           playerEntityHits += explosion.entityHits
         }
@@ -211,15 +276,13 @@ export const stepTorpedoes = (
     }
 
     if (!exploded) {
-      nextTorpedoes.push({
-        ...torpedo,
-        position: current,
-      })
+      torpedo.position = current
     }
   }
 
   return {
-    torpedoes: nextTorpedoes,
+    torpedoes: activeTorpedoes,
+    depthCharges: activeDepthCharges,
     trails: nextTrails,
     cracks: nextCracks,
     structuralDamage: nextStructuralDamage,
@@ -240,6 +303,7 @@ export const stepTorpedoes = (
 export const stepDepthCharges = (
   map: GeneratedMap,
   depthCharges: DepthCharge[],
+  torpedoes: Torpedo[],
   trails: FadeCell[],
   cracks: CrackCell[],
   structuralDamage: number[],
@@ -251,6 +315,7 @@ export const stepDepthCharges = (
   turn: number,
 ): {
   depthCharges: DepthCharge[]
+  torpedoes: Torpedo[]
   trails: FadeCell[]
   cracks: CrackCell[]
   structuralDamage: number[]
@@ -266,11 +331,15 @@ export const stepDepthCharges = (
   playerEntityHits: number
   playerDestroyed: boolean
 } => {
-  const nextDepthCharges: DepthCharge[] = []
   let nextTrails = trails
   let nextCracks = cracks
   let nextStructuralDamage = structuralDamage
   let nextDust = dust
+  let activeTorpedoes = torpedoes.map(cloneTorpedo)
+  const orderedDepthCharges = orderProjectilesByPrecedence(depthCharges).map(
+    cloneDepthCharge,
+  )
+  let activeDepthCharges = orderedDepthCharges
   const nextFish = fish.map(cloneFish)
   const nextHostileSubmarines = hostileSubmarines.map(cloneHostileSubmarine)
   const fallingBoulders: FallingBoulder[] = []
@@ -282,7 +351,20 @@ export const stepDepthCharges = (
   let playerEntityHits = 0
   let playerDestroyed = false
 
-  for (const depthCharge of depthCharges) {
+  for (const depthCharge of orderedDepthCharges) {
+    if (!activeDepthCharges.includes(depthCharge)) {
+      continue
+    }
+
+    if (
+      !hasActiveProjectileSender(depthCharge.senderId, nextHostileSubmarines)
+    ) {
+      activeDepthCharges = activeDepthCharges.filter((candidate) =>
+        candidate !== depthCharge
+      )
+      continue
+    }
+
     let current = { ...depthCharge.position }
     let remaining = depthCharge.rangeRemaining
     let exploded = false
@@ -337,6 +419,17 @@ export const stepDepthCharges = (
         impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        activeTorpedoes = resolveProjectileBlastDamage(
+          current,
+          depthCharge.senderId,
+          activeTorpedoes,
+        )
+        activeDepthCharges = resolveProjectileBlastDamage(
+          current,
+          depthCharge.senderId,
+          activeDepthCharges,
+          depthCharge,
+        )
         if (depthCharge.senderId === "player") {
           playerEntityHits += explosion.entityHits
         }
@@ -358,6 +451,10 @@ export const stepDepthCharges = (
           nextFish,
           nextHostileSubmarines,
           player,
+          activeTorpedoes,
+          activeDepthCharges,
+          null,
+          depthCharge,
         )
       ) {
         const explosion = detonateProjectile(
@@ -388,6 +485,17 @@ export const stepDepthCharges = (
         impactPoints.push(explosion.impactPoint)
         shockwaves.push(explosion.shockwave)
         playerDestroyed = playerDestroyed || explosion.playerDestroyed
+        activeTorpedoes = resolveProjectileBlastDamage(
+          current,
+          depthCharge.senderId,
+          activeTorpedoes,
+        )
+        activeDepthCharges = resolveProjectileBlastDamage(
+          current,
+          depthCharge.senderId,
+          activeDepthCharges,
+          depthCharge,
+        )
         if (depthCharge.senderId === "player") {
           playerEntityHits += explosion.entityHits
         }
@@ -400,16 +508,14 @@ export const stepDepthCharges = (
     }
 
     if (!exploded && remaining > 0) {
-      nextDepthCharges.push({
-        ...depthCharge,
-        position: current,
-        rangeRemaining: remaining,
-      })
+      depthCharge.position = current
+      depthCharge.rangeRemaining = remaining
     }
   }
 
   return {
-    depthCharges: nextDepthCharges,
+    depthCharges: activeDepthCharges,
+    torpedoes: activeTorpedoes,
     trails: nextTrails,
     cracks: nextCracks,
     structuralDamage: nextStructuralDamage,
@@ -488,6 +594,10 @@ const hasProjectileTargetNearby = (
   fish: Fish[],
   hostileSubmarines: HostileSubmarine[],
   player: Point,
+  torpedoes: Torpedo[],
+  depthCharges: DepthCharge[],
+  ignoredTorpedo: Torpedo | null,
+  ignoredDepthCharge: DepthCharge | null,
 ): boolean => {
   if (senderId === "player") {
     return hostileSubmarines.some((hostileSubmarine) =>
@@ -496,10 +606,41 @@ const hasProjectileTargetNearby = (
     ) || fish.some((candidate) =>
       chebyshevDistance(point, candidate.position) <=
         PROJECTILE_PROXIMITY_RADIUS
+    ) || hasHostileProjectileNearby(
+      point,
+      senderId,
+      avoidFriendlyFire,
+      torpedoes,
+      ignoredTorpedo,
+    ) || hasHostileProjectileNearby(
+      point,
+      senderId,
+      avoidFriendlyFire,
+      depthCharges,
+      ignoredDepthCharge,
     )
   }
 
   if (chebyshevDistance(point, player) <= PROJECTILE_PROXIMITY_RADIUS) {
+    return true
+  }
+
+  if (
+    hasHostileProjectileNearby(
+      point,
+      senderId,
+      avoidFriendlyFire,
+      torpedoes,
+      ignoredTorpedo,
+    ) ||
+    hasHostileProjectileNearby(
+      point,
+      senderId,
+      avoidFriendlyFire,
+      depthCharges,
+      ignoredDepthCharge,
+    )
+  ) {
     return true
   }
 
@@ -511,6 +652,67 @@ const hasProjectileTargetNearby = (
     hostileSubmarine.id !== senderId &&
     chebyshevDistance(point, hostileSubmarine.position) <=
       PROJECTILE_PROXIMITY_RADIUS
+  )
+}
+
+const hasHostileProjectileNearby = <Projectile extends {
+  senderId: string
+  position: Point
+}>(
+  point: Point,
+  senderId: string,
+  avoidFriendlyFire: boolean,
+  projectiles: Projectile[],
+  ignoredProjectile: Projectile | null,
+): boolean => {
+  return projectiles.some((projectile) => {
+    if (projectile === ignoredProjectile) {
+      return false
+    }
+
+    return isProjectileHostile(
+        senderId,
+        projectile.senderId,
+        avoidFriendlyFire,
+      ) &&
+      chebyshevDistance(point, projectile.position) <= PROJECTILE_PROXIMITY_RADIUS
+  })
+}
+
+const isProjectileHostile = (
+  senderId: string,
+  projectileSenderId: string,
+  avoidFriendlyFire: boolean,
+): boolean => {
+  if (projectileSenderId === senderId) {
+    return false
+  }
+
+  if (senderId === "player") {
+    return projectileSenderId !== "player"
+  }
+
+  if (projectileSenderId === "player") {
+    return true
+  }
+
+  return avoidFriendlyFire === false
+}
+
+const resolveProjectileBlastDamage = <Projectile extends {
+  senderId: string
+  position: Point
+}>(
+  impactPoint: Point,
+  senderId: string,
+  projectiles: Projectile[],
+  ignoredProjectile?: Projectile,
+): Projectile[] => {
+  return projectiles.filter((projectile) =>
+    projectile !== ignoredProjectile &&
+    (projectile.senderId === senderId ||
+      chebyshevDistance(impactPoint, projectile.position) >
+        EXPLOSION_DAMAGE_RADIUS)
   )
 }
 
