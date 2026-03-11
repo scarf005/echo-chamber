@@ -24,7 +24,7 @@ import {
   isPlayerSonarEnabled,
   keyForAutoMoveAnomaly,
   movePlayer,
-  revealMap,
+  revealMapMemory,
   shouldHaltAutoMoveForAnomaly,
   shouldIgnoreAutoMovePickupAnomalyOnPath,
   SONAR_INTERVAL,
@@ -114,7 +114,7 @@ const createConfiguredGame = (rawSeed: string, settings: AppSettings) => {
     ),
   })
   return shouldRevealDevMap(settings) || runSeed.enableMapMode
-    ? revealMap(game)
+    ? revealMapMemory(game)
     : game
 }
 
@@ -169,8 +169,17 @@ const appRuntime: AppRuntime = {
     : isDocumentAudioAllowed(document),
 }
 
+const shouldRevealRuntimeMap = (): boolean => {
+  return shouldRevealDevMap(appSettingsSignal.peek()) ||
+    parseRunSeed(activeRunSeedSignal.peek(), INITIAL_RUN_SEED).enableMapMode
+}
+
 const updateGame = (update: (current: AppGame) => AppGame) => {
-  gameSignal.value = update(gameSignal.peek())
+  const nextGame = update(gameSignal.peek())
+
+  gameSignal.value = shouldRevealRuntimeMap()
+    ? revealMapMemory(nextGame)
+    : nextGame
 }
 
 const updateAppSettings = (update: (current: AppSettings) => AppSettings) => {
@@ -1222,7 +1231,9 @@ export const App = () => {
                               }))
 
                               if (checked) {
-                                updateGame((current) => revealMap(current))
+                                updateGame((current) =>
+                                  revealMapMemory(current)
+                                )
                               }
                             }}
                           />

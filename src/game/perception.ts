@@ -124,6 +124,14 @@ export const revealMap = (game: GameState): GameState => {
   }
 }
 
+export const revealMapMemory = (game: GameState): GameState => {
+  return {
+    ...game,
+    capsuleKnown: true,
+    memory: game.map.tiles.slice(),
+  }
+}
+
 const clearEntityMemory = (
   entityMemory: Array<EntityMemoryKind | null>,
   index: number,

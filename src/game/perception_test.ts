@@ -2,7 +2,7 @@
 
 import { assert, assertEquals } from "@std/assert"
 
-import { type GameState, revealMap } from "./game.ts"
+import { type GameState, revealMap, revealMapMemory } from "./game.ts"
 import type { GeneratedMap, Point } from "./mapgen.ts"
 
 Deno.test("revealMap remembers the full terrain layout as fog-of-war", () => {
@@ -15,6 +15,21 @@ Deno.test("revealMap remembers the full terrain layout as fog-of-war", () => {
   assertEquals(revealed.memory, game.map.tiles)
   assertEquals(revealed.entityMemory, game.entityMemory)
   assertEquals(game.memory.some((tile) => tile === null), true)
+})
+
+Deno.test("revealMapMemory preserves visibility while filling map memory", () => {
+  const game = createPerceptionTestGame()
+  game.visibility[0] = 3
+  game.visibility[1] = 2
+  game.entityMemory![2] = "enemy"
+
+  const revealed = revealMapMemory(game)
+
+  assertEquals(revealed.capsuleKnown, true)
+  assert(revealed.memory.every((tile) => tile !== null))
+  assertEquals(revealed.memory, game.map.tiles)
+  assertEquals(revealed.visibility, game.visibility)
+  assertEquals(revealed.entityMemory, game.entityMemory)
 })
 
 const createPerceptionTestGame = (): GameState => {
