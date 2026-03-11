@@ -642,6 +642,27 @@ Deno.test("player torpedoes proximity-detonate and sink hostile submarines", () 
   assert(next.screenShake > 0)
 })
 
+Deno.test("player torpedo kill takes precedence over same-turn hostile torpedo hit", () => {
+  const game = createSimultaneousTorpedoPrecedenceGame()
+  const next = fireTorpedo(game, "right")
+
+  assertEquals(next.status, "playing")
+  assertEquals(next.player, game.player)
+  assertEquals(next.hostileSubmarines.length, 0)
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.playerDeathCueCount, 0)
+})
+
+Deno.test("player torpedoes proximity-detonate hostile depth charges", () => {
+  const game = createTorpedoVsHostileDepthChargeGame()
+  const next = fireTorpedo(game, "right")
+
+  assertEquals(next.status, "playing")
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.depthCharges.length, 0)
+  assertEquals(next.playerDeathCueCount, 0)
+})
+
 Deno.test("torpedoes keep cruising beyond sonar range until they hit a wall", () => {
   const game = createLongRangeTorpedoGame()
   const launched = fireTorpedo(game, "right")
@@ -741,6 +762,26 @@ Deno.test("depth charges proximity-detonate when a hostile submarine closes with
   assertEquals(next.hostileSubmarines.length, 0)
   assert(next.shockwaveFront.some((cell) => cell.index === detonationIndex))
   assert(next.screenShake > 0)
+})
+
+Deno.test("depth charges proximity-detonate hostile torpedoes", () => {
+  const game = createDepthChargeVsHostileTorpedoGame()
+  const next = dropDepthCharge(game)
+
+  assertEquals(next.status, "playing")
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.depthCharges.length, 0)
+  assertEquals(next.playerDeathCueCount, 0)
+})
+
+Deno.test("depth charges proximity-detonate hostile depth charges", () => {
+  const game = createDepthChargeVsHostileDepthChargeGame()
+  const next = dropDepthCharge(game)
+
+  assertEquals(next.status, "playing")
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.depthCharges.length, 0)
+  assertEquals(next.playerDeathCueCount, 0)
 })
 
 Deno.test("heavy dust blocks sonar reveals behind it", () => {
@@ -1711,6 +1752,118 @@ const createTorpedoProximityGame = (): GameState => {
   }
 }
 
+const createSimultaneousTorpedoPrecedenceGame = (): GameState => {
+  const map = createMapFromRows(
+    [
+      "##########",
+      "#........#",
+      "#........#",
+      "#........#",
+      "#........#",
+      "#........#",
+      "##########",
+    ],
+    { x: 1, y: 3 },
+    { x: 8, y: 3 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "simultaneous-torpedo-precedence-test",
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    playerSonarContactCueCount: 0,
+    playerSonarContactAudioVariant: null,
+    hostileSonarContactCueCount: 0,
+    playerEntityHitCueCount: 0,
+    playerDeathCueCount: 0,
+    playerPickupCueCount: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [{
+      position: { x: 2, y: 5 },
+      senderId: "hostile-1",
+      direction: "up",
+      speed: 3,
+      rangeRemaining: 18,
+    }],
+    depthCharges: [],
+    pickups: [],
+    fish: [],
+    hostileSubmarines: [{
+      id: "hostile-1",
+      position: { x: 6, y: 2 },
+      facing: "left",
+      mode: "attack",
+      target: { x: 2, y: 2 },
+      reload: 2,
+    }],
+    trails: [],
+    dust: [],
+    cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+const createTorpedoVsHostileDepthChargeGame = (): GameState => {
+  return createProjectileInteractionGame({
+    seed: "torpedo-vs-hostile-depth-charge-test",
+    player: { x: 2, y: 2 },
+    hostilePosition: { x: 8, y: 4 },
+    depthCharges: [{
+      position: { x: 5, y: 2 },
+      senderId: "hostile-1",
+      speed: 1,
+      rangeRemaining: 18,
+    }],
+    facing: "right",
+  })
+}
+
+const createDepthChargeVsHostileTorpedoGame = (): GameState => {
+  return createProjectileInteractionGame({
+    seed: "depth-charge-vs-hostile-torpedo-test",
+    player: { x: 3, y: 1 },
+    hostilePosition: { x: 8, y: 5 },
+    torpedoes: [{
+      position: { x: 7, y: 4 },
+      senderId: "hostile-1",
+      direction: "left",
+      speed: 3,
+      rangeRemaining: 18,
+    }],
+    facing: "right",
+  })
+}
+
+const createDepthChargeVsHostileDepthChargeGame = (): GameState => {
+  return createProjectileInteractionGame({
+    seed: "depth-charge-vs-hostile-depth-charge-test",
+    player: { x: 3, y: 1 },
+    hostilePosition: { x: 8, y: 5 },
+    depthCharges: [{
+      position: { x: 5, y: 2 },
+      senderId: "hostile-1",
+      speed: 1,
+      rangeRemaining: 18,
+    }],
+    facing: "right",
+  })
+}
+
 const createDepthChargeTestGame = (): GameState => {
   const map = createMapFromRows(
     [
@@ -1798,6 +1951,82 @@ const createDepthChargeProximityGame = (): GameState => {
     cracks: [],
     fallingBoulders: [],
     facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+const createProjectileInteractionGame = (
+  overrides: {
+    seed: string
+    player: Point
+    hostilePosition: Point
+    torpedoes?: GameState["torpedoes"]
+    depthCharges?: GameState["depthCharges"]
+    facing?: GameState["facing"]
+  },
+): GameState => {
+  const map = createMapFromRows(
+    [
+      "##########",
+      "#........#",
+      "#........#",
+      "#........#",
+      "#........#",
+      "#........#",
+      "##########",
+    ],
+    { x: 1, y: 1 },
+    { x: 8, y: 5 },
+  )
+
+  return {
+    map,
+    player: { ...overrides.player },
+    seed: overrides.seed,
+    turn: 0,
+    status: "playing",
+    capsuleKnown: false,
+    capsuleCollected: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    playerSonarContactCueCount: 0,
+    playerSonarContactAudioVariant: null,
+    hostileSonarContactCueCount: 0,
+    playerEntityHitCueCount: 0,
+    playerDeathCueCount: 0,
+    playerPickupCueCount: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: (overrides.torpedoes ?? []).map((torpedo) => ({
+      ...torpedo,
+      position: { ...torpedo.position },
+    })),
+    depthCharges: (overrides.depthCharges ?? []).map((depthCharge) => ({
+      ...depthCharge,
+      position: { ...depthCharge.position },
+    })),
+    pickups: [],
+    fish: [],
+    hostileSubmarines: [{
+      id: "hostile-1",
+      position: { ...overrides.hostilePosition },
+      facing: "left",
+      mode: "attack",
+      target: { ...overrides.player },
+      reload: 2,
+    }],
+    trails: [],
+    dust: [],
+    cracks: [],
+    structuralDamage: Array.from({ length: map.tiles.length }, () => 0),
+    fallingBoulders: [],
+    facing: overrides.facing ?? "right",
     torpedoAmmo: 6,
     depthChargeAmmo: 6,
     screenShake: 0,
