@@ -131,6 +131,23 @@ export const shouldHaltAutoMoveForAnomaly = (
   return anomaly !== null && !seenAnomalies.has(keyForAutoMoveAnomaly(anomaly))
 }
 
+export const shouldIgnoreAutoMovePickupAnomalyOnPath = (
+  game: GameState,
+  path: Point[],
+  anomaly: AutoMoveAnomaly | null,
+): boolean => {
+  if (
+    anomaly === null || !path.some((point) => pointsEqual(point, anomaly.point))
+  ) {
+    return false
+  }
+
+  const index = anomaly.point.y * game.map.width + anomaly.point.x
+
+  return game.entityMemory?.[index] === "item" ||
+    game.pickups.some((pickup) => pointsEqual(pickup.position, anomaly.point))
+}
+
 export const findAutoMoveAnomaly = (
   game: GameState,
 ): AutoMoveAnomaly | null => {

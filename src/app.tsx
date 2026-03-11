@@ -26,6 +26,7 @@ import {
   movePlayer,
   revealMap,
   shouldHaltAutoMoveForAnomaly,
+  shouldIgnoreAutoMovePickupAnomalyOnPath,
   SONAR_INTERVAL,
   togglePlayerSonar,
   withGameMessage,
@@ -638,11 +639,16 @@ const ensureAppRuntime = () => {
           return current
         }
 
+        const path = findAutoMovePath(current, autoMoveTarget)
         const anomaly = findAutoMoveAnomaly(current)
 
         if (
           shouldHaltAutoMoveForAnomaly(
             appRuntime.autoMoveSeenAnomalies,
+            anomaly,
+          ) && !shouldIgnoreAutoMovePickupAnomalyOnPath(
+            current,
+            path,
             anomaly,
           )
         ) {
@@ -660,8 +666,6 @@ const ensureAppRuntime = () => {
             ),
           )
         }
-
-        const path = findAutoMovePath(current, autoMoveTarget)
 
         if (path.length < 2) {
           autoMoveTargetSignal.value = null
@@ -702,6 +706,9 @@ const ensureAppRuntime = () => {
           appRuntime.movementLoop?.markMovement()
         }
 
+        const nextPath = next.status === "playing"
+          ? findAutoMovePath(next, autoMoveTarget)
+          : []
         const nextAnomaly = next.status === "playing"
           ? findAutoMoveAnomaly(next)
           : null
@@ -709,6 +716,10 @@ const ensureAppRuntime = () => {
         if (
           shouldHaltAutoMoveForAnomaly(
             appRuntime.autoMoveSeenAnomalies,
+            nextAnomaly,
+          ) && !shouldIgnoreAutoMovePickupAnomalyOnPath(
+            next,
+            nextPath,
             nextAnomaly,
           )
         ) {
