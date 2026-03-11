@@ -4,6 +4,7 @@ import { assertEquals, assertStrictEquals } from "@std/assert"
 
 import {
   createGame,
+  findAutoMoveAnomaly,
   findAutoMovePath,
   keyForAutoMoveAnomaly,
   shouldHaltAutoMoveForAnomaly,
@@ -74,4 +75,30 @@ Deno.test("auto-move anomaly cache distinguishes matching reasons by location", 
     }),
     true,
   )
+})
+
+Deno.test("auto-move halts for hostile sonar contacts even with player sonar off", () => {
+  const game = createGame({
+    seed: "auto-move-hostile-sonar-test",
+    width: 16,
+    height: 10,
+    hostileSubmarineCount: 0,
+  })
+  const contactPoint = { x: game.player.x + 4, y: game.player.y }
+  const contactIndex = contactPoint.y * game.map.width + contactPoint.x
+  const next = {
+    ...game,
+    playerSonarEnabled: false,
+    visibility: game.visibility.map((level, index) =>
+      index === contactIndex ? 1 : level
+    ),
+    entityMemory: (game.entityMemory ?? []).map((entry, index) =>
+      index === contactIndex ? "enemy" : entry
+    ),
+  }
+
+  assertEquals(findAutoMoveAnomaly(next), {
+    point: contactPoint,
+    reason: "sonar",
+  })
 })

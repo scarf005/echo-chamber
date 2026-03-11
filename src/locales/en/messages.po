@@ -189,7 +189,7 @@ msgid "You paste {rammedFishCount} fish against the bow."
 msgstr "You paste {rammedFishCount} fish against the bow."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:354
+#: src/game/actions.ts:389
 #: src/game/log_test.ts:101
 msgid "Holding position."
 msgstr "Holding position."
@@ -485,52 +485,52 @@ msgid "Depth charge detonates below."
 msgstr "Depth charge detonates below."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:306
+#: src/game/actions.ts:341
 msgid "Player sonar enabled."
 msgstr "Player sonar enabled."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:307
+#: src/game/actions.ts:342
 msgid "Player sonar disabled."
 msgstr "Player sonar disabled."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:331
+#: src/game/actions.ts:366
 msgid "Hull blocked."
 msgstr "Hull blocked."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:340
+#: src/game/actions.ts:375
 msgid "Advance."
 msgstr "Advance."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:375
+#: src/game/actions.ts:410
 msgid "No torpedoes remaining."
 msgstr "No torpedoes remaining."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:387
+#: src/game/actions.ts:422
 msgid "Tube away to port."
 msgstr "Tube away to port."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:389
+#: src/game/actions.ts:424
 msgid "Tube away to starboard."
 msgstr "Tube away to starboard."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:390
+#: src/game/actions.ts:425
 msgid "VLS launch upward."
 msgstr "VLS launch upward."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:406
+#: src/game/actions.ts:441
 msgid "No depth charges remaining."
 msgstr "No depth charges remaining."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:415
+#: src/game/actions.ts:450
 msgid "Depth charge away."
 msgstr "Depth charge away."
 

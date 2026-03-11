@@ -189,7 +189,7 @@ msgid "You paste {rammedFishCount} fish against the bow."
 msgstr "선수로 물고기 {rammedFishCount}마리를 짓이겼다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:354
+#: src/game/actions.ts:389
 #: src/game/log_test.ts:101
 msgid "Holding position."
 msgstr "위치 유지."
@@ -485,52 +485,52 @@ msgid "Depth charge detonates below."
 msgstr "아래에서 기뢰가 폭발했다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:306
+#: src/game/actions.ts:341
 msgid "Player sonar enabled."
 msgstr "플레이어 소나 활성화됨."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:307
+#: src/game/actions.ts:342
 msgid "Player sonar disabled."
 msgstr "플레이어 소나 비활성화됨."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:331
+#: src/game/actions.ts:366
 msgid "Hull blocked."
 msgstr "선체 차단됨."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:340
+#: src/game/actions.ts:375
 msgid "Advance."
 msgstr "전진."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:375
+#: src/game/actions.ts:410
 msgid "No torpedoes remaining."
 msgstr "남은 어뢰가 없습니다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:387
+#: src/game/actions.ts:422
 msgid "Tube away to port."
 msgstr "좌현으로 발사."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:389
+#: src/game/actions.ts:424
 msgid "Tube away to starboard."
 msgstr "우현으로 발사."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:390
+#: src/game/actions.ts:425
 msgid "VLS launch upward."
 msgstr "VLS 상향 발사."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:406
+#: src/game/actions.ts:441
 msgid "No depth charges remaining."
 msgstr "남은 기뢰가 없습니다."
 
 #. js-lingui-explicit-id
-#: src/game/actions.ts:415
+#: src/game/actions.ts:450
 msgid "Depth charge away."
 msgstr "기뢰 투하."
 

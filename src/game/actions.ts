@@ -165,6 +165,12 @@ export const findAutoMoveAnomaly = (
     return visibleHostile
   }
 
+  const hostileSonarContact = firstVisibleEntityMemoryPoint(game, "enemy")
+
+  if (hostileSonarContact) {
+    return hostileSonarContact
+  }
+
   const visibleTorpedo = firstVisiblePoint(
     game,
     game.torpedoes.map((torpedo) => ({
@@ -250,6 +256,35 @@ const firstVisiblePoint = (
     const index = entry.point.y * game.map.width + entry.point.x
     return game.visibility[index] > 0
   }) ?? null
+}
+
+const firstVisibleEntityMemoryPoint = (
+  game: GameState,
+  kind: NonNullable<GameState["entityMemory"]>[number],
+): AutoMoveAnomaly | null => {
+  const entityMemory = game.entityMemory ?? []
+
+  for (let index = 0; index < entityMemory.length; index += 1) {
+    if (entityMemory[index] !== kind || game.visibility[index] <= 0) {
+      continue
+    }
+
+    const point = {
+      x: index % game.map.width,
+      y: Math.floor(index / game.map.width),
+    }
+
+    if (pointsEqual(point, game.player)) {
+      continue
+    }
+
+    return {
+      point,
+      reason: "sonar",
+    }
+  }
+
+  return null
 }
 
 const reasonForVisibility = (
