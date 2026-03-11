@@ -71,9 +71,10 @@ const hasActiveProjectileSender = (
   senderId: string,
   hostileSubmarines: HostileSubmarine[],
 ): boolean => {
-  return senderId === "player" || hostileSubmarines.some((hostileSubmarine) =>
-    hostileSubmarine.id === senderId
-  )
+  return senderId === "player" ||
+    hostileSubmarines.some((hostileSubmarine) =>
+      hostileSubmarine.id === senderId
+    )
 }
 
 export const stepTorpedoes = (
@@ -133,7 +134,9 @@ export const stepTorpedoes = (
     }
 
     if (!hasActiveProjectileSender(torpedo.senderId, nextHostileSubmarines)) {
-      activeTorpedoes = activeTorpedoes.filter((candidate) => candidate !== torpedo)
+      activeTorpedoes = activeTorpedoes.filter((candidate) =>
+        candidate !== torpedo
+      )
       continue
     }
 
@@ -655,10 +658,12 @@ const hasProjectileTargetNearby = (
   )
 }
 
-const hasHostileProjectileNearby = <Projectile extends {
-  senderId: string
-  position: Point
-}>(
+const hasHostileProjectileNearby = <
+  Projectile extends {
+    senderId: string
+    position: Point
+  },
+>(
   point: Point,
   senderId: string,
   avoidFriendlyFire: boolean,
@@ -671,11 +676,12 @@ const hasHostileProjectileNearby = <Projectile extends {
     }
 
     return isProjectileHostile(
-        senderId,
-        projectile.senderId,
-        avoidFriendlyFire,
-      ) &&
-      chebyshevDistance(point, projectile.position) <= PROJECTILE_PROXIMITY_RADIUS
+      senderId,
+      projectile.senderId,
+      avoidFriendlyFire,
+    ) &&
+      chebyshevDistance(point, projectile.position) <=
+        PROJECTILE_PROXIMITY_RADIUS
   })
 }
 
@@ -699,10 +705,12 @@ const isProjectileHostile = (
   return avoidFriendlyFire === false
 }
 
-const resolveProjectileBlastDamage = <Projectile extends {
-  senderId: string
-  position: Point
-}>(
+const resolveProjectileBlastDamage = <
+  Projectile extends {
+    senderId: string
+    position: Point
+  },
+>(
   impactPoint: Point,
   senderId: string,
   projectiles: Projectile[],
