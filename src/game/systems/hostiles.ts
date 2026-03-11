@@ -2269,7 +2269,7 @@ const sonarIntervalForHostile = (
         ? HOSTILE_SCOUT_ALERT_SONAR_INTERVAL
         : HOSTILE_SCOUT_SONAR_INTERVAL
     case "hunter":
-      return HOSTILE_HUNTER_SONAR_INTERVAL
+      return hasPlayerFix ? HOSTILE_HUNTER_SONAR_INTERVAL : null
   }
 }
 

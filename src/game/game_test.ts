@@ -896,6 +896,19 @@ Deno.test("hostile scouts sonar every five turns while patrolling", () => {
   )
 })
 
+Deno.test("hunters do not sonar without a player estimate", () => {
+  const game = createHunterSonarCadenceGame()
+  const next = holdPosition(game)
+
+  assertEquals(next.hostileSubmarines[0].lastSonarTurn, 0)
+  assertEquals(
+    next.shockwaves.some((wave) =>
+      wave.senderId === "hostile-1" && wave.damaging === false
+    ),
+    false,
+  )
+})
+
 Deno.test("guard submarines patrol the capsule, sonar every ten turns, and fire at threats", () => {
   const patrolGame = createGuardPatrolGame()
   const patrolling = holdPosition(patrolGame)
@@ -2593,6 +2606,54 @@ const createScoutSonarCadenceGame = (): GameState => {
   }
 }
 
+const createHunterSonarCadenceGame = (): GameState => {
+  const map = createMapFromRows(
+    [
+      "################",
+      "#..............#",
+      "#..............#",
+      "#..............#",
+      "################",
+    ],
+    { x: 1, y: 2 },
+    { x: 14, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: "hunter-sonar-cadence-test",
+    turn: 4,
+    status: "playing",
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 10, y: 1 },
+      archetype: "hunter",
+      lastSonarTurn: 0,
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
 const createHostileProximityAttackGame = (): GameState => {
   const map = createMapFromRows(
     [
@@ -3749,6 +3810,8 @@ const createEnemySonarVisibilityGame = (blocked: boolean): GameState => {
       position: blocked ? { x: 8, y: 1 } : { x: 8, y: 2 },
       archetype: "hunter",
       lastSonarTurn: 0,
+      lastKnownPlayerPosition: { x: 2, y: 2 },
+      lastKnownPlayerTurn: 4,
     })],
     trails: [],
     dust: [],
