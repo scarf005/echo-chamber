@@ -841,6 +841,53 @@ Deno.test("hostile submarines launch torpedoes and can sink the player", () => {
   )
 })
 
+Deno.test("easy difficulty gives four turns of grace after direct contact", () => {
+  let current = createHostileEncounterGraceGame(4)
+
+  for (let turn = 1; turn <= 4; turn += 1) {
+    current = holdPosition(current)
+    assertEquals(current.torpedoes.length, 0)
+    assertEquals(current.hostileSubmarines[0].engagementGraceUntilTurn, 4)
+    assertEquals(
+      current.hostileSubmarines[0].debugState?.attack.blockedReason,
+      "engagement grace",
+    )
+  }
+
+  const armed = holdPosition(current)
+
+  assertEquals(armed.torpedoes.length, 1)
+  assertEquals(armed.torpedoes[0].senderId, "hostile-1")
+})
+
+Deno.test("medium difficulty gives two turns of grace after direct contact", () => {
+  let current = createHostileEncounterGraceGame(2)
+
+  for (let turn = 1; turn <= 2; turn += 1) {
+    current = holdPosition(current)
+    assertEquals(current.torpedoes.length, 0)
+    assertEquals(current.hostileSubmarines[0].engagementGraceUntilTurn, 2)
+    assertEquals(
+      current.hostileSubmarines[0].debugState?.attack.blockedReason,
+      "engagement grace",
+    )
+  }
+
+  const armed = holdPosition(current)
+
+  assertEquals(armed.torpedoes.length, 1)
+  assertEquals(armed.torpedoes[0].senderId, "hostile-1")
+})
+
+Deno.test("medium difficulty blocks in-flight hostile torpedoes on first contact", () => {
+  const game = createHostileContactTorpedoGraceGame(2)
+  const next = holdPosition(game)
+
+  assertEquals(next.status, "playing")
+  assertEquals(next.torpedoes.length, 0)
+  assertEquals(next.hostileContactGraceUntilTurn, 2)
+})
+
 Deno.test("hostile sonar contact logs red and leaves an imprecise marker", () => {
   const game = createEnemySonarContactGame()
   const next = holdPosition(game)
@@ -2319,6 +2366,113 @@ const createHostileAttackGame = (): GameState => {
       target: { x: 2, y: 2 },
       reload: 0,
     }],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+const createHostileEncounterGraceGame = (
+  hostileEngagementGraceTurns: number,
+): GameState => {
+  const map = createMapFromRows(
+    [
+      "############",
+      "#..........#",
+      "#..........#",
+      "#..........#",
+      "############",
+    ],
+    { x: 1, y: 2 },
+    { x: 10, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: `hostile-encounter-grace-${hostileEngagementGraceTurns}`,
+    turn: 0,
+    status: "playing",
+    hostileEngagementGraceTurns,
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 9, y: 2 },
+      archetype: "hunter",
+    })],
+    trails: [],
+    dust: [],
+    cracks: [],
+    fallingBoulders: [],
+    facing: "right",
+    torpedoAmmo: 6,
+    depthChargeAmmo: 6,
+    screenShake: 0,
+    message: "",
+    logs: [],
+  }
+}
+
+const createHostileContactTorpedoGraceGame = (
+  hostileEngagementGraceTurns: number,
+): GameState => {
+  const map = createMapFromRows(
+    [
+      "########",
+      "#......#",
+      "#......#",
+      "#......#",
+      "########",
+    ],
+    { x: 1, y: 2 },
+    { x: 6, y: 2 },
+  )
+
+  return {
+    map,
+    player: { x: 2, y: 2 },
+    seed: `hostile-contact-torpedo-grace-${hostileEngagementGraceTurns}`,
+    turn: 0,
+    status: "playing",
+    hostileEngagementGraceTurns,
+    capsuleKnown: false,
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    entityMemory: Array.from({ length: map.tiles.length }, () => null),
+    visibility: Array.from({ length: map.tiles.length }, () => 0),
+    lastSonarTurn: 0,
+    shockwaves: [],
+    shockwaveFront: [],
+    torpedoes: [{
+      position: { x: 3, y: 2 },
+      senderId: "hostile-1",
+      direction: "left",
+      speed: 1,
+      rangeRemaining: 6,
+      avoidFriendlyFire: false,
+    }],
+    depthCharges: [],
+    pickups: [],
+    hostileSubmarines: [createHostile({
+      id: "hostile-1",
+      position: { x: 4, y: 2 },
+      archetype: "hunter",
+    })],
     trails: [],
     dust: [],
     cracks: [],
@@ -3989,6 +4143,8 @@ const createHostile = (options: {
     lastKnownPlayerPosition: options.lastKnownPlayerPosition ?? null,
     lastKnownPlayerVector: null,
     lastKnownPlayerTurn: options.lastKnownPlayerTurn ?? null,
+    directDetectionActive: false,
+    engagementGraceUntilTurn: null,
     previousPosition: options.previousPosition ?? null,
   }
 }

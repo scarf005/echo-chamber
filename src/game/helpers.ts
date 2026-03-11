@@ -74,6 +74,8 @@ export const cloneHostileSubmarine = (
     lastKnownPlayerVector: hostileSubmarine.lastKnownPlayerVector
       ? { ...hostileSubmarine.lastKnownPlayerVector }
       : null,
+    engagementGraceUntilTurn: hostileSubmarine.engagementGraceUntilTurn ?? null,
+    directDetectionActive: hostileSubmarine.directDetectionActive ?? false,
     plannedPath: hostileSubmarine.plannedPath?.map((point) => ({ ...point })),
     salvoMoveTarget: hostileSubmarine.salvoMoveTarget
       ? { ...hostileSubmarine.salvoMoveTarget }

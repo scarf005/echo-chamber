@@ -31,6 +31,20 @@ export const difficultyToHostileSubmarineCount = (
   return Math.max(1, Math.floor(hardCount / divisor))
 }
 
+export const difficultyToHostileEngagementGraceTurns = (
+  difficulty: DifficultySetting,
+): number => {
+  if (difficulty === "easy") {
+    return 4
+  }
+
+  if (difficulty === "medium") {
+    return 2
+  }
+
+  return 0
+}
+
 export type AppSettings = {
   audio: AudioSettings
   crtEnabled: boolean

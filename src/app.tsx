@@ -49,6 +49,7 @@ import {
 } from "./audio/settings.ts"
 import {
   type AppSettings,
+  difficultyToHostileEngagementGraceTurns,
   difficultyToHostileSubmarineCount,
   readAppSettings,
   writeAppSettings,
@@ -109,6 +110,9 @@ const createConfiguredGame = (rawSeed: string, settings: AppSettings) => {
   const runSeed = parseRunSeed(rawSeed, INITIAL_RUN_SEED)
   const game = createGame({
     seed: runSeed.gameSeed,
+    hostileEngagementGraceTurns: difficultyToHostileEngagementGraceTurns(
+      settings.difficulty,
+    ),
     hostileSubmarineCount: difficultyToHostileSubmarineCount(
       settings.difficulty,
     ),

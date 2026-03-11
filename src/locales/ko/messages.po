@@ -138,53 +138,53 @@ msgid "When sunk, press R to restart. Use Options for restart or random run anyt
 msgstr "침몰 시 R을 눌러 재시작하세요. 언제든지 옵션에서 재시작하거나 무작위 실행할 수 있습니다."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:109
-#: src/game/turn.ts:325
+#: src/game/turn.ts:130
+#: src/game/turn.ts:349
 msgid "A hostile submarine rams your hull. Press R for a new run."
 msgstr "적 잠수함이 선체를 들이받았습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:173
+#: src/game/turn.ts:195
 msgid "A hostile torpedo tears through your hull. Press R for a new run."
 msgstr "적 어뢰가 선체를 관통했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:207
+#: src/game/turn.ts:230
 msgid "A hostile blast caves in your hull. Press R for a new run."
 msgstr "적의 폭발로 선체가 붕괴했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:231
+#: src/game/turn.ts:254
 msgid "Cave-in debris crushes your hull. Press R for a new run."
 msgstr "낙반 잔해가 선체를 짓눌렀습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:354
+#: src/game/turn.ts:378
 msgid "hostile sonar from {direction}"
 msgstr "{direction}에서 적 소나"
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:433
+#: src/game/turn.ts:457
 msgid "Capsule retrieved. Return to dock."
 msgstr "캡슐 회수 완료. 도크로 복귀하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:441
+#: src/game/turn.ts:465
 msgid "Your submarine is destroyed. Press R for a new run."
 msgstr "잠수함이 파괴되었습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:446
+#: src/game/turn.ts:470
 msgid "Capsule delivered to dock. Press R for a new run."
 msgstr "캡슐을 도크에 인도했습니다. R을 눌러 새로 시작하세요."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:457
+#: src/game/turn.ts:481
 msgid "You paste a fish against the bow."
 msgstr "선수로 물고기 한 마리를 짓이겼다."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:458
+#: src/game/turn.ts:482
 msgid "You paste {rammedFishCount} fish against the bow."
 msgstr "선수로 물고기 {rammedFishCount}마리를 짓이겼다."
 
@@ -405,62 +405,67 @@ msgid "friendly fire risk"
 msgstr "아군 오사 위험"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:110
+#: src/game/localize.ts:109
+msgid "engagement grace"
+msgstr ""
+
+#. js-lingui-explicit-id
+#: src/game/localize.ts:111
 msgid "no valid weapon solution"
 msgstr "유효한 무장 해법 없음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:116
+#: src/game/localize.ts:117
 msgid "wall ahead"
 msgstr "전방에 벽"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:117
+#: src/game/localize.ts:118
 msgid "no plotted course"
 msgstr "설정된 항로 없음"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:119
+#: src/game/localize.ts:120
 msgid "charted wall at destination"
 msgstr "목적지에 기록된 벽"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:121
+#: src/game/localize.ts:122
 msgid "torpedo in sight"
 msgstr "어뢰 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:122
+#: src/game/localize.ts:123
 msgid "depth charge in sight"
 msgstr "기뢰 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:124
+#: src/game/localize.ts:125
 msgid "falling boulder in sight"
 msgstr "낙석 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:127
+#: src/game/localize.ts:128
 msgid "torpedo cache in sight"
 msgstr "어뢰 보급함 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:130
+#: src/game/localize.ts:131
 msgid "depth charge cache in sight"
 msgstr "기뢰 보급함 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:132
+#: src/game/localize.ts:133
 msgid "survey map in sight"
 msgstr "조사 맵 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:133
+#: src/game/localize.ts:134
 msgid "capsule in sight"
 msgstr "캡슐 발견"
 
 #. js-lingui-explicit-id
-#: src/game/localize.ts:134
+#: src/game/localize.ts:135
 msgid "sonar"
 msgstr "소나"
 
@@ -559,225 +564,225 @@ msgstr "{target} 부근 대기 중"
 msgid "{id}: will {mode}{targetSuffix}"
 msgstr "{id}: {mode}{targetSuffix} 예정"
 
-#: src/app.tsx:1005
+#: src/app.tsx:1009
 msgid "active seed modes"
 msgstr "활성 시드 모드"
 
-#: src/app.tsx:1119
+#: src/app.tsx:1123
 msgid "audio"
 msgstr "오디오"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:353
+#: src/app.tsx:357
 msgid "Auto-nav engaged to {0}."
 msgstr "자동 항법 {0}로 활성화됨."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1436
+#: src/app.tsx:1440
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "자동 항법 중지: {localizedReason} @ {0}{1}."
 
-#: src/app.tsx:976
-#: src/app.tsx:1407
+#: src/app.tsx:980
+#: src/app.tsx:1411
 msgid "close"
 msgstr "닫기"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:372
+#: src/app.tsx:376
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "{0}로 항로 표시됨. 다시 클릭하여 시작하세요."
 
-#: src/app.tsx:1271
+#: src/app.tsx:1275
 msgid "credits"
 msgstr "크레딧"
 
-#: src/app.tsx:1099
+#: src/app.tsx:1103
 msgid "CRT effect"
 msgstr "CRT 효과"
 
-#: src/app.tsx:880
+#: src/app.tsx:884
 msgid "depth charges"
 msgstr "기뢰"
 
-#: src/app.tsx:1213
+#: src/app.tsx:1217
 msgid "dev"
 msgstr "개발"
 
-#: src/app.tsx:1041
-#: src/app.tsx:1044
+#: src/app.tsx:1045
+#: src/app.tsx:1048
 msgid "difficulty"
 msgstr "난이도"
 
-#: src/app.tsx:892
+#: src/app.tsx:896
 msgid "display"
 msgstr "표시"
 
-#: src/app.tsx:306
+#: src/app.tsx:310
 msgid "Display set to full map."
 msgstr "전체 맵으로 표시 설정됨."
 
-#: src/app.tsx:307
+#: src/app.tsx:311
 msgid "Display set to tracking camera."
 msgstr "추적 카메라로 표시 설정됨."
 
-#: src/app.tsx:1052
-#: src/app.tsx:1060
+#: src/app.tsx:1056
+#: src/app.tsx:1064
 msgid "easy"
 msgstr "쉬움"
 
-#: src/app.tsx:1149
+#: src/app.tsx:1153
 msgid "enable music"
 msgstr "음악 활성화"
 
-#: src/app.tsx:1193
+#: src/app.tsx:1197
 msgid "enable sfx"
 msgstr "효과음 활성화"
 
-#: src/app.tsx:1022
+#: src/app.tsx:1026
 msgid "English"
 msgstr "영어"
 
-#: src/app.tsx:816
+#: src/app.tsx:820
 msgid "FULL MAP (M)"
 msgstr "전체 맵 (M)"
 
-#: src/app.tsx:1247
-#: src/app.tsx:1253
+#: src/app.tsx:1251
+#: src/app.tsx:1257
 msgid "god mode"
 msgstr "신 모드"
 
-#: src/app.tsx:1097
+#: src/app.tsx:1101
 msgid "graphics"
 msgstr "그래픽"
 
-#: src/app.tsx:1084
-#: src/app.tsx:1092
+#: src/app.tsx:1088
+#: src/app.tsx:1096
 msgid "hard"
 msgstr "어려움"
 
-#: src/app.tsx:947
+#: src/app.tsx:951
 msgid "hover any tile to inspect terrain and contacts."
 msgstr "타일에 마우스를 올려 지형과 접촉을 검사하세요."
 
-#: src/app.tsx:928
+#: src/app.tsx:932
 msgid "hover tile"
 msgstr "마우스 오버 타일"
 
-#: src/app.tsx:926
+#: src/app.tsx:930
 msgid "inspector"
 msgstr "검사기"
 
-#: src/app.tsx:1033
+#: src/app.tsx:1037
 msgid "Korean"
 msgstr "한국어"
 
-#: src/app.tsx:1011
-#: src/app.tsx:1014
+#: src/app.tsx:1015
+#: src/app.tsx:1018
 msgid "language"
 msgstr "언어"
 
-#: src/app.tsx:910
-#: src/app.tsx:1397
+#: src/app.tsx:914
 #: src/app.tsx:1401
+#: src/app.tsx:1405
 msgid "log"
 msgstr "기록"
 
-#: src/app.tsx:1244
+#: src/app.tsx:1248
 msgid "map overlay"
 msgstr "맵 오버레이"
 
-#: src/app.tsx:1216
+#: src/app.tsx:1220
 msgid "map visibility"
 msgstr "맵 가시성"
 
-#: src/app.tsx:1068
-#: src/app.tsx:1076
+#: src/app.tsx:1072
+#: src/app.tsx:1080
 msgid "medium"
 msgstr "보통"
 
-#: src/app.tsx:850
+#: src/app.tsx:854
 msgid "mission status"
 msgstr "임무 상태"
 
-#: src/app.tsx:1122
+#: src/app.tsx:1126
 msgid "music"
 msgstr "음악"
 
-#: src/app.tsx:1131
+#: src/app.tsx:1135
 msgid "music volume"
 msgstr "음악 볼륨"
 
-#: src/app.tsx:829
+#: src/app.tsx:833
 msgid "OFF"
 msgstr "끔"
 
-#: src/app.tsx:829
+#: src/app.tsx:833
 msgid "ON"
 msgstr "켬"
 
-#: src/app.tsx:902
+#: src/app.tsx:906
 msgid "open full order log"
 msgstr "전체 명령 로그 열기"
 
-#: src/app.tsx:854
+#: src/app.tsx:858
 msgid "open options"
 msgstr "옵션 열기"
 
-#: src/app.tsx:967
-#: src/app.tsx:970
+#: src/app.tsx:971
+#: src/app.tsx:974
 msgid "options"
 msgstr "옵션"
 
-#: src/app.tsx:884
+#: src/app.tsx:888
 msgid "position"
 msgstr "위치"
 
-#: src/app.tsx:999
+#: src/app.tsx:1003
 msgid "restart"
 msgstr "재시작"
 
-#: src/app.tsx:1218
-#: src/app.tsx:1223
+#: src/app.tsx:1222
+#: src/app.tsx:1227
 msgid "reveal map"
 msgstr "맵 공개"
 
-#: src/app.tsx:987
+#: src/app.tsx:991
 msgid "run seed"
 msgstr "실행 시드"
 
-#: src/app.tsx:986
+#: src/app.tsx:990
 msgid "seed"
 msgstr "시드"
 
-#: src/app.tsx:1166
+#: src/app.tsx:1170
 msgid "sfx"
 msgstr "효과음"
 
-#: src/app.tsx:1175
+#: src/app.tsx:1179
 msgid "sfx volume"
 msgstr "효과음 볼륨"
 
-#: src/app.tsx:872
+#: src/app.tsx:876
 msgid "sonar in"
 msgstr "소나 입력"
 
-#: src/app.tsx:888
+#: src/app.tsx:892
 msgid "target"
 msgstr "목표"
 
-#: src/app.tsx:1104
+#: src/app.tsx:1108
 msgid "toggle CRT effect"
 msgstr "CRT 효과 전환"
 
-#: src/app.tsx:876
+#: src/app.tsx:880
 msgid "torpedoes"
 msgstr "어뢰"
 
-#: src/app.tsx:817
+#: src/app.tsx:821
 msgid "TRACKING (M)"
 msgstr "추적 화면 (M)"
 
-#: src/app.tsx:868
+#: src/app.tsx:872
 msgid "turn"
 msgstr "턴"

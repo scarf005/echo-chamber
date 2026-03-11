@@ -106,6 +106,7 @@ export const localizeAttackBlockReason = (reason: string | null): string => {
     return i18n._("low confidence shot skipped")
   }
   if (reason === "friendly fire risk") return i18n._("friendly fire risk")
+  if (reason === "engagement grace") return i18n._("engagement grace")
   if (reason === "no valid weapon solution") {
     return i18n._("no valid weapon solution")
   }

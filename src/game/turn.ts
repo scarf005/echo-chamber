@@ -4,6 +4,7 @@ import {
   DEPTH_CHARGE_RANGE,
   DEPTH_CHARGE_SPEED,
   DUST_DECAY,
+  PASSIVE_DETECTED_RADIUS,
   PASSIVE_EXACT_RADIUS,
   SHAKE_DECAY,
   SONAR_INTERVAL,
@@ -94,15 +95,35 @@ export const advanceTurn = (
   let torpedoAmmo = game.torpedoAmmo
   let depthChargeAmmo = game.depthChargeAmmo
   let screenShake = decayShake(game.screenShake, SHAKE_DECAY)
+  let hostileContactGraceUntilTurn = game.hostileContactGraceUntilTurn ?? null
+  const preStepHostileContactActive = isHostileContactActive(
+    nextPlayer,
+    hostileSubmarines,
+  )
+  const hostileEngagementGraceTurns = game.hostileEngagementGraceTurns ?? 0
+
+  if (
+    hostileEngagementGraceTurns > 0 &&
+    preStepHostileContactActive &&
+    !(game.hostileContactActive ?? false) &&
+    (hostileContactGraceUntilTurn === null ||
+      nextTurn > hostileContactGraceUntilTurn)
+  ) {
+    hostileContactGraceUntilTurn = nextTurn + hostileEngagementGraceTurns - 1
+  }
+
+  const hostileContactGraceActive = hostileContactGraceUntilTurn !== null &&
+    nextTurn <= hostileContactGraceUntilTurn
   let rammedFishCount =
     fish.filter((candidate) => pointsEqual(candidate.position, nextPlayer))
       .length
   fish = fish.filter((candidate) =>
     !pointsEqual(candidate.position, nextPlayer)
   )
-  let playerDestroyed = hostileSubmarines.some((hostileSubmarine) =>
-    pointsEqual(hostileSubmarine.position, nextPlayer)
-  )
+  let playerDestroyed = !hostileContactGraceActive &&
+    hostileSubmarines.some((hostileSubmarine) =>
+      pointsEqual(hostileSubmarine.position, nextPlayer)
+    )
   let hostileMessage: LogMessage | null = playerDestroyed
     ? createLogMessage(
       () =>
@@ -166,9 +187,10 @@ export const advanceTurn = (
   hostileSubmarines = torpedoStep.hostileSubmarines
   fallingBoulders = [...fallingBoulders, ...torpedoStep.fallingBoulders]
   screenShake = Math.max(screenShake, torpedoStep.screenShake)
-  playerDestroyed = playerDestroyed || torpedoStep.playerDestroyed
+  playerDestroyed = playerDestroyed ||
+    (!hostileContactGraceActive && torpedoStep.playerDestroyed)
 
-  if (torpedoStep.playerDestroyed) {
+  if (torpedoStep.playerDestroyed && !hostileContactGraceActive) {
     hostileMessage = createLogMessage(() =>
       i18n._(
         "A hostile torpedo tears through your hull. Press R for a new run.",
@@ -199,9 +221,10 @@ export const advanceTurn = (
   hostileSubmarines = depthChargeStep.hostileSubmarines
   fallingBoulders = [...fallingBoulders, ...depthChargeStep.fallingBoulders]
   screenShake = Math.max(screenShake, depthChargeStep.screenShake)
-  playerDestroyed = playerDestroyed || depthChargeStep.playerDestroyed
+  playerDestroyed = playerDestroyed ||
+    (!hostileContactGraceActive && depthChargeStep.playerDestroyed)
 
-  if (depthChargeStep.playerDestroyed) {
+  if (depthChargeStep.playerDestroyed && !hostileContactGraceActive) {
     hostileMessage = createLogMessage(
       () =>
         i18n._("A hostile blast caves in your hull. Press R for a new run."),
@@ -303,6 +326,7 @@ export const advanceTurn = (
         shockwaves: [...game.shockwaves, ...spawnedShockwaves],
         trails,
         memory: map.tiles.slice(),
+        hostileEngagementGraceTurns: game.hostileEngagementGraceTurns ?? 0,
         playerSonarHitHostiles,
         capsuleRetrievedThisTurn,
       },
@@ -317,9 +341,9 @@ export const advanceTurn = (
     hostileAiLogs = hostileStep.aiDecisionLogs.map((message) =>
       createLogMessage(message, "ai")
     )
-    playerDestroyed = hostileStep.playerDestroyed
+    playerDestroyed = hostileStep.playerDestroyed && !hostileContactGraceActive
 
-    if (hostileStep.playerDestroyed) {
+    if (hostileStep.playerDestroyed && !hostileContactGraceActive) {
       hostileMessage = createLogMessage(
         () =>
           i18n._("A hostile submarine rams your hull. Press R for a new run."),
@@ -493,6 +517,21 @@ export const advanceTurn = (
     : won
     ? "won"
     : "playing"
+  const nextHostileContactActive = isHostileContactActive(
+    nextPlayer,
+    hostileSubmarines,
+  )
+
+  if (
+    hostileEngagementGraceTurns > 0 &&
+    nextHostileContactActive &&
+    !(game.hostileContactActive ?? false) &&
+    (hostileContactGraceUntilTurn === null ||
+      nextTurn > hostileContactGraceUntilTurn)
+  ) {
+    hostileContactGraceUntilTurn = nextTurn + hostileEngagementGraceTurns - 1
+  }
+
   const nextGame: GameState = {
     ...game,
     map,
@@ -500,6 +539,9 @@ export const advanceTurn = (
     turn: nextTurn,
     status: nextStatus,
     playerSonarEnabled,
+    hostileEngagementGraceTurns: game.hostileEngagementGraceTurns ?? 0,
+    hostileContactActive: nextHostileContactActive,
+    hostileContactGraceUntilTurn,
     capsuleCollected,
     lastSonarTurn: shouldEmitSonar ? nextTurn : game.lastSonarTurn,
     playerSonarContactCueCount: playerSonarMadeContact
@@ -545,6 +587,16 @@ export const advanceTurn = (
       [...shockwaveStep.revealedEntities, ...hostileSonarContact.reveals],
     ),
     nextMessage,
+  )
+}
+
+const isHostileContactActive = (
+  player: Point,
+  hostileSubmarines: readonly HostileSubmarine[],
+): boolean => {
+  return hostileSubmarines.some((hostileSubmarine) =>
+    chebyshevDistance(player, hostileSubmarine.position) <=
+      PASSIVE_DETECTED_RADIUS
   )
 }
 

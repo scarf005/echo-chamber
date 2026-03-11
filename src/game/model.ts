@@ -178,6 +178,8 @@ export interface HostileSubmarine {
   lastKnownPlayerVector?: Point | null
   lastKnownPlayerTurn?: number | null
   lastKnownPlayerFromDirectDetection?: boolean
+  directDetectionActive?: boolean
+  engagementGraceUntilTurn?: number | null
   previousPosition?: Point | null
   recentPositions?: Point[]
   plannedPath?: Point[]
@@ -195,6 +197,9 @@ export interface GameState {
   turn: number
   status: GameStatus
   playerSonarEnabled?: boolean
+  hostileEngagementGraceTurns?: number
+  hostileContactActive?: boolean
+  hostileContactGraceUntilTurn?: number | null
   capsuleKnown: boolean
   capsuleCollected?: boolean
   memory: Array<TileKind | null>
@@ -231,6 +236,7 @@ export interface GameOptions {
   seed?: string
   width?: number
   height?: number
+  hostileEngagementGraceTurns?: number
   hostileSubmarineCount?: number
 }
 

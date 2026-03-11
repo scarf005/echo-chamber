@@ -74,6 +74,7 @@ interface HostileTurnContext {
   shockwaves: Shockwave[]
   trails: FadeCell[]
   memory: Array<TileKind | null>
+  hostileEngagementGraceTurns: number
   playerSonarHitHostiles: ReadonlySet<string>
   capsuleRetrievedThisTurn: boolean
 }
@@ -89,6 +90,8 @@ interface ResolvedHostileSubmarine extends HostileSubmarine {
   lastKnownPlayerVector: Point | null
   lastKnownPlayerTurn: number | null
   lastKnownPlayerFromDirectDetection: boolean
+  directDetectionActive: boolean
+  engagementGraceUntilTurn: number | null
   previousPosition: Point | null
   recentPositions: Point[]
   plannedPath: Point[]
@@ -338,6 +341,9 @@ export const stepHostileSubmarines = (
     let lastKnownPlayerTurn = hostileSubmarine.lastKnownPlayerTurn
     let lastKnownPlayerFromDirectDetection =
       hostileSubmarine.lastKnownPlayerFromDirectDetection ?? false
+    let directDetectionActive = hostileSubmarine.directDetectionActive ?? false
+    let engagementGraceUntilTurn = hostileSubmarine.engagementGraceUntilTurn ??
+      null
     let previousPosition = hostileSubmarine.previousPosition
       ? { ...hostileSubmarine.previousPosition }
       : null
@@ -375,6 +381,19 @@ export const stepHostileSubmarines = (
       salvoMoveTarget = null
       lastKnownPlayerFromDirectDetection = false
     }
+
+    if (
+      knowledge.directDetection &&
+      !directDetectionActive &&
+      context.hostileEngagementGraceTurns > 0 &&
+      (engagementGraceUntilTurn === null || turn > engagementGraceUntilTurn)
+    ) {
+      engagementGraceUntilTurn = turn + context.hostileEngagementGraceTurns - 1
+    }
+
+    directDetectionActive = knowledge.directDetection
+    const attackGraceActive = engagementGraceUntilTurn !== null &&
+      turn <= engagementGraceUntilTurn
 
     if (
       archetype === "turtle" &&
@@ -569,6 +588,7 @@ export const stepHostileSubmarines = (
         lastKnownPlayerFromDirectDetection,
         reload,
         knowledge.directDetection,
+        attackGraceActive,
         repositioningForSalvo,
         turn,
         retainedPlannedPath,
@@ -588,6 +608,7 @@ export const stepHostileSubmarines = (
           lastKnownPlayerFromDirectDetection,
           reload,
           knowledge.directDetection,
+          attackGraceActive,
           repositioningForSalvo,
           turn,
         )
@@ -607,6 +628,7 @@ export const stepHostileSubmarines = (
         lastKnownPlayerFromDirectDetection,
         reload,
         knowledge.directDetection,
+        attackGraceActive,
         repositioningForSalvo,
         turn,
       )
@@ -623,7 +645,7 @@ export const stepHostileSubmarines = (
       position = nextStep
       clearKelpStrandAt(map, position)
 
-      if (pointsEqual(position, context.player)) {
+      if (pointsEqual(position, context.player) && !attackGraceActive) {
         playerDestroyed = true
       }
     }
@@ -649,6 +671,7 @@ export const stepHostileSubmarines = (
       lastKnownPlayerTurn,
       lastKnownPlayerFromDirectDetection,
       knowledge.directDetection,
+      attackGraceActive,
       random,
       turn,
       salvoShotsRemaining,
@@ -686,6 +709,7 @@ export const stepHostileSubmarines = (
         lastKnownPlayerFromDirectDetection,
         reload,
         knowledge.directDetection,
+        attackGraceActive,
         false,
         turn,
       )
@@ -767,6 +791,8 @@ export const stepHostileSubmarines = (
       lastKnownPlayerVector,
       lastKnownPlayerTurn,
       lastKnownPlayerFromDirectDetection,
+      directDetectionActive,
+      engagementGraceUntilTurn,
       previousPosition,
       recentPositions,
       lastAiLog,
@@ -972,6 +998,8 @@ const hydrateHostileSubmarine = (
     lastKnownPlayerTurn: hostileSubmarine.lastKnownPlayerTurn ?? null,
     lastKnownPlayerFromDirectDetection:
       hostileSubmarine.lastKnownPlayerFromDirectDetection ?? false,
+    directDetectionActive: hostileSubmarine.directDetectionActive ?? false,
+    engagementGraceUntilTurn: hostileSubmarine.engagementGraceUntilTurn ?? null,
     previousPosition: hostileSubmarine.previousPosition
       ? { ...hostileSubmarine.previousPosition }
       : null,
@@ -1445,6 +1473,7 @@ const _chooseNextStep = (
   lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
+  attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
 ): Point | null => {
@@ -1466,6 +1495,7 @@ const _chooseNextStep = (
       lastKnownPlayerFromDirectDetection,
       reload,
       directDetection,
+      attackGraceActive,
       turn,
     )
   ) {
@@ -1483,6 +1513,7 @@ const _chooseNextStep = (
       lastKnownPlayerTurn,
       occupied,
       reload,
+      attackGraceActive,
       turn,
     )
   ) {
@@ -1522,6 +1553,7 @@ const describePlannedPath = (
   lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
+  attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
 ): Point[] => {
@@ -1543,6 +1575,7 @@ const describePlannedPath = (
       lastKnownPlayerFromDirectDetection,
       reload,
       directDetection,
+      attackGraceActive,
       turn,
     )
   ) {
@@ -1560,6 +1593,7 @@ const describePlannedPath = (
       lastKnownPlayerTurn,
       occupied,
       reload,
+      attackGraceActive,
       turn,
     )
   ) {
@@ -1645,12 +1679,14 @@ const shouldHoldAttackPosition = (
   lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
+  attackGraceActive: boolean,
   turn: number,
 ): boolean => {
   if (
     !target ||
     archetype === "scout" ||
-    !hasRangedAmmo(hostileSubmarine)
+    !hasRangedAmmo(hostileSubmarine) ||
+    attackGraceActive
   ) {
     return false
   }
@@ -1758,9 +1794,15 @@ const shouldScoutHoldForEstimatedShot = (
   targetTurn: number | null,
   occupied: ReadonlySet<string>,
   reload: number,
+  attackGraceActive: boolean,
   turn: number,
 ): boolean => {
-  if (reload > 0 || !target || !hasRangedAmmo(hostileSubmarine)) {
+  if (
+    reload > 0 ||
+    attackGraceActive ||
+    !target ||
+    !hasRangedAmmo(hostileSubmarine)
+  ) {
     return false
   }
 
@@ -1829,6 +1871,7 @@ const resolveAttack = (
   lastKnownPlayerTurn: number | null,
   lastKnownPlayerFromDirectDetection: boolean,
   directDetection: boolean,
+  attackGraceActive: boolean,
   random: () => number,
   turn: number,
   salvoShotsRemaining: number,
@@ -1889,6 +1932,12 @@ const resolveAttack = (
   if (!lastKnownPlayerPosition || reload > 0) {
     return noAttack(reload, !lastKnownPlayerPosition, {
       blockedReason: lastKnownPlayerPosition ? "reloading" : "no player fix",
+    })
+  }
+
+  if (attackGraceActive) {
+    return noAttack(reload, false, {
+      blockedReason: "engagement grace",
     })
   }
 
@@ -2501,6 +2550,7 @@ const canReuseCurrentPlannedPath = (
   lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
+  attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
 ): boolean => {
@@ -2527,6 +2577,7 @@ const canReuseCurrentPlannedPath = (
       lastKnownPlayerFromDirectDetection,
       reload,
       directDetection,
+      attackGraceActive,
       turn,
     )
   ) {
@@ -2557,6 +2608,7 @@ const canUsePlannedPathForMovement = (
   lastKnownPlayerFromDirectDetection: boolean,
   reload: number,
   directDetection: boolean,
+  attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
   plannedPath: readonly Point[] | null,
@@ -2591,6 +2643,7 @@ const canUsePlannedPathForMovement = (
       lastKnownPlayerFromDirectDetection,
       reload,
       directDetection,
+      attackGraceActive,
       turn,
     )
   ) {

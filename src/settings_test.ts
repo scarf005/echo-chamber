@@ -10,6 +10,7 @@ import {
   DEFAULT_DIFFICULTY_SETTING,
   defaultAppSettings,
   DEV_ENTITY_OVERLAY_STORAGE_KEY,
+  difficultyToHostileEngagementGraceTurns,
   difficultyToHostileSubmarineCount,
   normalizeDifficultySetting,
   readAppSettings,
@@ -55,6 +56,9 @@ Deno.test("difficulty settings normalize and scale hostile counts", () => {
     DEFAULT_HOSTILE_SUBMARINE_COUNT,
   )
   assertEquals(difficultyToHostileSubmarineCount("easy", 3), 1)
+  assertEquals(difficultyToHostileEngagementGraceTurns("easy"), 4)
+  assertEquals(difficultyToHostileEngagementGraceTurns("medium"), 2)
+  assertEquals(difficultyToHostileEngagementGraceTurns("hard"), 0)
 })
 
 Deno.test("readAppSettings restores the unified payload", () => {
