@@ -7,13 +7,6 @@ import {
   isAutoMoveNavigable,
 } from "./game.ts"
 
-const game = createGame({
-  seed: "auto-move-bench",
-  width: 72,
-  height: 36,
-  hostileSubmarineCount: 0,
-})
-
 const pickDestination = () => {
   for (let y = game.map.height - 1; y >= 0; y -= 1) {
     for (let x = game.map.width - 1; x >= 0; x -= 1) {
@@ -30,6 +23,13 @@ const pickDestination = () => {
 
   return { ...game.player }
 }
+
+const game = createGame({
+  seed: "auto-move-bench",
+  width: 72,
+  height: 36,
+  hostileSubmarineCount: 0,
+})
 
 const destination = pickDestination()
 
