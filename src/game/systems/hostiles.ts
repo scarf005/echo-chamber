@@ -209,7 +209,7 @@ export const spawnHostileSubmarines = (
       ? "hunter"
       : provisionalArchetype
 
-    if (!canSpawnHostileAt(map, point, archetype, hostileSubmarines)) {
+    if (!canSpawnHostileAt(map, point, { archetype, hostileSubmarines })) {
       continue
     }
 
@@ -301,10 +301,12 @@ export const stepHostileSubmarines = (
       gatherKnowledge(
         map,
         hostileSubmarine,
-        currentHostiles,
         {
-          ...context,
-          shockwaves: availableShockwaves,
+          hostileSubmarines: currentHostiles,
+          context: {
+            ...context,
+            shockwaves: availableShockwaves,
+          },
         },
       ),
     ]),
@@ -445,17 +447,15 @@ export const stepHostileSubmarines = (
       )
     ) {
       mode = "attack"
-      target = chooseAttackTarget(
-        map,
-        position,
+      target = chooseAttackTarget(map, position, {
         lastKnownPlayerPosition,
         lastKnownPlayerVector,
         archetype,
-        knowledge.directDetection,
+        directDetection: knowledge.directDetection,
         lastKnownPlayerTurn,
         turn,
-        hostilePredictionDistancePenalty,
-      )
+        predictionDistancePenalty: hostilePredictionDistancePenalty,
+      })
     } else if (
       archetype === "guard" &&
       knowledge.cluePosition &&
@@ -467,19 +467,23 @@ export const stepHostileSubmarines = (
         ? keepInvestigationPath(
           map,
           position,
-          target,
-          knowledge.cluePosition,
-          occupied,
-          plannedPath,
+          {
+            target,
+            cluePosition: knowledge.cluePosition,
+            occupied,
+            plannedPath,
+          },
         )
         : null
       target = retainedPlannedPath ? target : chooseCoordinatedClueTarget(
         map,
         position,
-        knowledge.cluePosition,
-        occupied,
-        reservedInvestigationTargets,
-        random,
+        {
+          cluePosition: knowledge.cluePosition,
+          occupied,
+          reservedTargets: reservedInvestigationTargets,
+          random,
+        },
       )
     } else if (knowledge.cluePosition) {
       mode = "investigate"
@@ -487,24 +491,28 @@ export const stepHostileSubmarines = (
         ? keepInvestigationPath(
           map,
           position,
-          target,
-          knowledge.cluePosition,
-          occupied,
-          plannedPath,
+          {
+            target,
+            cluePosition: knowledge.cluePosition,
+            occupied,
+            plannedPath,
+          },
         )
         : null
       target = retainedPlannedPath ? target : chooseCoordinatedClueTarget(
         map,
         position,
-        knowledge.cluePosition,
-        occupied,
-        reservedInvestigationTargets,
-        random,
+        {
+          cluePosition: knowledge.cluePosition,
+          occupied,
+          reservedTargets: reservedInvestigationTargets,
+          random,
+        },
       )
     } else if (archetype === "scout") {
       mode = "investigate"
       retainedPlannedPath = target
-        ? keepPatrolPath(map, position, target, occupied, plannedPath)
+        ? keepPatrolPath(map, position, { target, occupied, plannedPath })
         : null
       target = retainedPlannedPath
         ? target
@@ -512,46 +520,54 @@ export const stepHostileSubmarines = (
           ? chooseCoordinatedSearchTarget(
             map,
             position,
-            occupied,
-            reservedInvestigationTargets,
-            random,
-            previousPosition,
+            {
+              occupied,
+              reservedTargets: reservedInvestigationTargets,
+              random,
+              previousPosition,
+            },
           )
           : findScoutExplorationTarget(
             map,
             context.memory,
-            position,
-            occupied,
-            random,
+            {
+              start: position,
+              occupied,
+              random,
+            },
           )) ??
-          choosePatrolStep(map, position, occupied, random, previousPosition)
+          choosePatrolStep(map, position, { occupied, random, previousPosition })
     } else if (archetype === "guard") {
       mode = "patrol"
       retainedPlannedPath = target
-        ? keepPatrolPath(map, position, target, occupied, plannedPath)
+        ? keepPatrolPath(map, position, { target, occupied, plannedPath })
         : null
       target = retainedPlannedPath ? target : chooseGuardPatrolTarget(
         map,
         map.capsule,
-        hostileSubmarine.initialPosition,
-        position,
-        occupied,
-        random,
-        previousPosition,
+        {
+          guardPost: hostileSubmarine.initialPosition,
+          position,
+          occupied,
+          random,
+          previousPosition,
+        },
       )
     } else {
       mode = "investigate"
       retainedPlannedPath = target
-        ? keepPatrolPath(map, position, target, occupied, plannedPath)
+        ? keepPatrolPath(map, position, { target, occupied, plannedPath })
         : null
       target = retainedPlannedPath ? target : chooseCoordinatedSearchTarget(
         map,
         position,
-        occupied,
-        reservedInvestigationTargets,
-        random,
-        previousPosition,
-      ) ?? choosePatrolStep(map, position, occupied, random, previousPosition)
+        {
+          occupied,
+          reservedTargets: reservedInvestigationTargets,
+          random,
+          previousPosition,
+        },
+      ) ?? choosePatrolStep(map, position, { occupied, random, previousPosition })
     }
 
     if (mode === "investigate" && target) {
@@ -586,68 +602,62 @@ export const stepHostileSubmarines = (
 
     lastAiLog = nextAiLog ?? lastAiLog
 
-    plannedPath = canUsePlannedPathForMovement(
-        map,
-        hostileSubmarine,
+    plannedPath = canUsePlannedPathForMovement(map, hostileSubmarine, {
         archetype,
         position,
         target,
         movementTarget,
         occupied,
-        context.player,
+        player: context.player,
         lastKnownPlayerPosition,
         lastKnownPlayerVector,
         lastKnownPlayerTurn,
         lastKnownPlayerFromDirectDetection,
         reload,
-        knowledge.directDetection,
+        directDetection: knowledge.directDetection,
         attackGraceActive,
         repositioningForSalvo,
         turn,
         hostileAdvancedTactics,
-        retainedPlannedPath,
-      )
-      ? retainedPlannedPath.map((point) => ({ ...point }))
-      : canReuseCurrentPlannedPath(
-          map,
-          hostileSubmarine,
+        plannedPath: retainedPlannedPath,
+      })
+      ? retainedPlannedPath!.map((point) => ({ ...point }))
+      : canReuseCurrentPlannedPath(map, hostileSubmarine, {
           archetype,
           position,
           movementTarget,
           occupied,
-          context.player,
+          player: context.player,
           lastKnownPlayerPosition,
           lastKnownPlayerVector,
           lastKnownPlayerTurn,
           lastKnownPlayerFromDirectDetection,
           reload,
-          knowledge.directDetection,
+          directDetection: knowledge.directDetection,
           attackGraceActive,
           repositioningForSalvo,
           turn,
           hostileAdvancedTactics,
-        )
+        })
       ? hostileSubmarine.plannedPath.map((point) => ({ ...point }))
-      : describePlannedPath(
-        map,
-        hostileSubmarine,
-        currentHostiles,
+      : describePlannedPath(map, hostileSubmarine, {
+        hostileSubmarines: currentHostiles,
         archetype,
         position,
-        movementTarget,
+        target: movementTarget,
         occupied,
-        context.player,
+        player: context.player,
         lastKnownPlayerPosition,
         lastKnownPlayerVector,
         lastKnownPlayerTurn,
         lastKnownPlayerFromDirectDetection,
         reload,
-        knowledge.directDetection,
+        directDetection: knowledge.directDetection,
         attackGraceActive,
         repositioningForSalvo,
         turn,
         hostileAdvancedTactics,
-      )
+      })
 
     const nextStep = plannedPath[1] ?? null
 
@@ -671,10 +681,8 @@ export const stepHostileSubmarines = (
       previousPosition,
     )
 
-    const attack = resolveAttack(
-      map,
-      hostileSubmarine,
-      currentHostiles,
+    const attack = resolveAttack(map, hostileSubmarine, {
+      hostileSubmarines: currentHostiles,
       archetype,
       position,
       facing,
@@ -686,7 +694,7 @@ export const stepHostileSubmarines = (
       lastKnownPlayerVector,
       lastKnownPlayerTurn,
       lastKnownPlayerFromDirectDetection,
-      knowledge.directDetection,
+      directDetection: knowledge.directDetection,
       attackGraceActive,
       random,
       turn,
@@ -697,7 +705,7 @@ export const stepHostileSubmarines = (
       hostileAdvancedTactics,
       hostileGuessRadiusBonus,
       hostileGuessConfidenceMultiplier,
-    )
+    })
     launchedTorpedoes.push(...attack.torpedoes)
     launchedDepthCharges.push(...attack.depthCharges)
     reload = attack.reload
@@ -714,26 +722,24 @@ export const stepHostileSubmarines = (
         finalMovementTarget,
       )
       ? advancePlannedPath(plannedPath)
-      : describePlannedPath(
-        map,
-        hostileSubmarine,
-        currentHostiles,
+      : describePlannedPath(map, hostileSubmarine, {
+        hostileSubmarines: currentHostiles,
         archetype,
         position,
-        finalMovementTarget,
+        target: finalMovementTarget,
         occupied,
-        context.player,
+        player: context.player,
         lastKnownPlayerPosition,
         lastKnownPlayerVector,
         lastKnownPlayerTurn,
         lastKnownPlayerFromDirectDetection,
         reload,
-        knowledge.directDetection,
+        directDetection: knowledge.directDetection,
         attackGraceActive,
-        false,
+        repositioningForSalvo: false,
         turn,
         hostileAdvancedTactics,
-      )
+      })
 
     const sonarInterval = sonarIntervalForHostile(
       archetype,
@@ -907,11 +913,14 @@ const canPursuePlayerFix = (
 const shouldUseExactAttackTarget = (
   map: GeneratedMap,
   position: Point,
-  lastKnownPlayerPosition: Point,
-  directDetection: boolean,
-  lastKnownPlayerTurn: number | null,
-  turn: number,
+  options: {
+    lastKnownPlayerPosition: Point
+    directDetection: boolean
+    lastKnownPlayerTurn: number | null
+    turn: number
+  },
 ): boolean => {
+  const { lastKnownPlayerPosition, directDetection, lastKnownPlayerTurn, turn } = options
   return directDetection ||
     (lastKnownPlayerTurn !== null && turn - lastKnownPlayerTurn <= 1 && (
       hasHorizontalShotOpportunity(map, position, lastKnownPlayerPosition) ||
@@ -938,9 +947,12 @@ const allWaterTiles = (map: GeneratedMap): Point[] => {
 const canSpawnHostileAt = (
   map: GeneratedMap,
   point: Point,
-  archetype: HostileSubmarineArchetype,
-  hostileSubmarines: HostileSubmarine[],
+  options: {
+    archetype: HostileSubmarineArchetype
+    hostileSubmarines: HostileSubmarine[]
+  },
 ): boolean => {
+  const { archetype, hostileSubmarines } = options
   if (chebyshevDistance(point, map.spawn) < HOSTILE_MIN_SPAWN_DISTANCE) {
     return false
   }
@@ -1041,9 +1053,12 @@ const hydrateHostileSubmarine = (
 const gatherKnowledge = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
-  hostileSubmarines: ResolvedHostileSubmarine[],
-  context: HostileTurnContext,
+  options: {
+    hostileSubmarines: ResolvedHostileSubmarine[]
+    context: HostileTurnContext
+  },
 ): HostileKnowledge => {
+  const { hostileSubmarines, context } = options
   const playerVector = createPlayerVector(
     context.previousPlayer,
     context.player,
@@ -1345,21 +1360,35 @@ const chooseScoutRetreatTarget = (
 const chooseAttackTarget = (
   map: GeneratedMap,
   position: Point,
-  lastKnownPlayerPosition: Point,
-  lastKnownPlayerVector: Point | null,
-  archetype: HostileSubmarineArchetype,
-  directDetection: boolean,
-  lastKnownPlayerTurn: number | null,
-  turn: number,
-  predictionDistancePenalty: number,
+  options: {
+    lastKnownPlayerPosition: Point
+    lastKnownPlayerVector: Point | null
+    archetype: HostileSubmarineArchetype
+    directDetection: boolean
+    lastKnownPlayerTurn: number | null
+    turn: number
+    predictionDistancePenalty: number
+  },
 ): Point => {
+  const {
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    archetype,
+    directDetection,
+    lastKnownPlayerTurn,
+    turn,
+    predictionDistancePenalty,
+  } = options
+
   return shouldUseExactAttackTarget(
       map,
       position,
-      lastKnownPlayerPosition,
-      directDetection,
-      lastKnownPlayerTurn,
-      turn,
+      {
+        lastKnownPlayerPosition,
+        directDetection,
+        lastKnownPlayerTurn,
+        turn,
+      },
     )
     ? { ...lastKnownPlayerPosition }
     : predictPlayerPosition(
@@ -1515,9 +1544,7 @@ const _chooseNextStep = (
   }
 
   if (
-    !repositioningForSalvo && shouldHoldAttackPosition(
-      map,
-      hostileSubmarine,
+    !repositioningForSalvo && shouldHoldAttackPosition(map, hostileSubmarine, {
       archetype,
       position,
       target,
@@ -1531,26 +1558,24 @@ const _chooseNextStep = (
       attackGraceActive,
       turn,
       hostileAdvancedTactics,
-    )
+    })
   ) {
     return null
   }
 
   if (
     archetype === "scout" &&
-    shouldScoutHoldForEstimatedShot(
-      map,
-      hostileSubmarine,
+    shouldScoutHoldForEstimatedShot(map, hostileSubmarine, {
       hostileSubmarines,
       position,
-      lastKnownPlayerPosition,
-      lastKnownPlayerTurn,
+      target: lastKnownPlayerPosition,
+      targetTurn: lastKnownPlayerTurn,
       occupied,
       reload,
       attackGraceActive,
       turn,
       hostileAdvancedTactics,
-    )
+    })
   ) {
     return null
   }
@@ -1559,10 +1584,12 @@ const _chooseNextStep = (
     return chooseRetreatStep(
       map,
       position,
-      target ?? hostileSubmarine.initialPosition,
-      occupied,
-      player,
-      hostileSubmarine.recentPositions,
+      {
+        retreatTarget: target ?? hostileSubmarine.initialPosition,
+        occupied,
+        player,
+        recentPositions: hostileSubmarine.recentPositions,
+      },
     )
   }
 
@@ -1576,31 +1603,50 @@ const _chooseNextStep = (
 const describePlannedPath = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
-  hostileSubmarines: ResolvedHostileSubmarine[],
-  archetype: HostileSubmarineArchetype,
-  position: Point,
-  target: Point | null,
-  occupied: Set<string>,
-  player: Point,
-  lastKnownPlayerPosition: Point | null,
-  lastKnownPlayerVector: Point | null,
-  lastKnownPlayerTurn: number | null,
-  lastKnownPlayerFromDirectDetection: boolean,
-  reload: number,
-  directDetection: boolean,
-  attackGraceActive: boolean,
-  repositioningForSalvo: boolean,
-  turn: number,
-  hostileAdvancedTactics: boolean,
+  options: {
+    hostileSubmarines: ResolvedHostileSubmarine[]
+    archetype: HostileSubmarineArchetype
+    position: Point
+    target: Point | null
+    occupied: Set<string>
+    player: Point
+    lastKnownPlayerPosition: Point | null
+    lastKnownPlayerVector: Point | null
+    lastKnownPlayerTurn: number | null
+    lastKnownPlayerFromDirectDetection: boolean
+    reload: number
+    directDetection: boolean
+    attackGraceActive: boolean
+    repositioningForSalvo: boolean
+    turn: number
+    hostileAdvancedTactics: boolean
+  },
 ): Point[] => {
+  const {
+    hostileSubmarines,
+    archetype,
+    position,
+    target,
+    occupied,
+    player,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
+    reload,
+    directDetection,
+    attackGraceActive,
+    repositioningForSalvo,
+    turn,
+    hostileAdvancedTactics,
+  } = options
+
   if (archetype === "turtle") {
     return [{ ...position }]
   }
 
   if (
-    !repositioningForSalvo && shouldHoldAttackPosition(
-      map,
-      hostileSubmarine,
+    !repositioningForSalvo && shouldHoldAttackPosition(map, hostileSubmarine, {
       archetype,
       position,
       target,
@@ -1614,26 +1660,24 @@ const describePlannedPath = (
       attackGraceActive,
       turn,
       hostileAdvancedTactics,
-    )
+    })
   ) {
     return [{ ...position }]
   }
 
   if (
     archetype === "scout" &&
-    shouldScoutHoldForEstimatedShot(
-      map,
-      hostileSubmarine,
+    shouldScoutHoldForEstimatedShot(map, hostileSubmarine, {
       hostileSubmarines,
       position,
-      lastKnownPlayerPosition,
-      lastKnownPlayerTurn,
+      target: lastKnownPlayerPosition,
+      targetTurn: lastKnownPlayerTurn,
       occupied,
       reload,
       attackGraceActive,
       turn,
       hostileAdvancedTactics,
-    )
+    })
   ) {
     return [{ ...position }]
   }
@@ -1646,10 +1690,12 @@ const describePlannedPath = (
     const retreatStep = chooseRetreatStep(
       map,
       position,
-      target,
-      occupied,
-      player,
-      hostileSubmarine.recentPositions,
+      {
+        retreatTarget: target,
+        occupied,
+        player,
+        recentPositions: hostileSubmarine.recentPositions,
+      },
     )
     return retreatStep ? [{ ...position }, retreatStep] : [{ ...position }]
   }
@@ -1660,22 +1706,25 @@ const describePlannedPath = (
 const chooseRetreatStep = (
   map: GeneratedMap,
   position: Point,
-  retreatTarget: Point,
-  occupied: Set<string>,
-  player: Point,
-  recentPositions: readonly Point[],
+  options: {
+    retreatTarget: Point
+    occupied: Set<string>
+    player: Point
+    recentPositions: readonly Point[]
+  },
 ): Point | null => {
-  const options = orderedNeighbors(position, retreatTarget)
+  const { retreatTarget, occupied, player, recentPositions } = options
+  const candidates = orderedNeighbors(position, retreatTarget)
     .filter((point) =>
       isPassableTile(tileAt(map, point.x, point.y)) &&
       !occupied.has(keyOfPoint(point))
     )
 
-  if (options.length === 0) {
+  if (candidates.length === 0) {
     return null
   }
 
-  return options.sort((left, right) => {
+  return candidates.sort((left, right) => {
     const leftScore = scoutKiteScore(left, player) -
       chebyshevDistance(left, retreatTarget) -
       retreatLoopPenalty(left, recentPositions)
@@ -1707,20 +1756,38 @@ const retreatLoopPenalty = (
 const shouldHoldAttackPosition = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
-  archetype: HostileSubmarineArchetype,
-  position: Point,
-  target: Point | null,
-  occupied: ReadonlySet<string>,
-  lastKnownPlayerPosition: Point | null,
-  lastKnownPlayerVector: Point | null,
-  lastKnownPlayerTurn: number | null,
-  lastKnownPlayerFromDirectDetection: boolean,
-  reload: number,
-  directDetection: boolean,
-  attackGraceActive: boolean,
-  turn: number,
-  hostileAdvancedTactics: boolean,
+  options: {
+    archetype: HostileSubmarineArchetype
+    position: Point
+    target: Point | null
+    occupied: ReadonlySet<string>
+    lastKnownPlayerPosition: Point | null
+    lastKnownPlayerVector: Point | null
+    lastKnownPlayerTurn: number | null
+    lastKnownPlayerFromDirectDetection: boolean
+    reload: number
+    directDetection: boolean
+    attackGraceActive: boolean
+    turn: number
+    hostileAdvancedTactics: boolean
+  },
 ): boolean => {
+  const {
+    archetype,
+    position,
+    target,
+    occupied,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
+    reload,
+    directDetection,
+    attackGraceActive,
+    turn,
+    hostileAdvancedTactics,
+  } = options
+
   if (
     !target ||
     archetype === "scout" ||
@@ -1739,14 +1806,16 @@ const shouldHoldAttackPosition = (
   const freshPursuitWeaponOpportunity = hasFreshPursuitWeaponOpportunity(
     map,
     position,
-    attackTarget,
-    hostileSubmarine.torpedoAmmo,
-    hostileSubmarine.vlsAmmo,
-    hostileSubmarine.depthChargeAmmo,
-    lastKnownPlayerVector,
-    lastKnownPlayerTurn,
-    lastKnownPlayerFromDirectDetection,
-    turn,
+    {
+      target: attackTarget,
+      torpedoAmmo: hostileSubmarine.torpedoAmmo,
+      vlsAmmo: hostileSubmarine.vlsAmmo,
+      depthChargeAmmo: hostileSubmarine.depthChargeAmmo,
+      lastKnownPlayerVector,
+      lastKnownPlayerTurn,
+      lastKnownPlayerFromDirectDetection,
+      turn,
+    },
   )
 
   const attackReady = (archetype !== "hunter" && archetype !== "guard") ||
@@ -1770,8 +1839,10 @@ const shouldHoldAttackPosition = (
         canEscapeVerticalCaveIn(
           map,
           position,
-          ceilingTrapShot.impactPoint,
-          occupied,
+          {
+            impactPoint: ceilingTrapShot.impactPoint,
+            occupied,
+          },
         )) &&
       ((ceilingTrapShot.direction === "up" && hostileSubmarine.vlsAmmo > 0) ||
         (ceilingTrapShot.direction !== "up" &&
@@ -1786,15 +1857,28 @@ const shouldHoldAttackPosition = (
 const hasFreshPursuitWeaponOpportunity = (
   map: GeneratedMap,
   position: Point,
-  target: Point,
-  torpedoAmmo: number,
-  vlsAmmo: number,
-  depthChargeAmmo: number,
-  lastKnownPlayerVector: Point | null,
-  lastKnownPlayerTurn: number | null,
-  lastKnownPlayerFromDirectDetection: boolean,
-  turn: number,
+  options: {
+    target: Point
+    torpedoAmmo: number
+    vlsAmmo: number
+    depthChargeAmmo: number
+    lastKnownPlayerVector: Point | null
+    lastKnownPlayerTurn: number | null
+    lastKnownPlayerFromDirectDetection: boolean
+    turn: number
+  },
 ): boolean => {
+  const {
+    target,
+    torpedoAmmo,
+    vlsAmmo,
+    depthChargeAmmo,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
+    turn,
+  } = options
+
   if (
     lastKnownPlayerVector === null ||
     lastKnownPlayerTurn === null ||
@@ -1827,16 +1911,30 @@ const hasFreshPursuitWeaponOpportunity = (
 const shouldScoutHoldForEstimatedShot = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
-  hostileSubmarines: ResolvedHostileSubmarine[],
-  position: Point,
-  target: Point | null,
-  targetTurn: number | null,
-  occupied: ReadonlySet<string>,
-  reload: number,
-  attackGraceActive: boolean,
-  turn: number,
-  hostileAdvancedTactics: boolean,
+  options: {
+    hostileSubmarines: ResolvedHostileSubmarine[]
+    position: Point
+    target: Point | null
+    targetTurn: number | null
+    occupied: ReadonlySet<string>
+    reload: number
+    attackGraceActive: boolean
+    turn: number
+    hostileAdvancedTactics: boolean
+  },
 ): boolean => {
+  const {
+    hostileSubmarines,
+    position,
+    target,
+    targetTurn,
+    occupied,
+    reload,
+    attackGraceActive,
+    turn,
+    hostileAdvancedTactics,
+  } = options
+
   if (
     reload > 0 ||
     attackGraceActive ||
@@ -1867,8 +1965,10 @@ const shouldScoutHoldForEstimatedShot = (
         canEscapeVerticalCaveIn(
           map,
           position,
-          ceilingTrapShot.impactPoint,
-          occupied,
+          {
+            impactPoint: ceilingTrapShot.impactPoint,
+            occupied,
+          },
         ))
     ? ceilingTrapShot
     : null
@@ -1898,30 +1998,56 @@ const hasRangedAmmo = (hostileSubmarine: ResolvedHostileSubmarine): boolean => {
 const resolveAttack = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
-  hostileSubmarines: ResolvedHostileSubmarine[],
-  archetype: HostileSubmarineArchetype,
-  position: Point,
-  _facing: HostileSubmarine["facing"],
-  reload: number,
-  torpedoAmmo: number,
-  vlsAmmo: number,
-  depthChargeAmmo: number,
-  lastKnownPlayerPosition: Point | null,
-  lastKnownPlayerVector: Point | null,
-  lastKnownPlayerTurn: number | null,
-  lastKnownPlayerFromDirectDetection: boolean,
-  directDetection: boolean,
-  attackGraceActive: boolean,
-  random: () => number,
-  turn: number,
-  salvoShotsRemaining: number,
-  salvoStepDirection: Direction | null,
-  salvoMoveTarget: Point | null,
-  hostileTorpedoSpeed: number,
-  hostileAdvancedTactics: boolean,
-  hostileGuessRadiusBonus: number,
-  hostileGuessConfidenceMultiplier: number,
+  options: {
+    hostileSubmarines: ResolvedHostileSubmarine[]
+    archetype: HostileSubmarineArchetype
+    position: Point
+    facing: HostileSubmarine["facing"]
+    reload: number
+    torpedoAmmo: number
+    vlsAmmo: number
+    depthChargeAmmo: number
+    lastKnownPlayerPosition: Point | null
+    lastKnownPlayerVector: Point | null
+    lastKnownPlayerTurn: number | null
+    lastKnownPlayerFromDirectDetection: boolean
+    directDetection: boolean
+    attackGraceActive: boolean
+    random: () => number
+    turn: number
+    salvoShotsRemaining: number
+    salvoStepDirection: Direction | null
+    salvoMoveTarget: Point | null
+    hostileTorpedoSpeed: number
+    hostileAdvancedTactics: boolean
+    hostileGuessRadiusBonus: number
+    hostileGuessConfidenceMultiplier: number
+  },
 ): AttackResolution => {
+  const {
+    hostileSubmarines,
+    archetype,
+    position,
+    reload,
+    torpedoAmmo,
+    vlsAmmo,
+    depthChargeAmmo,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
+    directDetection,
+    attackGraceActive,
+    random,
+    turn,
+    salvoShotsRemaining,
+    salvoStepDirection,
+    salvoMoveTarget,
+    hostileTorpedoSpeed,
+    hostileAdvancedTactics,
+    hostileGuessRadiusBonus,
+    hostileGuessConfidenceMultiplier,
+  } = options
   const createDebugState = (
     overrides: Partial<HostileAttackDebugState>,
   ): HostileAttackDebugState => ({
@@ -2014,14 +2140,16 @@ const resolveAttack = (
   const freshPursuitWeaponOpportunity = hasFreshPursuitWeaponOpportunity(
     map,
     position,
-    lastKnownPlayerPosition,
-    torpedoAmmo,
-    vlsAmmo,
-    depthChargeAmmo,
-    lastKnownPlayerVector,
-    lastKnownPlayerTurn,
-    lastKnownPlayerFromDirectDetection,
-    turn,
+    {
+      target: lastKnownPlayerPosition,
+      torpedoAmmo,
+      vlsAmmo,
+      depthChargeAmmo,
+      lastKnownPlayerVector,
+      lastKnownPlayerTurn,
+      lastKnownPlayerFromDirectDetection,
+      turn,
+    },
   )
 
   if (
@@ -2071,8 +2199,10 @@ const resolveAttack = (
         canEscapeVerticalCaveIn(
           map,
           position,
-          ceilingTrapShot.impactPoint,
-          occupied,
+          {
+            impactPoint: ceilingTrapShot.impactPoint,
+            occupied,
+          },
         ))
     ? ceilingTrapShot
     : null
@@ -2253,12 +2383,14 @@ const resolveAttack = (
       const nextDirection = chooseSalvoStepDirection(
         map,
         position,
-        firedOrientation,
-        occupied,
-        random,
+        {
+          orientation: firedOrientation,
+          occupied,
+          random,
+        },
       )
       const moveTarget = nextDirection
-        ? createNextSalvoMoveTarget(map, position, nextDirection, occupied)
+        ? createNextSalvoMoveTarget(map, position, { direction: nextDirection, occupied })
         : null
 
       nextSalvoShotsRemaining = moveTarget ? 1 : 0
@@ -2302,16 +2434,19 @@ const resolveAttack = (
 const chooseSalvoStepDirection = (
   map: GeneratedMap,
   position: Point,
-  orientation: "horizontal" | "vertical",
-  occupied: ReadonlySet<string>,
-  random: () => number,
+  options: {
+    orientation: "horizontal" | "vertical"
+    occupied: ReadonlySet<string>
+    random: () => number
+  },
 ): Direction | null => {
+  const { orientation, occupied, random } = options
   const directions = orientation === "horizontal"
     ? (random() < 0.5 ? ["up", "down"] as const : ["down", "up"] as const)
     : (random() < 0.5 ? ["left", "right"] as const : ["right", "left"] as const)
 
   for (const direction of directions) {
-    if (createNextSalvoMoveTarget(map, position, direction, occupied)) {
+    if (createNextSalvoMoveTarget(map, position, { direction, occupied })) {
       return direction
     }
   }
@@ -2322,9 +2457,12 @@ const chooseSalvoStepDirection = (
 const createNextSalvoMoveTarget = (
   map: GeneratedMap,
   position: Point,
-  direction: Direction,
-  occupied?: ReadonlySet<string>,
+  options: {
+    direction: Direction
+    occupied?: ReadonlySet<string>
+  },
 ): Point | null => {
+  const { direction, occupied } = options
   const delta = deltaForDirection(direction)
   const lane = Array.from(
     { length: HOSTILE_SALVO_OFFSET },
@@ -2393,9 +2531,12 @@ const rememberRecentPosition = (
 const canEscapeVerticalCaveIn = (
   map: GeneratedMap,
   position: Point,
-  impactPoint: Point,
-  occupied: ReadonlySet<string>,
+  options: {
+    impactPoint: Point
+    occupied: ReadonlySet<string>
+  },
 ): boolean => {
+  const { impactPoint, occupied } = options
   if (impactPoint.x !== position.x || impactPoint.y >= position.y) {
     return true
   }
@@ -2478,11 +2619,14 @@ const hasLineOfSight = (map: GeneratedMap, from: Point, to: Point): boolean => {
 const choosePatrolStep = (
   map: GeneratedMap,
   position: Point,
-  occupied: Set<string>,
-  random: () => number,
-  previousPosition: Point | null,
+  options: {
+    occupied: Set<string>
+    random: () => number
+    previousPosition: Point | null
+  },
 ): Point | null => {
-  const options = shufflePoints(
+  const { occupied, random, previousPosition } = options
+  const candidates = shufflePoints(
     CARDINAL_STEPS.map((step) => ({
       x: position.x + step.x,
       y: position.y + step.y,
@@ -2493,20 +2637,23 @@ const choosePatrolStep = (
     !occupied.has(keyOfPoint(point))
   )
 
-  const nonBacktrackingOptions = previousPosition
-    ? options.filter((point) => !pointsEqual(point, previousPosition))
-    : options
+  const nonBacktrackingCandidates = previousPosition
+    ? candidates.filter((point) => !pointsEqual(point, previousPosition))
+    : candidates
 
-  return nonBacktrackingOptions[0] ?? options[0] ?? null
+  return nonBacktrackingCandidates[0] ?? candidates[0] ?? null
 }
 
 const keepPatrolPath = (
   map: GeneratedMap,
   start: Point,
-  target: Point,
-  occupied: Set<string>,
-  plannedPath: readonly Point[],
+  options: {
+    target: Point
+    occupied: Set<string>
+    plannedPath: readonly Point[]
+  },
 ): Point[] | null => {
+  const { target, occupied, plannedPath } = options
   if (
     pointsEqual(start, target) ||
     !isPassableTile(tileAt(map, target.x, target.y)) ||
@@ -2515,7 +2662,7 @@ const keepPatrolPath = (
     return null
   }
 
-  if (isReusablePlannedPath(map, start, target, occupied, plannedPath)) {
+  if (isReusablePlannedPath(map, start, { target, occupied, plannedPath })) {
     return plannedPath.map((point) => ({ ...point }))
   }
 
@@ -2526,25 +2673,31 @@ const keepPatrolPath = (
 const keepInvestigationPath = (
   map: GeneratedMap,
   start: Point,
-  target: Point,
-  cluePosition: Point,
-  occupied: Set<string>,
-  plannedPath: readonly Point[],
+  options: {
+    target: Point
+    cluePosition: Point
+    occupied: Set<string>
+    plannedPath: readonly Point[]
+  },
 ): Point[] | null => {
+  const { target, cluePosition, occupied, plannedPath } = options
   if (chebyshevDistance(target, cluePosition) > HOSTILE_PLAYER_CLUE_RADIUS) {
     return null
   }
 
-  return keepPatrolPath(map, start, target, occupied, plannedPath)
+  return keepPatrolPath(map, start, { target, occupied, plannedPath })
 }
 
 const isReusablePlannedPath = (
   map: GeneratedMap,
   start: Point,
-  target: Point,
-  occupied: ReadonlySet<string>,
-  plannedPath: readonly Point[],
+  options: {
+    target: Point
+    occupied: ReadonlySet<string>
+    plannedPath: readonly Point[]
+  },
 ): boolean => {
+  const { target, occupied, plannedPath } = options
   if (plannedPath.length <= 1) {
     return false
   }
@@ -2591,22 +2744,41 @@ const canAdvancePlannedPath = (
 const canReuseCurrentPlannedPath = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
-  archetype: HostileSubmarineArchetype,
-  position: Point,
-  movementTarget: Point | null,
-  occupied: ReadonlySet<string>,
-  _player: Point,
-  lastKnownPlayerPosition: Point | null,
-  lastKnownPlayerVector: Point | null,
-  lastKnownPlayerTurn: number | null,
-  lastKnownPlayerFromDirectDetection: boolean,
-  reload: number,
-  directDetection: boolean,
-  attackGraceActive: boolean,
-  repositioningForSalvo: boolean,
-  turn: number,
-  hostileAdvancedTactics: boolean,
+  options: {
+    archetype: HostileSubmarineArchetype
+    position: Point
+    movementTarget: Point | null
+    occupied: ReadonlySet<string>
+    player: Point
+    lastKnownPlayerPosition: Point | null
+    lastKnownPlayerVector: Point | null
+    lastKnownPlayerTurn: number | null
+    lastKnownPlayerFromDirectDetection: boolean
+    reload: number
+    directDetection: boolean
+    attackGraceActive: boolean
+    repositioningForSalvo: boolean
+    turn: number
+    hostileAdvancedTactics: boolean
+  },
 ): boolean => {
+  const {
+    archetype,
+    position,
+    movementTarget,
+    occupied,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
+    reload,
+    directDetection,
+    attackGraceActive,
+    repositioningForSalvo,
+    turn,
+    hostileAdvancedTactics,
+  } = options
+
   if (
     movementTarget === null ||
     repositioningForSalvo ||
@@ -2617,12 +2789,10 @@ const canReuseCurrentPlannedPath = (
   }
 
   if (
-    shouldHoldAttackPosition(
-      map,
-      hostileSubmarine,
+    shouldHoldAttackPosition(map, hostileSubmarine, {
       archetype,
       position,
-      movementTarget,
+      target: movementTarget,
       occupied,
       lastKnownPlayerPosition,
       lastKnownPlayerVector,
@@ -2633,7 +2803,7 @@ const canReuseCurrentPlannedPath = (
       attackGraceActive,
       turn,
       hostileAdvancedTactics,
-    )
+    })
   ) {
     return false
   }
@@ -2641,33 +2811,56 @@ const canReuseCurrentPlannedPath = (
   return isReusablePlannedPath(
     map,
     position,
-    movementTarget,
-    occupied,
-    hostileSubmarine.plannedPath,
+    {
+      target: movementTarget,
+      occupied,
+      plannedPath: hostileSubmarine.plannedPath,
+    },
   )
 }
 
 const canUsePlannedPathForMovement = (
   map: GeneratedMap,
   hostileSubmarine: ResolvedHostileSubmarine,
-  archetype: HostileSubmarineArchetype,
-  position: Point,
-  target: Point | null,
-  movementTarget: Point | null,
-  occupied: ReadonlySet<string>,
-  _player: Point,
-  lastKnownPlayerPosition: Point | null,
-  lastKnownPlayerVector: Point | null,
-  lastKnownPlayerTurn: number | null,
-  lastKnownPlayerFromDirectDetection: boolean,
-  reload: number,
-  directDetection: boolean,
-  attackGraceActive: boolean,
-  repositioningForSalvo: boolean,
-  turn: number,
-  hostileAdvancedTactics: boolean,
-  plannedPath: readonly Point[] | null,
-): plannedPath is Point[] => {
+  options: {
+    archetype: HostileSubmarineArchetype
+    position: Point
+    target: Point | null
+    movementTarget: Point | null
+    occupied: ReadonlySet<string>
+    player: Point
+    lastKnownPlayerPosition: Point | null
+    lastKnownPlayerVector: Point | null
+    lastKnownPlayerTurn: number | null
+    lastKnownPlayerFromDirectDetection: boolean
+    reload: number
+    directDetection: boolean
+    attackGraceActive: boolean
+    repositioningForSalvo: boolean
+    turn: number
+    hostileAdvancedTactics: boolean
+    plannedPath: readonly Point[] | null
+  },
+): boolean => {
+  const {
+    archetype,
+    position,
+    target,
+    movementTarget,
+    occupied,
+    lastKnownPlayerPosition,
+    lastKnownPlayerVector,
+    lastKnownPlayerTurn,
+    lastKnownPlayerFromDirectDetection,
+    reload,
+    directDetection,
+    attackGraceActive,
+    repositioningForSalvo,
+    turn,
+    hostileAdvancedTactics,
+    plannedPath,
+  } = options
+
   if (plannedPath === null || target === null || movementTarget === null) {
     return false
   }
@@ -2685,12 +2878,10 @@ const canUsePlannedPathForMovement = (
   }
 
   if (
-    shouldHoldAttackPosition(
-      map,
-      hostileSubmarine,
+    shouldHoldAttackPosition(map, hostileSubmarine, {
       archetype,
       position,
-      movementTarget,
+      target: movementTarget,
       occupied,
       lastKnownPlayerPosition,
       lastKnownPlayerVector,
@@ -2701,7 +2892,7 @@ const canUsePlannedPathForMovement = (
       attackGraceActive,
       turn,
       hostileAdvancedTactics,
-    )
+    })
   ) {
     return false
   }
@@ -2709,9 +2900,11 @@ const canUsePlannedPathForMovement = (
   return isReusablePlannedPath(
     map,
     position,
-    movementTarget,
-    occupied,
-    plannedPath,
+    {
+      target: movementTarget,
+      occupied,
+      plannedPath,
+    },
   )
 }
 
@@ -2727,51 +2920,64 @@ const areCardinalNeighbors = (left: Point, right: Point): boolean => {
 const chooseCoordinatedClueTarget = (
   map: GeneratedMap,
   position: Point,
-  cluePosition: Point,
-  occupied: Set<string>,
-  reservedTargets: ReadonlySet<string>,
-  random: () => number,
+  options: {
+    cluePosition: Point
+    occupied: Set<string>
+    reservedTargets: ReadonlySet<string>
+    random: () => number
+  },
 ): Point => {
+  const { cluePosition, occupied, reservedTargets, random } = options
   const reservedPoints = pointsFromReservedTargets(reservedTargets)
 
   return findBestReachableTarget(
     map,
     position,
-    occupied,
-    random,
-    (point) =>
-      chebyshevDistance(point, cluePosition) <= HOSTILE_PLAYER_CLUE_RADIUS,
-    (point) =>
-      scoreInvestigationTarget(point, cluePosition, position, reservedPoints),
+    {
+      occupied,
+      random,
+      isCandidate: (point) =>
+        chebyshevDistance(point, cluePosition) <= HOSTILE_PLAYER_CLUE_RADIUS,
+      scoreCandidate: (point) =>
+        scoreInvestigationTarget(point, cluePosition, { start: position, reservedPoints }),
+    },
   ) ?? { ...cluePosition }
 }
 
 const chooseCoordinatedSearchTarget = (
   map: GeneratedMap,
   position: Point,
-  occupied: Set<string>,
-  reservedTargets: ReadonlySet<string>,
-  random: () => number,
-  previousPosition: Point | null,
+  options: {
+    occupied: Set<string>
+    reservedTargets: ReadonlySet<string>
+    random: () => number
+    previousPosition: Point | null
+  },
 ): Point | null => {
+  const { occupied, reservedTargets, random, previousPosition } = options
   const reservedPoints = pointsFromReservedTargets(reservedTargets)
 
   return findBestReachableTarget(
     map,
     position,
-    occupied,
-    random,
-    (point) => !previousPosition || !pointsEqual(point, previousPosition),
-    (point) => scoreSearchTarget(point, position, reservedPoints),
+    {
+      occupied,
+      random,
+      isCandidate: (point) => !previousPosition || !pointsEqual(point, previousPosition),
+      scoreCandidate: (point) => scoreSearchTarget(point, position, reservedPoints),
+    },
   )
 }
 
 const scoreInvestigationTarget = (
   point: Point,
   cluePosition: Point,
-  start: Point,
-  reservedPoints: readonly Point[],
+  options: {
+    start: Point
+    reservedPoints: readonly Point[]
+  },
 ): number => {
+  const { start, reservedPoints } = options
   return reservationSeparationScore(point, reservedPoints) * 18 -
     chebyshevDistance(point, cluePosition) * 9 -
     chebyshevDistance(point, start)
@@ -2815,11 +3021,14 @@ const pointsFromReservedTargets = (
 const findBestReachableTarget = (
   map: GeneratedMap,
   start: Point,
-  occupied: ReadonlySet<string>,
-  random: () => number,
-  isCandidate: (point: Point) => boolean,
-  scoreCandidate: (point: Point) => number,
+  options: {
+    occupied: ReadonlySet<string>
+    random: () => number
+    isCandidate: (point: Point) => boolean
+    scoreCandidate: (point: Point) => number
+  },
 ): Point | null => {
+  const { occupied, random, isCandidate, scoreCandidate } = options
   const width = map.width
   const totalTiles = map.tiles.length
   const queue = new Int32Array(totalTiles)
@@ -2885,12 +3094,15 @@ const findBestReachableTarget = (
 const chooseGuardPatrolTarget = (
   map: GeneratedMap,
   capsule: Point,
-  guardPost: Point,
-  position: Point,
-  occupied: Set<string>,
-  random: () => number,
-  previousPosition: Point | null,
+  options: {
+    guardPost: Point
+    position: Point
+    occupied: Set<string>
+    random: () => number
+    previousPosition: Point | null
+  },
 ): Point | null => {
+  const { guardPost, position, occupied, random, previousPosition } = options
   const candidates: Point[] = []
 
   for (
@@ -2940,16 +3152,19 @@ const chooseGuardPatrolTarget = (
       })
 
   return rankedCandidates[0] ??
-    choosePatrolStep(map, position, occupied, random, previousPosition)
+    choosePatrolStep(map, position, { occupied, random, previousPosition })
 }
 
 const findScoutExplorationTarget = (
   map: GeneratedMap,
   memory: Array<TileKind | null>,
-  start: Point,
-  occupied: Set<string>,
-  random: () => number,
+  options: {
+    start: Point
+    occupied: Set<string>
+    random: () => number
+  },
 ): Point | null => {
+  const { start, occupied, random } = options
   const queue: Point[] = [{ ...start }]
   let queueIndex = 0
   const parents = new Map<string, Point | null>()

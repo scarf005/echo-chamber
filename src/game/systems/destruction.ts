@@ -38,7 +38,11 @@ export const detonateTorpedo = (
   const nextStructuralDamage = structuralDamage.slice()
   const impactCanDislodge = canDislodgeBoulder(map, impactPoint)
 
-  carveDisc(map.tiles, map.width, map.height, impactPoint, TORPEDO_BLAST_RADIUS)
+  carveDisc(
+    map.tiles,
+    { width: map.width, height: map.height },
+    { center: impactPoint, radius: TORPEDO_BLAST_RADIUS },
+  )
 
   if (impactCanDislodge) {
     nextStructuralDamage[indexForPoint(map.width, impactPoint)] = 0
@@ -56,7 +60,11 @@ export const detonateTorpedo = (
       y: impactPoint.y +
         direction.y * randomInteger(random, 1, TORPEDO_BLAST_RADIUS),
     }
-    carveDisc(map.tiles, map.width, map.height, center, 1)
+    carveDisc(
+      map.tiles,
+      { width: map.width, height: map.height },
+      { center, radius: 1 },
+    )
   }
 
   for (const direction of crackDirections(random)) {

@@ -116,16 +116,16 @@ export const generateMap = (options: MapGenOptions = {}): GeneratedMap => {
 
   if (!spawn) {
     spawn = { x: 2, y: Math.floor(height / 2) }
-    carveDisc(tiles, width, height, spawn, 1)
+    carveDisc(tiles, { width, height }, { center: spawn, radius: 1 })
   }
 
   if (!capsule || isSamePoint(spawn, capsule)) {
     capsule = { x: width - 3, y: Math.floor(height / 2) }
-    carveDisc(tiles, width, height, capsule, 1)
+    carveDisc(tiles, { width, height }, { center: capsule, radius: 1 })
   }
 
-  carveDisc(tiles, width, height, spawn, 1)
-  carveDisc(tiles, width, height, capsule, 1)
+  carveDisc(tiles, { width, height }, { center: spawn, radius: 1 })
+  carveDisc(tiles, { width, height }, { center: capsule, radius: 1 })
 
   if (!hasPath(tiles, width, height, spawn, capsule)) {
     carveFallbackRoute(tiles, width, height, spawn, capsule)
@@ -238,11 +238,14 @@ export const mapToAscii = (map: GeneratedMap): string => {
 
 export const carveDisc = (
   tiles: TileKind[],
-  width: number,
-  height: number,
-  center: Point,
-  radius: number,
+  dimensions: { width: number; height: number },
+  options: {
+    center: Point
+    radius: number
+  },
 ): void => {
+  const { width, height } = dimensions
+  const { center, radius } = options
   const radiusSquared = radius * radius
 
   for (let y = center.y - radius; y <= center.y + radius; y += 1) {
@@ -262,12 +265,15 @@ export const carveDisc = (
 
 export const carveLine = (
   tiles: TileKind[],
-  width: number,
-  height: number,
-  start: Point,
-  end: Point,
-  radius: number,
+  dimensions: { width: number; height: number },
+  options: {
+    start: Point
+    end: Point
+    radius: number
+  },
 ): void => {
+  const { width, height } = dimensions
+  const { start, end, radius } = options
   const steps = Math.max(
     Math.abs(end.x - start.x),
     Math.abs(end.y - start.y),
@@ -278,13 +284,14 @@ export const carveLine = (
     const amount = step / steps
     carveDisc(
       tiles,
-      width,
-      height,
+      { width, height },
       {
-        x: Math.round(lerp(start.x, end.x, amount)),
-        y: Math.round(lerp(start.y, end.y, amount)),
+        center: {
+          x: Math.round(lerp(start.x, end.x, amount)),
+          y: Math.round(lerp(start.y, end.y, amount)),
+        },
+        radius,
       },
-      radius,
     )
   }
 }
@@ -325,9 +332,9 @@ const carveFallbackRoute = (
   start: Point,
   end: Point,
 ): void => {
-  carveLine(tiles, width, height, start, end, 1)
-  carveDisc(tiles, width, height, start, 1)
-  carveDisc(tiles, width, height, end, 1)
+  carveLine(tiles, { width, height }, { start, end, radius: 1 })
+  carveDisc(tiles, { width, height }, { center: start, radius: 1 })
+  carveDisc(tiles, { width, height }, { center: end, radius: 1 })
 }
 
 const addKelpOnRock = (
