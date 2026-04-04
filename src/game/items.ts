@@ -169,8 +169,10 @@ const createMapReveal = (
   const random = createDeterministicRandom(
     `${game.seed}:map:${game.turn}:${pickupPosition.x}:${pickupPosition.y}`,
   )
-  const hiddenCandidates: Point[] = []
-  const distantCandidates: Point[] = []
+  const hiddenTerrain: Point[] = []
+  const hiddenWater: Point[] = []
+  const distantTerrain: Point[] = []
+  const distantWater: Point[] = []
 
   for (let y = 1; y < game.map.height - 1; y += 1) {
     for (let x = 1; x < game.map.width - 1; x += 1) {
@@ -181,17 +183,28 @@ const createMapReveal = (
       }
 
       const point = { x, y }
-      hiddenCandidates.push(point)
+      const tile = tileAt(game.map, x, y)
+      const isTerrain = tile !== null && tile !== "water"
+      const isDistant = chebyshevDistance(point, game.player) > passiveDetectedRadius
 
-      if (chebyshevDistance(point, game.player) > passiveDetectedRadius) {
-        distantCandidates.push(point)
+      if (isTerrain) {
+        hiddenTerrain.push(point)
+        if (isDistant) distantTerrain.push(point)
+      } else {
+        hiddenWater.push(point)
+        if (isDistant) distantWater.push(point)
       }
     }
   }
 
-  const candidates = distantCandidates.length > 0
-    ? distantCandidates
-    : hiddenCandidates
+  const terrainCandidates = distantTerrain.length > 0
+    ? distantTerrain
+    : hiddenTerrain
+  const candidates = terrainCandidates.length > 0
+    ? terrainCandidates
+    : distantWater.length > 0
+      ? distantWater
+      : hiddenWater
   const center = candidates.length > 0
     ? randomChoice(candidates, random)
     : { ...pickupPosition }
