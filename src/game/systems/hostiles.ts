@@ -75,6 +75,11 @@ interface HostileTurnContext {
   trails: FadeCell[]
   memory: Array<TileKind | null>
   hostileEngagementGraceTurns: number
+  hostileTorpedoSpeed?: number
+  hostileAdvancedTactics?: boolean
+  hostileGuessRadiusBonus?: number
+  hostileGuessConfidenceMultiplier?: number
+  hostilePredictionDistancePenalty?: number
   playerSonarHitHostiles: ReadonlySet<string>
   capsuleRetrievedThisTurn: boolean
 }
@@ -253,6 +258,13 @@ export const stepHostileSubmarines = (
   playerDestroyed: boolean
 } => {
   const currentHostiles = hostileSubmarines.map(hydrateHostileSubmarine)
+  const hostileTorpedoSpeed = context.hostileTorpedoSpeed ?? TORPEDO_SPEED
+  const hostileAdvancedTactics = context.hostileAdvancedTactics ?? true
+  const hostileGuessRadiusBonus = context.hostileGuessRadiusBonus ?? 0
+  const hostileGuessConfidenceMultiplier =
+    context.hostileGuessConfidenceMultiplier ?? 1
+  const hostilePredictionDistancePenalty =
+    context.hostilePredictionDistancePenalty ?? 0
   const availableShockwaves = context.shockwaves.map((shockwave) => ({
     ...shockwave,
     origin: { ...shockwave.origin },
@@ -442,6 +454,7 @@ export const stepHostileSubmarines = (
         knowledge.directDetection,
         lastKnownPlayerTurn,
         turn,
+        hostilePredictionDistancePenalty,
       )
     } else if (
       archetype === "guard" &&
@@ -591,6 +604,7 @@ export const stepHostileSubmarines = (
         attackGraceActive,
         repositioningForSalvo,
         turn,
+        hostileAdvancedTactics,
         retainedPlannedPath,
       )
       ? retainedPlannedPath.map((point) => ({ ...point }))
@@ -611,6 +625,7 @@ export const stepHostileSubmarines = (
           attackGraceActive,
           repositioningForSalvo,
           turn,
+          hostileAdvancedTactics,
         )
       ? hostileSubmarine.plannedPath.map((point) => ({ ...point }))
       : describePlannedPath(
@@ -631,6 +646,7 @@ export const stepHostileSubmarines = (
         attackGraceActive,
         repositioningForSalvo,
         turn,
+        hostileAdvancedTactics,
       )
 
     const nextStep = plannedPath[1] ?? null
@@ -677,6 +693,10 @@ export const stepHostileSubmarines = (
       salvoShotsRemaining,
       salvoStepDirection,
       salvoMoveTarget,
+      hostileTorpedoSpeed,
+      hostileAdvancedTactics,
+      hostileGuessRadiusBonus,
+      hostileGuessConfidenceMultiplier,
     )
     launchedTorpedoes.push(...attack.torpedoes)
     launchedDepthCharges.push(...attack.depthCharges)
@@ -712,6 +732,7 @@ export const stepHostileSubmarines = (
         attackGraceActive,
         false,
         turn,
+        hostileAdvancedTactics,
       )
 
     const sonarInterval = sonarIntervalForHostile(
@@ -1330,6 +1351,7 @@ const chooseAttackTarget = (
   directDetection: boolean,
   lastKnownPlayerTurn: number | null,
   turn: number,
+  predictionDistancePenalty: number,
 ): Point => {
   return shouldUseExactAttackTarget(
       map,
@@ -1345,6 +1367,7 @@ const chooseAttackTarget = (
       lastKnownPlayerPosition,
       lastKnownPlayerVector,
       archetype,
+      predictionDistancePenalty,
     )
 }
 
@@ -1353,12 +1376,21 @@ const predictPlayerPosition = (
   lastKnownPlayerPosition: Point,
   lastKnownPlayerVector: Point | null,
   archetype: HostileSubmarineArchetype,
+  predictionDistancePenalty: number,
 ): Point => {
   if (!lastKnownPlayerVector) {
     return { ...lastKnownPlayerPosition }
   }
 
-  const projectionDistance = archetype === "hunter" ? 2 : 1
+  const baseProjectionDistance = archetype === "hunter" ? 2 : 1
+  const projectionDistance = Math.max(
+    0,
+    baseProjectionDistance - predictionDistancePenalty,
+  )
+
+  if (projectionDistance === 0) {
+    return { ...lastKnownPlayerPosition }
+  }
   const candidate = {
     x: lastKnownPlayerPosition.x + lastKnownPlayerVector.x * projectionDistance,
     y: lastKnownPlayerPosition.y + lastKnownPlayerVector.y * projectionDistance,
@@ -1476,6 +1508,7 @@ const _chooseNextStep = (
   attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
+  hostileAdvancedTactics: boolean,
 ): Point | null => {
   if (archetype === "turtle") {
     return null
@@ -1497,6 +1530,7 @@ const _chooseNextStep = (
       directDetection,
       attackGraceActive,
       turn,
+      hostileAdvancedTactics,
     )
   ) {
     return null
@@ -1515,6 +1549,7 @@ const _chooseNextStep = (
       reload,
       attackGraceActive,
       turn,
+      hostileAdvancedTactics,
     )
   ) {
     return null
@@ -1556,6 +1591,7 @@ const describePlannedPath = (
   attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
+  hostileAdvancedTactics: boolean,
 ): Point[] => {
   if (archetype === "turtle") {
     return [{ ...position }]
@@ -1577,6 +1613,7 @@ const describePlannedPath = (
       directDetection,
       attackGraceActive,
       turn,
+      hostileAdvancedTactics,
     )
   ) {
     return [{ ...position }]
@@ -1595,6 +1632,7 @@ const describePlannedPath = (
       reload,
       attackGraceActive,
       turn,
+      hostileAdvancedTactics,
     )
   ) {
     return [{ ...position }]
@@ -1681,6 +1719,7 @@ const shouldHoldAttackPosition = (
   directDetection: boolean,
   attackGraceActive: boolean,
   turn: number,
+  hostileAdvancedTactics: boolean,
 ): boolean => {
   if (
     !target ||
@@ -1726,7 +1765,7 @@ const shouldHoldAttackPosition = (
     hasVerticalShotOpportunity(map, position, attackTarget)
   const depthChargeOpportunity = hostileSubmarine.depthChargeAmmo > 0 &&
     hasDepthChargeOpportunity(map, position, attackTarget)
-  const safeCeilingTrap = ceilingTrapShot !== null &&
+  const safeCeilingTrap = hostileAdvancedTactics && ceilingTrapShot !== null &&
       (ceilingTrapShot.direction !== "up" ||
         canEscapeVerticalCaveIn(
           map,
@@ -1796,6 +1835,7 @@ const shouldScoutHoldForEstimatedShot = (
   reload: number,
   attackGraceActive: boolean,
   turn: number,
+  hostileAdvancedTactics: boolean,
 ): boolean => {
   if (
     reload > 0 ||
@@ -1822,7 +1862,7 @@ const shouldScoutHoldForEstimatedShot = (
     hasDepthChargeOpportunity(map, position, target)
 
   const ceilingTrapShot = findCeilingTrapShot(map, position, target)
-  const safeCeilingTrap = ceilingTrapShot !== null &&
+  const safeCeilingTrap = hostileAdvancedTactics && ceilingTrapShot !== null &&
       (ceilingTrapShot.direction !== "up" ||
         canEscapeVerticalCaveIn(
           map,
@@ -1877,6 +1917,10 @@ const resolveAttack = (
   salvoShotsRemaining: number,
   salvoStepDirection: Direction | null,
   salvoMoveTarget: Point | null,
+  hostileTorpedoSpeed: number,
+  hostileAdvancedTactics: boolean,
+  hostileGuessRadiusBonus: number,
+  hostileGuessConfidenceMultiplier: number,
 ): AttackResolution => {
   const createDebugState = (
     overrides: Partial<HostileAttackDebugState>,
@@ -1941,7 +1985,8 @@ const resolveAttack = (
     })
   }
 
-  const guessRadius = archetype === "hunter" ? 2 : 1
+  const guessRadius = (archetype === "hunter" ? 2 : 1) +
+    hostileGuessRadiusBonus
   const turnAge = lastKnownPlayerTurn === null
     ? Number.POSITIVE_INFINITY
     : turn - lastKnownPlayerTurn
@@ -2021,6 +2066,7 @@ const resolveAttack = (
       .map((candidate) => keyOfPoint(candidate.position)),
   )
   const usableCeilingTrapShot = ceilingTrapShot !== null &&
+      hostileAdvancedTactics &&
       (ceilingTrapShot.direction !== "up" ||
         canEscapeVerticalCaveIn(
           map,
@@ -2040,11 +2086,17 @@ const resolveAttack = (
       : guessedTarget)
 
   const maxEvidenceAge = maxEvidenceAgeForArchetype(archetype)
-  const confidence = archetype === "hunter"
-    ? turnAge === 0 ? 0.32 : 0.16
-    : turnAge === 0
-    ? 0.62
-    : 0.28
+  const confidence = Math.max(
+    0,
+    Math.min(
+      1,
+      (archetype === "hunter"
+        ? turnAge === 0 ? 0.32 : 0.16
+        : turnAge === 0
+        ? 0.62
+        : 0.28) * hostileGuessConfidenceMultiplier,
+    ),
+  )
   const debugStateBase = {
     attackTarget: { ...attackTarget },
     guessedTarget: { ...guessedTarget },
@@ -2113,7 +2165,7 @@ const resolveAttack = (
       position: { ...position },
       senderId: hostileSubmarine.id,
       direction,
-      speed: TORPEDO_SPEED,
+      speed: hostileTorpedoSpeed,
       rangeRemaining: HOSTILE_TORPEDO_RANGE,
       avoidFriendlyFire,
     })
@@ -2126,7 +2178,7 @@ const resolveAttack = (
       position: { ...position },
       senderId: hostileSubmarine.id,
       direction: "up",
-      speed: TORPEDO_SPEED,
+      speed: hostileTorpedoSpeed,
       rangeRemaining: HOSTILE_TORPEDO_RANGE,
       avoidFriendlyFire,
     })
@@ -2142,7 +2194,7 @@ const resolveAttack = (
       position: { ...position },
       senderId: hostileSubmarine.id,
       direction: usableCeilingTrapShot.direction,
-      speed: TORPEDO_SPEED,
+      speed: hostileTorpedoSpeed,
       rangeRemaining: HOSTILE_TORPEDO_RANGE,
       avoidFriendlyFire,
     })
@@ -2157,7 +2209,7 @@ const resolveAttack = (
       position: { ...position },
       senderId: hostileSubmarine.id,
       direction: "up",
-      speed: TORPEDO_SPEED,
+      speed: hostileTorpedoSpeed,
       rangeRemaining: HOSTILE_TORPEDO_RANGE,
       avoidFriendlyFire,
     })
@@ -2187,7 +2239,7 @@ const resolveAttack = (
     })
   }
 
-  if (archetype === "hunter" && firedOrientation) {
+  if (archetype === "hunter" && firedOrientation && hostileAdvancedTactics) {
     if (nextSalvoShotsRemaining > 0) {
       nextSalvoShotsRemaining = 0
       nextSalvoStepDirection = null
@@ -2213,7 +2265,7 @@ const resolveAttack = (
       nextSalvoStepDirection = moveTarget ? nextDirection : null
       nextSalvoMoveTarget = moveTarget
     }
-  } else if (archetype !== "hunter") {
+  } else {
     nextSalvoShotsRemaining = 0
     nextSalvoStepDirection = null
     nextSalvoMoveTarget = null
@@ -2553,6 +2605,7 @@ const canReuseCurrentPlannedPath = (
   attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
+  hostileAdvancedTactics: boolean,
 ): boolean => {
   if (
     movementTarget === null ||
@@ -2579,6 +2632,7 @@ const canReuseCurrentPlannedPath = (
       directDetection,
       attackGraceActive,
       turn,
+      hostileAdvancedTactics,
     )
   ) {
     return false
@@ -2611,6 +2665,7 @@ const canUsePlannedPathForMovement = (
   attackGraceActive: boolean,
   repositioningForSalvo: boolean,
   turn: number,
+  hostileAdvancedTactics: boolean,
   plannedPath: readonly Point[] | null,
 ): plannedPath is Point[] => {
   if (plannedPath === null || target === null || movementTarget === null) {
@@ -2645,6 +2700,7 @@ const canUsePlannedPathForMovement = (
       directDetection,
       attackGraceActive,
       turn,
+      hostileAdvancedTactics,
     )
   ) {
     return false

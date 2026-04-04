@@ -19,6 +19,8 @@ export const refreshPerception = (
     { length: game.map.tiles.length },
     () => null,
   )
+  const passiveDetectedRadius = game.playerPassiveDetectedRadius ??
+    PASSIVE_DETECTED_RADIUS
   const visibility = Array.from(
     { length: game.map.tiles.length },
     () => 0 as VisibilityLevel,
@@ -47,7 +49,7 @@ export const refreshPerception = (
         continue
       }
 
-      if (distance <= PASSIVE_DETECTED_RADIUS) {
+      if (distance <= passiveDetectedRadius) {
         memory[index] = tile
         clearEntityMemory(entityMemory, index)
         setVisibility(visibility, index, 2)

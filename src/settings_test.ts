@@ -10,8 +10,16 @@ import {
   DEFAULT_DIFFICULTY_SETTING,
   defaultAppSettings,
   DEV_ENTITY_OVERLAY_STORAGE_KEY,
+  difficultyToHostileAdvancedTactics,
   difficultyToHostileEngagementGraceTurns,
+  difficultyToHostileGuessConfidenceMultiplier,
+  difficultyToHostileGuessRadiusBonus,
+  difficultyToHostilePredictionDistancePenalty,
   difficultyToHostileSubmarineCount,
+  difficultyToHostileTorpedoSpeed,
+  difficultyToPlayerPassiveDetectedRadius,
+  difficultyToPlayerSonarMaxRadius,
+  difficultyToPlayerSonarSpeed,
   normalizeDifficultySetting,
   readAppSettings,
   writeAppSettings,
@@ -59,6 +67,27 @@ Deno.test("difficulty settings normalize and scale hostile counts", () => {
   assertEquals(difficultyToHostileEngagementGraceTurns("easy"), 4)
   assertEquals(difficultyToHostileEngagementGraceTurns("medium"), 2)
   assertEquals(difficultyToHostileEngagementGraceTurns("hard"), 0)
+  assertEquals(difficultyToHostileTorpedoSpeed("easy"), 1)
+  assertEquals(difficultyToHostileTorpedoSpeed("medium"), 3)
+  assertEquals(difficultyToPlayerSonarSpeed("easy"), 4)
+  assertEquals(difficultyToPlayerSonarSpeed("medium"), 4)
+  assertEquals(difficultyToPlayerSonarSpeed("hard"), 2)
+  assertEquals(difficultyToPlayerSonarMaxRadius("easy"), 40)
+  assertEquals(difficultyToPlayerSonarMaxRadius("medium"), 20)
+  assertEquals(difficultyToPlayerPassiveDetectedRadius("easy"), 3)
+  assertEquals(difficultyToPlayerPassiveDetectedRadius("medium"), 3)
+  assertEquals(difficultyToPlayerPassiveDetectedRadius("hard"), 2)
+  assertEquals(difficultyToHostileAdvancedTactics("easy"), false)
+  assertEquals(difficultyToHostileAdvancedTactics("medium"), true)
+  assertEquals(difficultyToHostileGuessRadiusBonus("easy"), 4)
+  assertEquals(difficultyToHostileGuessRadiusBonus("medium"), 2)
+  assertEquals(difficultyToHostileGuessRadiusBonus("hard"), 0)
+  assertEquals(difficultyToHostileGuessConfidenceMultiplier("easy"), 0.2)
+  assertEquals(difficultyToHostileGuessConfidenceMultiplier("medium"), 0.5)
+  assertEquals(difficultyToHostileGuessConfidenceMultiplier("hard"), 1)
+  assertEquals(difficultyToHostilePredictionDistancePenalty("easy"), 2)
+  assertEquals(difficultyToHostilePredictionDistancePenalty("medium"), 1)
+  assertEquals(difficultyToHostilePredictionDistancePenalty("hard"), 0)
 })
 
 Deno.test("readAppSettings restores the unified payload", () => {

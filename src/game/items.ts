@@ -164,6 +164,8 @@ const createMapReveal = (
   game: GameState,
   pickupPosition: Point,
 ): TileReveal[] => {
+  const passiveDetectedRadius = game.playerPassiveDetectedRadius ??
+    PASSIVE_DETECTED_RADIUS
   const random = createDeterministicRandom(
     `${game.seed}:map:${game.turn}:${pickupPosition.x}:${pickupPosition.y}`,
   )
@@ -181,7 +183,7 @@ const createMapReveal = (
       const point = { x, y }
       hiddenCandidates.push(point)
 
-      if (chebyshevDistance(point, game.player) > PASSIVE_DETECTED_RADIUS) {
+      if (chebyshevDistance(point, game.player) > passiveDetectedRadius) {
         distantCandidates.push(point)
       }
     }

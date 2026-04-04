@@ -4,10 +4,12 @@ import {
   DEPTH_CHARGE_RANGE,
   DEPTH_CHARGE_SPEED,
   DUST_DECAY,
+  MAX_SONAR_RADIUS,
   PASSIVE_DETECTED_RADIUS,
   PASSIVE_EXACT_RADIUS,
   SHAKE_DECAY,
   SONAR_INTERVAL,
+  SONAR_SPEED,
   TORPEDO_RANGE,
   TORPEDO_SPEED,
   TRAIL_DECAY,
@@ -99,6 +101,7 @@ export const advanceTurn = (
   const preStepHostileContactActive = isHostileContactActive(
     nextPlayer,
     hostileSubmarines,
+    game.playerPassiveDetectedRadius,
   )
   const hostileEngagementGraceTurns = game.hostileEngagementGraceTurns ?? 0
 
@@ -264,7 +267,15 @@ export const advanceTurn = (
   const spawnedShockwaves: Shockwave[] = [
     ...torpedoStep.shockwaves,
     ...depthChargeStep.shockwaves,
-    ...(shouldEmitSonar ? [createSonarShockwave(nextPlayer)] : []),
+    ...(shouldEmitSonar
+      ? [
+        createSonarShockwave(
+          nextPlayer,
+          game.playerSonarSpeed ?? SONAR_SPEED,
+          game.playerSonarMaxRadius ?? MAX_SONAR_RADIUS,
+        ),
+      ]
+      : []),
   ]
   let hostileAiLogs: LogMessage[] = []
   const revealableEntitiesBeforeHostiles = collectRevealableEntities(
@@ -327,6 +338,11 @@ export const advanceTurn = (
         trails,
         memory: map.tiles.slice(),
         hostileEngagementGraceTurns: game.hostileEngagementGraceTurns ?? 0,
+        hostileTorpedoSpeed: game.hostileTorpedoSpeed,
+        hostileAdvancedTactics: game.hostileAdvancedTactics,
+        hostileGuessRadiusBonus: game.hostileGuessRadiusBonus,
+        hostileGuessConfidenceMultiplier: game.hostileGuessConfidenceMultiplier,
+        hostilePredictionDistancePenalty: game.hostilePredictionDistancePenalty,
         playerSonarHitHostiles,
         capsuleRetrievedThisTurn,
       },
@@ -439,6 +455,8 @@ export const advanceTurn = (
     torpedoStep.caveIns,
     0,
   )
+  const playerHostileKills = torpedoStep.playerHostileKills +
+    depthChargeStep.playerHostileKills
   const detectionLogs = [
     ...torpedoStep.impactPoints.map((point) =>
       createDirectionalDetectionLog(nextPlayer, point, "explosion")
@@ -458,6 +476,15 @@ export const advanceTurn = (
       "positive",
     )
     : null
+  const playerKillMessage = playerHostileKills === 0 ? null : createLogMessage(
+    () =>
+      playerHostileKills === 1
+        ? i18n._("Hostile submarine destroyed.")
+        : i18n._("Destroyed {playerHostileKills} hostile submarines.", {
+          playerHostileKills,
+        }),
+    "positive",
+  )
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
@@ -474,6 +501,8 @@ export const advanceTurn = (
     ? capsuleMessage
     : pickupStep.message !== null
     ? pickupStep.message
+    : playerKillMessage !== null
+    ? playerKillMessage
     : rammedFishCount > 0
     ? createLogMessage(
       () =>
@@ -520,6 +549,7 @@ export const advanceTurn = (
   const nextHostileContactActive = isHostileContactActive(
     nextPlayer,
     hostileSubmarines,
+    game.playerPassiveDetectedRadius,
   )
 
   if (
@@ -593,10 +623,11 @@ export const advanceTurn = (
 const isHostileContactActive = (
   player: Point,
   hostileSubmarines: readonly HostileSubmarine[],
+  playerPassiveDetectedRadius = PASSIVE_DETECTED_RADIUS,
 ): boolean => {
   return hostileSubmarines.some((hostileSubmarine) =>
     chebyshevDistance(player, hostileSubmarine.position) <=
-      PASSIVE_DETECTED_RADIUS
+      playerPassiveDetectedRadius
   )
 }
 
@@ -780,11 +811,17 @@ const describeDetectionBearing = (player: Point, origin: Point): string => {
   return "↘"
 }
 
-const createSonarShockwave = (origin: Point): Shockwave => {
+const createSonarShockwave = (
+  origin: Point,
+  speed: number,
+  maxRadius: number,
+): Shockwave => {
   return {
     origin: { ...origin },
     radius: 0,
     senderId: "player",
+    speed,
+    maxRadius,
     damaging: false,
     revealTerrain: true,
     revealEntities: true,

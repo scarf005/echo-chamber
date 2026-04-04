@@ -49,6 +49,7 @@ interface ExplosionResolution {
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   entityHits: number
+  hostileKills: number
   playerDestroyed: boolean
   caveIns: number
   screenShake: number
@@ -106,6 +107,7 @@ export const stepTorpedoes = (
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   playerEntityHits: number
+  playerHostileKills: number
   playerDestroyed: boolean
 } => {
   let nextTrails = trails
@@ -126,6 +128,7 @@ export const stepTorpedoes = (
   let caveIns = 0
   let screenShake = 0
   let playerEntityHits = 0
+  let playerHostileKills = 0
   let playerDestroyed = false
 
   for (const torpedo of orderedTorpedoes) {
@@ -203,6 +206,7 @@ export const stepTorpedoes = (
         )
         if (torpedo.senderId === "player") {
           playerEntityHits += explosion.entityHits
+          playerHostileKills += explosion.hostileKills
         }
         exploded = true
         impacts += 1
@@ -267,6 +271,7 @@ export const stepTorpedoes = (
         )
         if (torpedo.senderId === "player") {
           playerEntityHits += explosion.entityHits
+          playerHostileKills += explosion.hostileKills
         }
         exploded = true
         impacts += 1
@@ -299,6 +304,7 @@ export const stepTorpedoes = (
     fish: nextFish,
     hostileSubmarines: nextHostileSubmarines,
     playerEntityHits,
+    playerHostileKills,
     playerDestroyed,
   }
 }
@@ -332,6 +338,7 @@ export const stepDepthCharges = (
   fish: Fish[]
   hostileSubmarines: HostileSubmarine[]
   playerEntityHits: number
+  playerHostileKills: number
   playerDestroyed: boolean
 } => {
   let nextTrails = trails
@@ -352,6 +359,7 @@ export const stepDepthCharges = (
   let caveIns = 0
   let screenShake = 0
   let playerEntityHits = 0
+  let playerHostileKills = 0
   let playerDestroyed = false
 
   for (const depthCharge of orderedDepthCharges) {
@@ -435,6 +443,7 @@ export const stepDepthCharges = (
         )
         if (depthCharge.senderId === "player") {
           playerEntityHits += explosion.entityHits
+          playerHostileKills += explosion.hostileKills
         }
         exploded = true
         impacts += 1
@@ -501,6 +510,7 @@ export const stepDepthCharges = (
         )
         if (depthCharge.senderId === "player") {
           playerEntityHits += explosion.entityHits
+          playerHostileKills += explosion.hostileKills
         }
         exploded = true
         impacts += 1
@@ -513,6 +523,10 @@ export const stepDepthCharges = (
     if (!exploded && remaining > 0) {
       depthCharge.position = current
       depthCharge.rangeRemaining = remaining
+    } else if (!exploded) {
+      activeDepthCharges = activeDepthCharges.filter((candidate) =>
+        candidate !== depthCharge
+      )
     }
   }
 
@@ -532,6 +546,7 @@ export const stepDepthCharges = (
     fish: nextFish,
     hostileSubmarines: nextHostileSubmarines,
     playerEntityHits,
+    playerHostileKills,
     playerDestroyed,
   }
 }
@@ -584,6 +599,7 @@ const detonateProjectile = (
     hostileSubmarines: nextHostileSubmarines,
     entityHits: (fish.length - nextFish.length) +
       (hostileSubmarines.length - nextHostileSubmarines.length),
+    hostileKills: hostileSubmarines.length - nextHostileSubmarines.length,
     playerDestroyed: doesExplosionDestroyPlayer(impactPoint, senderId, player),
     caveIns: explosion.fallingBoulders.length,
     screenShake: explosion.screenShake,

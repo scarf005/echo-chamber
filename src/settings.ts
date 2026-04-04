@@ -5,7 +5,13 @@ import {
   normalizeAudioSettings,
   readAudioSettings,
 } from "./audio/settings.ts"
-import { DEFAULT_HOSTILE_SUBMARINE_COUNT } from "./game/constants.ts"
+import {
+  DEFAULT_HOSTILE_SUBMARINE_COUNT,
+  MAX_SONAR_RADIUS,
+  PASSIVE_DETECTED_RADIUS,
+  SONAR_SPEED,
+  TORPEDO_SPEED,
+} from "./game/constants.ts"
 
 export type DifficultySetting = "easy" | "medium" | "hard"
 
@@ -40,6 +46,78 @@ export const difficultyToHostileEngagementGraceTurns = (
 
   if (difficulty === "medium") {
     return 2
+  }
+
+  return 0
+}
+
+export const difficultyToHostileTorpedoSpeed = (
+  difficulty: DifficultySetting,
+): number => {
+  return difficulty === "easy" ? 1 : TORPEDO_SPEED
+}
+
+export const difficultyToPlayerSonarSpeed = (
+  difficulty: DifficultySetting,
+): number => {
+  return difficulty === "hard" ? SONAR_SPEED : SONAR_SPEED * 2
+}
+
+export const difficultyToPlayerSonarMaxRadius = (
+  difficulty: DifficultySetting,
+): number => {
+  return difficulty === "easy" ? MAX_SONAR_RADIUS * 2 : MAX_SONAR_RADIUS
+}
+
+export const difficultyToPlayerPassiveDetectedRadius = (
+  difficulty: DifficultySetting,
+): number => {
+  return difficulty === "hard" ? PASSIVE_DETECTED_RADIUS : 3
+}
+
+export const difficultyToHostileAdvancedTactics = (
+  difficulty: DifficultySetting,
+): boolean => {
+  return difficulty !== "easy"
+}
+
+export const difficultyToHostileGuessRadiusBonus = (
+  difficulty: DifficultySetting,
+): number => {
+  if (difficulty === "easy") {
+    return 4
+  }
+
+  if (difficulty === "medium") {
+    return 2
+  }
+
+  return 0
+}
+
+export const difficultyToHostileGuessConfidenceMultiplier = (
+  difficulty: DifficultySetting,
+): number => {
+  if (difficulty === "easy") {
+    return 0.2
+  }
+
+  if (difficulty === "medium") {
+    return 0.5
+  }
+
+  return 1
+}
+
+export const difficultyToHostilePredictionDistancePenalty = (
+  difficulty: DifficultySetting,
+): number => {
+  if (difficulty === "easy") {
+    return 2
+  }
+
+  if (difficulty === "medium") {
+    return 1
   }
 
   return 0

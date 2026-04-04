@@ -50,6 +50,8 @@ export interface Shockwave {
   origin: Point
   radius: number
   senderId: string
+  speed?: number
+  maxRadius?: number
   damaging: boolean
   revealTerrain: boolean
   revealEntities: boolean
@@ -198,7 +200,15 @@ export interface GameState {
   turn: number
   status: GameStatus
   playerSonarEnabled?: boolean
+  playerPassiveDetectedRadius?: number
+  playerSonarSpeed?: number
+  playerSonarMaxRadius?: number
   hostileEngagementGraceTurns?: number
+  hostileTorpedoSpeed?: number
+  hostileAdvancedTactics?: boolean
+  hostileGuessRadiusBonus?: number
+  hostileGuessConfidenceMultiplier?: number
+  hostilePredictionDistancePenalty?: number
   hostileContactActive?: boolean
   hostileContactGraceUntilTurn?: number | null
   capsuleKnown: boolean
@@ -237,7 +247,15 @@ export interface GameOptions {
   seed?: string
   width?: number
   height?: number
+  playerPassiveDetectedRadius?: number
+  playerSonarSpeed?: number
+  playerSonarMaxRadius?: number
   hostileEngagementGraceTurns?: number
+  hostileTorpedoSpeed?: number
+  hostileAdvancedTactics?: boolean
+  hostileGuessRadiusBonus?: number
+  hostileGuessConfidenceMultiplier?: number
+  hostilePredictionDistancePenalty?: number
   hostileSubmarineCount?: number
 }
 

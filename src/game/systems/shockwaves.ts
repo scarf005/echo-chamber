@@ -169,11 +169,13 @@ export const didShockwaveReachPointThisTurn = (
     revealableEntities,
     trails,
   )
+  const maxRadius = wave.maxRadius ?? MAX_SONAR_RADIUS
+  const speed = wave.speed ?? SONAR_SPEED
   const trace = traceWaveBand(
     map,
     wave,
     spawnedThisTurn ? -1 : wave.radius,
-    Math.min(MAX_SONAR_RADIUS, wave.radius + SONAR_SPEED),
+    Math.min(maxRadius, wave.radius + speed),
     dustByIndex,
     entitiesByIndex,
     blockerIndexes,
@@ -195,7 +197,9 @@ const advanceShockwave = (
   senderId: string,
   spawnedThisTurn: boolean,
 ): void => {
-  const nextRadius = Math.min(MAX_SONAR_RADIUS, wave.radius + SONAR_SPEED)
+  const maxRadius = wave.maxRadius ?? MAX_SONAR_RADIUS
+  const speed = wave.speed ?? SONAR_SPEED
+  const nextRadius = Math.min(maxRadius, wave.radius + speed)
   const trace = traceWaveBand(
     map,
     wave,
@@ -223,7 +227,7 @@ const advanceShockwave = (
     })
   })
 
-  if (nextRadius < MAX_SONAR_RADIUS && trace.front.size > 0) {
+  if (nextRadius < maxRadius && trace.front.size > 0) {
     nextWaves.push({ ...wave, origin: { ...wave.origin }, radius: nextRadius })
   }
 }
@@ -244,6 +248,7 @@ const traceWaveBand = (
   const front = new Map<number, number>()
   const revealedTiles = new Map<number, TileKind>()
   const revealedEntities = new Map<string, EntityRevealKind>()
+  const maxRadius = wave.maxRadius ?? MAX_SONAR_RADIUS
   const rayCount = Math.max(64, Math.ceil(nextRadius * 18))
 
   for (let index = 0; index < rayCount; index += 1) {
@@ -264,7 +269,7 @@ const traceWaveBand = (
 
       const distance = euclideanDistance(wave.origin, point)
 
-      if (distance > nextRadius + 0.5 || distance > MAX_SONAR_RADIUS + 0.5) {
+      if (distance > nextRadius + 0.5 || distance > maxRadius + 0.5) {
         break
       }
 

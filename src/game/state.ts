@@ -1,7 +1,11 @@
 import {
   DEFAULT_HOSTILE_SUBMARINE_COUNT,
+  MAX_SONAR_RADIUS,
+  PASSIVE_DETECTED_RADIUS,
+  SONAR_SPEED,
   START_DEPTH_CHARGES,
   START_TORPEDOES,
+  TORPEDO_SPEED,
 } from "./constants.ts"
 import { createInitialLogs, createInitialMissionMessage } from "./log.ts"
 import { createCornerPickups } from "./items.ts"
@@ -45,7 +49,18 @@ export const createGame = (options: GameOptions = {}): GameState => {
     turn: 0,
     status: "playing",
     playerSonarEnabled: true,
+    playerPassiveDetectedRadius: options.playerPassiveDetectedRadius ??
+      PASSIVE_DETECTED_RADIUS,
+    playerSonarSpeed: options.playerSonarSpeed ?? SONAR_SPEED,
+    playerSonarMaxRadius: options.playerSonarMaxRadius ?? MAX_SONAR_RADIUS,
     hostileEngagementGraceTurns: options.hostileEngagementGraceTurns ?? 0,
+    hostileTorpedoSpeed: options.hostileTorpedoSpeed ?? TORPEDO_SPEED,
+    hostileAdvancedTactics: options.hostileAdvancedTactics ?? true,
+    hostileGuessRadiusBonus: options.hostileGuessRadiusBonus ?? 0,
+    hostileGuessConfidenceMultiplier:
+      options.hostileGuessConfidenceMultiplier ?? 1,
+    hostilePredictionDistancePenalty:
+      options.hostilePredictionDistancePenalty ?? 0,
     hostileContactActive: false,
     hostileContactGraceUntilTurn: null,
     capsuleKnown: false,

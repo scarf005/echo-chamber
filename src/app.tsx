@@ -49,8 +49,16 @@ import {
 } from "./audio/settings.ts"
 import {
   type AppSettings,
+  difficultyToHostileAdvancedTactics,
   difficultyToHostileEngagementGraceTurns,
+  difficultyToHostileGuessConfidenceMultiplier,
+  difficultyToHostileGuessRadiusBonus,
+  difficultyToHostilePredictionDistancePenalty,
   difficultyToHostileSubmarineCount,
+  difficultyToHostileTorpedoSpeed,
+  difficultyToPlayerPassiveDetectedRadius,
+  difficultyToPlayerSonarMaxRadius,
+  difficultyToPlayerSonarSpeed,
   readAppSettings,
   writeAppSettings,
 } from "./settings.ts"
@@ -110,9 +118,25 @@ const createConfiguredGame = (rawSeed: string, settings: AppSettings) => {
   const runSeed = parseRunSeed(rawSeed, INITIAL_RUN_SEED)
   const game = createGame({
     seed: runSeed.gameSeed,
+    playerPassiveDetectedRadius: difficultyToPlayerPassiveDetectedRadius(
+      settings.difficulty,
+    ),
+    playerSonarSpeed: difficultyToPlayerSonarSpeed(settings.difficulty),
+    playerSonarMaxRadius: difficultyToPlayerSonarMaxRadius(settings.difficulty),
     hostileEngagementGraceTurns: difficultyToHostileEngagementGraceTurns(
       settings.difficulty,
     ),
+    hostileTorpedoSpeed: difficultyToHostileTorpedoSpeed(settings.difficulty),
+    hostileAdvancedTactics: difficultyToHostileAdvancedTactics(
+      settings.difficulty,
+    ),
+    hostileGuessRadiusBonus: difficultyToHostileGuessRadiusBonus(
+      settings.difficulty,
+    ),
+    hostileGuessConfidenceMultiplier:
+      difficultyToHostileGuessConfidenceMultiplier(settings.difficulty),
+    hostilePredictionDistancePenalty:
+      difficultyToHostilePredictionDistancePenalty(settings.difficulty),
     hostileSubmarineCount: difficultyToHostileSubmarineCount(
       settings.difficulty,
     ),

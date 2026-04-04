@@ -311,6 +311,40 @@ Deno.test("holdPosition emits sonar when it lands on the fifth turn", () => {
   )
 })
 
+Deno.test("easy player sonar travels twice as fast and twice as far", () => {
+  const next = holdPosition({
+    ...createFlatGame(),
+    turn: 4,
+    lastSonarTurn: 0,
+    playerSonarSpeed: 4,
+    playerSonarMaxRadius: 40,
+  })
+  const wave = next.shockwaves.find((candidate) =>
+    candidate.senderId === "player"
+  )
+
+  assertEquals(wave?.radius, 4)
+  assertEquals(wave?.speed, 4)
+  assertEquals(wave?.maxRadius, 40)
+})
+
+Deno.test("medium player sonar travels twice as fast without extra range", () => {
+  const next = holdPosition({
+    ...createFlatGame(),
+    turn: 4,
+    lastSonarTurn: 0,
+    playerSonarSpeed: 4,
+    playerSonarMaxRadius: 20,
+  })
+  const wave = next.shockwaves.find((candidate) =>
+    candidate.senderId === "player"
+  )
+
+  assertEquals(wave?.radius, 4)
+  assertEquals(wave?.speed, 4)
+  assertEquals(wave?.maxRadius, 20)
+})
+
 Deno.test("player sonar contact cue fires when the expanding wave hits the capsule", () => {
   const emitted = holdPosition({
     ...createFlatGame(),
@@ -559,6 +593,29 @@ Deno.test("passive visibility uses 1 tile exact and 2 tiles coarse", () => {
   assertEquals(next.visibility[darkIndex], 0)
 })
 
+Deno.test("passive visibility can extend coarse detection to 3 tiles", () => {
+  const game = createFlatGame({
+    map: createMapFromRows(
+      [
+        "##########",
+        "#........#",
+        "#........#",
+        "#........#",
+        "##########",
+      ],
+      { x: 1, y: 2 },
+      { x: 8, y: 2 },
+    ),
+    playerPassiveDetectedRadius: 3,
+  })
+  const next = movePlayer(game, "right")
+  const coarseIndex = next.player.y * next.map.width + (next.player.x + 3)
+  const darkIndex = next.player.y * next.map.width + (next.player.x + 4)
+
+  assertEquals(next.visibility[coarseIndex], 2)
+  assertEquals(next.visibility[darkIndex], 0)
+})
+
 Deno.test("sonar wave stops at walls and does not reveal behind them", () => {
   const game = createSonarWallGame()
   const emitted = movePlayer(game, "right")
@@ -640,6 +697,16 @@ Deno.test("player torpedoes proximity-detonate and sink hostile submarines", () 
   assertEquals(next.hostileSubmarines.length, 0)
   assert(next.shockwaveFront.some((cell) => cell.index === detonationIndex))
   assert(next.screenShake > 0)
+})
+
+Deno.test("player torpedo kills show a positive destruction message", () => {
+  const next = fireTorpedo(createTorpedoProximityGame(), "right")
+
+  assertEquals(next.message, "Hostile submarine destroyed.")
+  assertEquals(next.logs.at(-1), {
+    message: "Hostile submarine destroyed.",
+    type: "positive",
+  })
 })
 
 Deno.test("player torpedo kill takes precedence over same-turn hostile torpedo hit", () => {
@@ -750,6 +817,22 @@ Deno.test("depth charge keeps falling past nearby obstacles until impact", () =>
   assertEquals(crashed.map.tiles[obstacleIndex], "water")
   assert(crashed.shockwaveFront.some((cell) => cell.index === detonationIndex))
   assert(crashed.screenShake > 0)
+})
+
+Deno.test("depth charges are removed when their range expires", () => {
+  const game = {
+    ...createDepthChargeTestGame(),
+    depthCharges: [{
+      position: { x: 3, y: 3 },
+      senderId: "player",
+      speed: 1,
+      rangeRemaining: 1,
+    }],
+  }
+
+  const next = holdPosition(game)
+
+  assertEquals(next.depthCharges.length, 0)
 })
 
 Deno.test("depth charges proximity-detonate when a hostile submarine closes within two tiles", () => {
@@ -990,6 +1073,16 @@ Deno.test("hostile submarines use torpedo proximity when the player is near thei
   assertEquals(launched.hostileSubmarines[0].torpedoAmmo, 5)
 })
 
+Deno.test("easy hostile torpedoes launch at one tile per turn", () => {
+  const launched = holdPosition({
+    ...createHostileProximityAttackGame(),
+    hostileTorpedoSpeed: 1,
+  })
+
+  assertEquals(launched.torpedoes.length, 1)
+  assertEquals(launched.torpedoes[0].speed, 1)
+})
+
 Deno.test("hostile submarines can trigger cave-ins by firing at rock above the player", () => {
   const game = createHostileCeilingTrapGame()
   const armed = holdPosition(game)
@@ -1002,6 +1095,18 @@ Deno.test("hostile submarines can trigger cave-ins by firing at rock above the p
   assertEquals(
     collapsed.message,
     "Cave-in debris crushes your hull. Press R for a new run.",
+  )
+})
+
+Deno.test("easy difficulty disables hostile cave-in trap shots", () => {
+  const next = holdPosition({
+    ...createHostileCeilingTrapGame(),
+    hostileAdvancedTactics: false,
+  })
+
+  assertEquals(
+    next.hostileSubmarines[0].debugState?.attack.ceilingTrapDirection,
+    null,
   )
 })
 

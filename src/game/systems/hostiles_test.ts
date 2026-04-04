@@ -402,6 +402,76 @@ Deno.test("hunters hold position and drop depth charges on fresh deeper pursuit 
   assertEquals(next.hostileSubmarines[0].depthChargeAmmo, 5)
 })
 
+Deno.test("prediction penalties make hostile target guesses worse", () => {
+  const map = createMapFromRows(
+    [
+      "##############",
+      "#............#",
+      "#............#",
+      "#............#",
+      "#............#",
+      "##############",
+    ],
+    { x: 1, y: 1 },
+    { x: 12, y: 4 },
+  )
+  const hostile: HostileSubmarine = {
+    id: "hostile-1",
+    position: { x: 10, y: 4 },
+    facing: "left",
+    mode: "attack",
+    target: null,
+    reload: 0,
+    archetype: "scout",
+    initialPosition: { x: 10, y: 4 },
+    torpedoAmmo: 2,
+    vlsAmmo: 2,
+    depthChargeAmmo: 2,
+    lastSonarTurn: 0,
+    lastKnownPlayerPosition: { x: 5, y: 1 },
+    lastKnownPlayerVector: { x: -1, y: 0 },
+    lastKnownPlayerTurn: 0,
+    plannedPath: [],
+    lastAiLog: null,
+  }
+  const baseContext = {
+    player: { x: 1, y: 1 },
+    previousPlayer: { x: 1, y: 1 },
+    shockwaves: [],
+    trails: [],
+    memory: Array.from({ length: map.tiles.length }, () => null),
+    hostileEngagementGraceTurns: 0,
+    playerSonarHitHostiles: new Set<string>(),
+    capsuleRetrievedThisTurn: false,
+  }
+
+  const hard = stepHostileSubmarines(
+    map,
+    [hostile],
+    { ...baseContext, hostilePredictionDistancePenalty: 0 },
+    "hostile-prediction-hard-test",
+    1,
+  )
+  const medium = stepHostileSubmarines(
+    map,
+    [hostile],
+    { ...baseContext, hostilePredictionDistancePenalty: 1 },
+    "hostile-prediction-medium-test",
+    1,
+  )
+  const easy = stepHostileSubmarines(
+    map,
+    [hostile],
+    { ...baseContext, hostilePredictionDistancePenalty: 2 },
+    "hostile-prediction-easy-test",
+    1,
+  )
+
+  assertEquals(hard.hostileSubmarines[0].target, { x: 4, y: 1 })
+  assertEquals(medium.hostileSubmarines[0].target, { x: 5, y: 1 })
+  assertEquals(easy.hostileSubmarines[0].target, { x: 5, y: 1 })
+})
+
 const createMapFromRows = (
   rows: string[],
   spawn: Point,
