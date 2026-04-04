@@ -334,8 +334,9 @@ const createTextureTarget = (
 const bindQuad = (
   gl: WebGLRenderingContext,
   quadBuffer: WebGLBuffer,
-  positionLocation: number,
+  options: { positionLocation: number },
 ) => {
+  const { positionLocation } = options
   gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer)
   gl.enableVertexAttribArray(positionLocation)
   gl.vertexAttribPointer(positionLocation, 2, gl.FLOAT, false, 0, 0)
@@ -344,8 +345,9 @@ const bindQuad = (
 const bindTextureUnit = (
   gl: WebGLRenderingContext,
   texture: WebGLTexture,
-  unit: number,
+  options: { unit: number },
 ) => {
+  const { unit } = options
   gl.activeTexture(gl.TEXTURE0 + unit)
   gl.bindTexture(gl.TEXTURE_2D, texture)
 }
@@ -475,7 +477,7 @@ const uploadSourceTexture = (
 ) => {
   const { gl } = renderer
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1)
-  bindTextureUnit(gl, renderer.sourceTexture, 0)
+  bindTextureUnit(gl, renderer.sourceTexture, { unit: 0 })
   gl.texImage2D(
     gl.TEXTURE_2D,
     0,
@@ -503,8 +505,8 @@ const renderBlurPass = (
   gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer)
   gl.viewport(0, 0, target.width, target.height)
   gl.useProgram(blurProgram.program)
-  bindQuad(gl, quadBuffer, blurProgram.positionLocation)
-  bindTextureUnit(gl, inputTexture, 0)
+  bindQuad(gl, quadBuffer, { positionLocation: blurProgram.positionLocation })
+  bindTextureUnit(gl, inputTexture, { unit: 0 })
   gl.uniform1i(blurProgram.textureLocation, 0)
   gl.uniform2f(blurProgram.texelLocation, 1 / target.width, 1 / target.height)
   gl.uniform2f(blurProgram.directionLocation, directionX, directionY)
@@ -526,9 +528,9 @@ const renderBurnInPass = (
   gl.bindFramebuffer(gl.FRAMEBUFFER, nextTarget.framebuffer)
   gl.viewport(0, 0, nextTarget.width, nextTarget.height)
   gl.useProgram(burnInProgram.program)
-  bindQuad(gl, quadBuffer, burnInProgram.positionLocation)
-  bindTextureUnit(gl, renderer.sourceTexture, 0)
-  bindTextureUnit(gl, previousTarget.texture, 1)
+  bindQuad(gl, quadBuffer, { positionLocation: burnInProgram.positionLocation })
+  bindTextureUnit(gl, renderer.sourceTexture, { unit: 0 })
+  bindTextureUnit(gl, previousTarget.texture, { unit: 1 })
   gl.uniform1i(burnInProgram.currentLocation, 0)
   gl.uniform1i(burnInProgram.previousLocation, 1)
   gl.uniform1f(burnInProgram.decayLocation, decay)
@@ -549,10 +551,12 @@ const renderCompositePass = (
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   gl.viewport(0, 0, renderer.canvas.width, renderer.canvas.height)
   gl.useProgram(compositeProgram.program)
-  bindQuad(gl, quadBuffer, compositeProgram.positionLocation)
-  bindTextureUnit(gl, renderer.sourceTexture, 0)
-  bindTextureUnit(gl, bloomTexture, 1)
-  bindTextureUnit(gl, burnInTexture, 2)
+  bindQuad(gl, quadBuffer, {
+    positionLocation: compositeProgram.positionLocation,
+  })
+  bindTextureUnit(gl, renderer.sourceTexture, { unit: 0 })
+  bindTextureUnit(gl, bloomTexture, { unit: 1 })
+  bindTextureUnit(gl, burnInTexture, { unit: 2 })
   gl.uniform1i(compositeProgram.sourceLocation, 0)
   gl.uniform1i(compositeProgram.bloomLocation, 1)
   gl.uniform1i(compositeProgram.burnInLocation, 2)
