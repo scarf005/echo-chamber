@@ -1,3 +1,4 @@
+import "./process_shim.ts"
 import { i18n } from "@lingui/core"
 import { messages as enMessages } from "./locales/en/messages.ts"
 import { messages as koMessages } from "./locales/ko/messages.ts"

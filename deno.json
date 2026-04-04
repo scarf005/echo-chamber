@@ -2,14 +2,14 @@
   "tasks": {
     "dev": "deno run -A --node-modules-dir npm:vite",
     "typecheck": "bash -lc 'shopt -s globstar nullglob; deno check src/**/*.ts src/**/*.tsx'",
-    "check": "deno fmt --check && deno task typecheck && deno lint && deno test --parallel --allow-env=NODE_ENV",
+    "check": "deno fmt --check && deno task typecheck && deno lint && deno test --parallel",
     "fix": "deno fmt && deno lint",
     "setup:hooks": "deno run --allow-read --allow-write --allow-run=git ./scripts/install_git_hooks.ts",
     "build": {
       "command": "deno run -A --node-modules-dir npm:vite build",
       "dependencies": ["i18n:extract"]
     },
-    "test": "deno test --parallel --allow-env=NODE_ENV",
+    "test": "deno test --parallel",
     "preview": "deno run -A --node-modules-dir npm:vite preview",
     "serve": "deno run --allow-net --allow-read jsr:@std/http@1/file-server dist/",
     "i18n:extract": "deno cache --node-modules-dir ./lingui.config.ts && deno run -A --node-modules-dir ./node_modules/@lingui/cli/dist/lingui-extract.js --config ./lingui.config.ts --clean --workers 1",
