@@ -202,8 +202,9 @@ void main() {
 const compileShader = (
   gl: WebGLRenderingContext,
   type: number,
-  source: string,
+  options: { source: string },
 ) => {
+  const { source } = options
   const shader = gl.createShader(type)
 
   if (!shader) {
@@ -226,11 +227,13 @@ const createProgram = (
   gl: WebGLRenderingContext,
   fragmentShaderSource: string,
 ) => {
-  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, vertexShaderSource)
+  const vertexShader = compileShader(gl, gl.VERTEX_SHADER, {
+    source: vertexShaderSource,
+  })
   const fragmentShader = compileShader(
     gl,
     gl.FRAGMENT_SHADER,
-    fragmentShaderSource,
+    { source: fragmentShaderSource },
   )
   const program = gl.createProgram()
 
@@ -265,8 +268,9 @@ const createProgram = (
 const getUniformLocation = (
   gl: WebGLRenderingContext,
   program: WebGLProgram,
-  name: string,
+  options: { name: string },
 ) => {
+  const { name } = options
   const location = gl.getUniformLocation(program, name)
 
   if (!location) {
@@ -287,8 +291,9 @@ const setupTexture = (gl: WebGLRenderingContext, texture: WebGLTexture) => {
 const createTextureTarget = (
   gl: WebGLRenderingContext,
   width: number,
-  height: number,
+  options: { height: number },
 ) => {
+  const { height } = options
   const texture = gl.createTexture()
   const framebuffer = gl.createFramebuffer()
 
@@ -379,45 +384,63 @@ export const createCrtRenderer = (canvas: HTMLCanvasElement): CrtRenderer => {
   const compositeBase = createProgram(gl, compositeFragmentShaderSource)
   const blurProgram: BlurProgram = {
     ...blurBase,
-    textureLocation: getUniformLocation(gl, blurBase.program, "u_texture"),
-    texelLocation: getUniformLocation(gl, blurBase.program, "u_texel"),
-    directionLocation: getUniformLocation(gl, blurBase.program, "u_direction"),
+    textureLocation: getUniformLocation(gl, blurBase.program, {
+      name: "u_texture",
+    }),
+    texelLocation: getUniformLocation(gl, blurBase.program, {
+      name: "u_texel",
+    }),
+    directionLocation: getUniformLocation(gl, blurBase.program, {
+      name: "u_direction",
+    }),
   }
   const burnInProgram: BurnInProgram = {
     ...burnInBase,
-    currentLocation: getUniformLocation(gl, burnInBase.program, "u_current"),
-    previousLocation: getUniformLocation(gl, burnInBase.program, "u_previous"),
-    decayLocation: getUniformLocation(gl, burnInBase.program, "u_decay"),
+    currentLocation: getUniformLocation(gl, burnInBase.program, {
+      name: "u_current",
+    }),
+    previousLocation: getUniformLocation(gl, burnInBase.program, {
+      name: "u_previous",
+    }),
+    decayLocation: getUniformLocation(gl, burnInBase.program, {
+      name: "u_decay",
+    }),
   }
   const compositeProgram: CompositeProgram = {
     ...compositeBase,
-    sourceLocation: getUniformLocation(gl, compositeBase.program, "u_source"),
-    bloomLocation: getUniformLocation(gl, compositeBase.program, "u_bloom"),
-    burnInLocation: getUniformLocation(gl, compositeBase.program, "u_burnIn"),
+    sourceLocation: getUniformLocation(gl, compositeBase.program, {
+      name: "u_source",
+    }),
+    bloomLocation: getUniformLocation(gl, compositeBase.program, {
+      name: "u_bloom",
+    }),
+    burnInLocation: getUniformLocation(gl, compositeBase.program, {
+      name: "u_burnIn",
+    }),
     resolutionLocation: getUniformLocation(
       gl,
       compositeBase.program,
-      "u_resolution",
+      { name: "u_resolution" },
     ),
     sourceResolutionLocation: getUniformLocation(
       gl,
       compositeBase.program,
-      "u_sourceResolution",
+      { name: "u_sourceResolution" },
     ),
     timeLocation: getUniformLocation(
       gl,
       compositeBase.program,
-      "u_time",
+      { name: "u_time" },
     ),
     eventIntensityLocation: getUniformLocation(
       gl,
       compositeBase.program,
-      "u_eventIntensity",
+      { name: "u_eventIntensity" },
     ),
     eventLineLocation: getUniformLocation(
       gl,
       compositeBase.program,
-      "u_eventLineY",
+      { name: "u_eventLineY" },
     ),
   }
 
@@ -433,12 +456,12 @@ export const createCrtRenderer = (canvas: HTMLCanvasElement): CrtRenderer => {
     burnInProgram,
     compositeProgram,
     bloomTargets: [
-      createTextureTarget(gl, bloomWidth, bloomHeight),
-      createTextureTarget(gl, bloomWidth, bloomHeight),
+      createTextureTarget(gl, bloomWidth, { height: bloomHeight }),
+      createTextureTarget(gl, bloomWidth, { height: bloomHeight }),
     ],
     burnInTargets: [
-      createTextureTarget(gl, canvas.width, canvas.height),
-      createTextureTarget(gl, canvas.width, canvas.height),
+      createTextureTarget(gl, canvas.width, { height: canvas.height }),
+      createTextureTarget(gl, canvas.width, { height: canvas.height }),
     ],
     burnInIndex: 0,
     sourceWidth: 0,
@@ -469,10 +492,13 @@ const uploadSourceTexture = (
 const renderBlurPass = (
   renderer: CrtRenderer,
   inputTexture: WebGLTexture,
-  target: TextureTarget,
-  directionX: number,
-  directionY: number,
+  options: {
+    target: TextureTarget
+    directionX: number
+    directionY: number
+  },
 ) => {
+  const { target, directionX, directionY } = options
   const { gl, blurProgram, quadBuffer } = renderer
   gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer)
   gl.viewport(0, 0, target.width, target.height)
@@ -490,9 +516,12 @@ const renderBlurPass = (
 const renderBurnInPass = (
   renderer: CrtRenderer,
   nextTarget: TextureTarget,
-  previousTarget: TextureTarget,
-  decay: number,
+  options: {
+    previousTarget: TextureTarget
+    decay: number
+  },
 ) => {
+  const { previousTarget, decay } = options
   const { gl, burnInProgram, quadBuffer } = renderer
   gl.bindFramebuffer(gl.FRAMEBUFFER, nextTarget.framebuffer)
   gl.viewport(0, 0, nextTarget.width, nextTarget.height)
@@ -511,9 +540,11 @@ const renderBurnInPass = (
 const renderCompositePass = (
   renderer: CrtRenderer,
   bloomTexture: WebGLTexture,
-  burnInTexture: WebGLTexture,
-  options: RenderCrtFrameOptions,
+  options: {
+    burnInTexture: WebGLTexture
+  } & RenderCrtFrameOptions,
 ) => {
+  const { burnInTexture } = options
   const { gl, compositeProgram, quadBuffer } = renderer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   gl.viewport(0, 0, renderer.canvas.width, renderer.canvas.height)
@@ -561,24 +592,33 @@ export const renderCrtFrame = (
     renderBlurPass(
       renderer,
       renderer.sourceTexture,
-      renderer.bloomTargets[0],
-      1,
-      0,
+      {
+        target: renderer.bloomTargets[0],
+        directionX: 1,
+        directionY: 0,
+      },
     )
     renderBlurPass(
       renderer,
       renderer.bloomTargets[0].texture,
-      renderer.bloomTargets[1],
-      0,
-      1,
+      {
+        target: renderer.bloomTargets[1],
+        directionX: 0,
+        directionY: 1,
+      },
     )
   }
-  renderBurnInPass(renderer, nextBurnTarget, previousBurnTarget, burnDecay)
+  renderBurnInPass(renderer, nextBurnTarget, {
+    previousTarget: previousBurnTarget,
+    decay: burnDecay,
+  })
   renderCompositePass(
     renderer,
     renderer.bloomTargets[1].texture,
-    nextBurnTarget.texture,
-    options,
+    {
+      ...options,
+      burnInTexture: nextBurnTarget.texture,
+    },
   )
 
   renderer.burnInIndex = nextBurnIndex
