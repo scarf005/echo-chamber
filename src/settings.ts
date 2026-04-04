@@ -54,7 +54,7 @@ export const difficultyToHostileEngagementGraceTurns = (
 export const difficultyToHostileTorpedoSpeed = (
   difficulty: DifficultySetting,
 ): number => {
-  return difficulty === "easy" ? 1 : TORPEDO_SPEED
+  return difficulty === "hard" ? TORPEDO_SPEED : 2
 }
 
 export const difficultyToPlayerSonarSpeed = (
@@ -66,7 +66,11 @@ export const difficultyToPlayerSonarSpeed = (
 export const difficultyToPlayerSonarMaxRadius = (
   difficulty: DifficultySetting,
 ): number => {
-  return difficulty === "easy" ? MAX_SONAR_RADIUS * 2 : MAX_SONAR_RADIUS
+  if (difficulty === "hard") {
+    return Math.floor(MAX_SONAR_RADIUS * 1.5)
+  }
+
+  return MAX_SONAR_RADIUS * 2
 }
 
 export const difficultyToPlayerPassiveDetectedRadius = (
