@@ -185,7 +185,8 @@ const createMapReveal = (
       const point = { x, y }
       const tile = tileAt(game.map, x, y)
       const isTerrain = tile !== null && tile !== "water"
-      const isDistant = chebyshevDistance(point, game.player) > passiveDetectedRadius
+      const isDistant =
+        chebyshevDistance(point, game.player) > passiveDetectedRadius
 
       if (isTerrain) {
         hiddenTerrain.push(point)
@@ -203,8 +204,8 @@ const createMapReveal = (
   const candidates = terrainCandidates.length > 0
     ? terrainCandidates
     : distantWater.length > 0
-      ? distantWater
-      : hiddenWater
+    ? distantWater
+    : hiddenWater
   const center = candidates.length > 0
     ? randomChoice(candidates, random)
     : { ...pickupPosition }
