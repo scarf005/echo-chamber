@@ -61,7 +61,6 @@ import { refreshPerception, revealMap } from "./perception.ts"
 import type { Point } from "./mapgen.ts"
 import { clearKelpStrandAt, isPassableTile, tileAt } from "./mapgen.ts"
 import { stepFallingBoulders } from "./systems/boulders.ts"
-import { stepFish } from "./systems/fish.ts"
 import { stepHostileSubmarines } from "./systems/hostiles.ts"
 import { stepDepthCharges, stepTorpedoes } from "./systems/projectiles.ts"
 import {
@@ -117,7 +116,7 @@ export const advanceTurn = (
 
   const hostileContactGraceActive = hostileContactGraceUntilTurn !== null &&
     nextTurn <= hostileContactGraceUntilTurn
-  let rammedFishCount =
+  const rammedFishCount =
     fish.filter((candidate) => pointsEqual(candidate.position, nextPlayer))
       .length
   fish = fish.filter((candidate) =>
@@ -311,21 +310,6 @@ export const advanceTurn = (
       )
       .map((hostileSubmarine) => hostileSubmarine.id),
   )
-
-  if (!playerDestroyed) {
-    const fishStep = stepFish(
-      map,
-      fish,
-      {
-        player: nextPlayer,
-        hostileSubmarines,
-      },
-      game.seed,
-      nextTurn,
-    )
-    fish = fishStep.fish
-    rammedFishCount += fishStep.rammedFishCount
-  }
 
   if (!playerDestroyed) {
     const hostileStep = stepHostileSubmarines(

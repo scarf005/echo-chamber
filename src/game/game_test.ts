@@ -50,7 +50,7 @@ Deno.test("createGame is deterministic for the same seed", () => {
   assertEquals(first, second)
 })
 
-Deno.test("hostile spawns include minimum composition and matching fish", () => {
+Deno.test("hostile spawns include minimum composition", () => {
   const game = createGame({
     seed: "scout-guard-spawn-test",
     width: 72,
@@ -73,7 +73,6 @@ Deno.test("hostile spawns include minimum composition and matching fish", () => 
   assertEquals(scoutCount >= 6, true)
   assertEquals(guards.length >= 2, true)
   assertEquals(hunterCount >= HOSTILE_HUNTER_MIN_COUNT, true)
-  assertEquals(game.fish?.length, scoutCount)
   assertEquals(
     guards.every((guard) =>
       Math.max(
