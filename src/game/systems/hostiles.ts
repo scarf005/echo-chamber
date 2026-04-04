@@ -536,7 +536,11 @@ export const stepHostileSubmarines = (
               random,
             },
           )) ??
-          choosePatrolStep(map, position, { occupied, random, previousPosition })
+          choosePatrolStep(map, position, {
+            occupied,
+            random,
+            previousPosition,
+          })
     } else if (archetype === "guard") {
       mode = "patrol"
       retainedPlannedPath = target
@@ -567,7 +571,8 @@ export const stepHostileSubmarines = (
           random,
           previousPosition,
         },
-      ) ?? choosePatrolStep(map, position, { occupied, random, previousPosition })
+      ) ??
+        choosePatrolStep(map, position, { occupied, random, previousPosition })
     }
 
     if (mode === "investigate" && target) {
@@ -764,7 +769,7 @@ export const stepHostileSubmarines = (
         damaging: false,
         revealTerrain: false,
         revealEntities: false,
-        visibleToPlayer: hasLineOfSight(map, context.player, position),
+        visibleToPlayer: hasLineOfSight(map, context.player, { to: position }),
         ...(lastKnownPlayerPosition && shouldBroadcastFix
           ? {
             message: {
@@ -920,7 +925,12 @@ const shouldUseExactAttackTarget = (
     turn: number
   },
 ): boolean => {
-  const { lastKnownPlayerPosition, directDetection, lastKnownPlayerTurn, turn } = options
+  const {
+    lastKnownPlayerPosition,
+    directDetection,
+    lastKnownPlayerTurn,
+    turn,
+  } = options
   return directDetection ||
     (lastKnownPlayerTurn !== null && turn - lastKnownPlayerTurn <= 1 && (
       hasHorizontalShotOpportunity(map, position, lastKnownPlayerPosition) ||
@@ -2390,7 +2400,10 @@ const resolveAttack = (
         },
       )
       const moveTarget = nextDirection
-        ? createNextSalvoMoveTarget(map, position, { direction: nextDirection, occupied })
+        ? createNextSalvoMoveTarget(map, position, {
+          direction: nextDirection,
+          occupied,
+        })
         : null
 
       nextSalvoShotsRemaining = moveTarget ? 1 : 0
@@ -2596,7 +2609,12 @@ const hasClearCardinalPath = (
   return true
 }
 
-const hasLineOfSight = (map: GeneratedMap, from: Point, to: Point): boolean => {
+const hasLineOfSight = (
+  map: GeneratedMap,
+  from: Point,
+  options: { to: Point },
+): boolean => {
+  const { to } = options
   const fov = new FOV.PreciseShadowcasting((x: number, y: number) =>
     tileAt(map, x, y) === "water"
   )
@@ -2939,7 +2957,10 @@ const chooseCoordinatedClueTarget = (
       isCandidate: (point) =>
         chebyshevDistance(point, cluePosition) <= HOSTILE_PLAYER_CLUE_RADIUS,
       scoreCandidate: (point) =>
-        scoreInvestigationTarget(point, cluePosition, { start: position, reservedPoints }),
+        scoreInvestigationTarget(point, cluePosition, {
+          start: position,
+          reservedPoints,
+        }),
     },
   ) ?? { ...cluePosition }
 }
@@ -2963,8 +2984,10 @@ const chooseCoordinatedSearchTarget = (
     {
       occupied,
       random,
-      isCandidate: (point) => !previousPosition || !pointsEqual(point, previousPosition),
-      scoreCandidate: (point) => scoreSearchTarget(point, position, reservedPoints),
+      isCandidate: (point) =>
+        !previousPosition || !pointsEqual(point, previousPosition),
+      scoreCandidate: (point) =>
+        scoreSearchTarget(point, position, reservedPoints),
     },
   )
 }
