@@ -1619,6 +1619,23 @@ Deno.test("map pickups reveal an unexplored terrain sector", () => {
   assertEquals(hasKnownTileBeyondPassiveRange(next), true)
 })
 
+Deno.test("collecting the capsule triggers the pickup cue", () => {
+  const game = createCapsuleSonarGame()
+  const path = findPath(game.map, game.player, game.map.capsule)
+  let current = game
+
+  for (let index = 1; index < path.length; index += 1) {
+    current = movePlayer(
+      current,
+      directionBetween(path[index - 1], path[index]),
+    )
+  }
+
+  assertEquals(current.capsuleCollected, true)
+  assertEquals(current.message, "Capsule retrieved. Return to dock.")
+  assertEquals(current.playerPickupCueCount, 1)
+})
+
 const findFirstStepDirection = (
   map: ReturnType<typeof createGame>["map"],
   start: Point,

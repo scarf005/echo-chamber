@@ -444,6 +444,7 @@ export const advanceTurn = (
   pickups = pickupStep.pickups
   torpedoAmmo = pickupStep.torpedoAmmo
   depthChargeAmmo = pickupStep.depthChargeAmmo
+  const playerCollectedCue = playerCollectedPickup || capsuleRetrievedThisTurn
   const capsuleCollected = playerDestroyed
     ? hadCapsule
     : hadCapsule || capsuleRetrievedThisTurn
@@ -603,7 +604,7 @@ export const advanceTurn = (
     playerDeathCueCount: playerDiedThisTurn
       ? (game.playerDeathCueCount ?? 0) + 1
       : (game.playerDeathCueCount ?? 0),
-    playerPickupCueCount: playerCollectedPickup
+    playerPickupCueCount: playerCollectedCue
       ? (game.playerPickupCueCount ?? 0) + 1
       : (game.playerPickupCueCount ?? 0),
     logs: nextLogs,
