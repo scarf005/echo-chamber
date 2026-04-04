@@ -86,7 +86,13 @@ Deno.test("falling boulders crush hostile submarines in their path", () => {
 
   assertEquals(next.status, "playing")
   assertEquals(next.hostileSubmarines.length, 0)
-  assertEquals(next.message, "loud falling rocks detected at ↘")
+  assertEquals(next.message, "hostile submatine detroyed at ↘")
+  assertEquals(
+    next.logs.some((entry) =>
+      entry.message === "hostile submatine detroyed at ↘"
+    ),
+    true,
+  )
 })
 
 const createBoulderLandingGame = (

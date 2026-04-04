@@ -328,13 +328,13 @@ Deno.test("easy player sonar travels twice as fast and twice as far", () => {
   assertEquals(wave?.maxRadius, 40)
 })
 
-Deno.test("medium player sonar travels twice as fast without extra range", () => {
+Deno.test("medium player sonar travels twice as fast and twice as far", () => {
   const next = holdPosition({
     ...createFlatGame(),
     turn: 4,
     lastSonarTurn: 0,
     playerSonarSpeed: 4,
-    playerSonarMaxRadius: 20,
+    playerSonarMaxRadius: 40,
   })
   const wave = next.shockwaves.find((candidate) =>
     candidate.senderId === "player"
@@ -342,7 +342,24 @@ Deno.test("medium player sonar travels twice as fast without extra range", () =>
 
   assertEquals(wave?.radius, 4)
   assertEquals(wave?.speed, 4)
-  assertEquals(wave?.maxRadius, 20)
+  assertEquals(wave?.maxRadius, 40)
+})
+
+Deno.test("hard player sonar travels one and a half times farther than enemy sonar", () => {
+  const next = holdPosition({
+    ...createFlatGame(),
+    turn: 4,
+    lastSonarTurn: 0,
+    playerSonarSpeed: 2,
+    playerSonarMaxRadius: 30,
+  })
+  const wave = next.shockwaves.find((candidate) =>
+    candidate.senderId === "player"
+  )
+
+  assertEquals(wave?.radius, 2)
+  assertEquals(wave?.speed, 2)
+  assertEquals(wave?.maxRadius, 30)
 })
 
 Deno.test("player sonar contact cue fires when the expanding wave hits the capsule", () => {
@@ -702,9 +719,9 @@ Deno.test("player torpedoes proximity-detonate and sink hostile submarines", () 
 Deno.test("player torpedo kills show a positive destruction message", () => {
   const next = fireTorpedo(createTorpedoProximityGame(), "right")
 
-  assertEquals(next.message, "Hostile submarine destroyed.")
+  assertEquals(next.message, "hostile submatine detroyed at →")
   assertEquals(next.logs.at(-1), {
-    message: "Hostile submarine destroyed.",
+    message: "hostile submatine detroyed at →",
     type: "positive",
   })
 })
@@ -1073,14 +1090,14 @@ Deno.test("hostile submarines use torpedo proximity when the player is near thei
   assertEquals(launched.hostileSubmarines[0].torpedoAmmo, 5)
 })
 
-Deno.test("easy hostile torpedoes launch at one tile per turn", () => {
+Deno.test("easy hostile torpedoes launch at two tiles per turn", () => {
   const launched = holdPosition({
     ...createHostileProximityAttackGame(),
-    hostileTorpedoSpeed: 1,
+    hostileTorpedoSpeed: 2,
   })
 
   assertEquals(launched.torpedoes.length, 1)
-  assertEquals(launched.torpedoes[0].speed, 1)
+  assertEquals(launched.torpedoes[0].speed, 2)
 })
 
 Deno.test("hostile submarines can trigger cave-ins by firing at rock above the player", () => {

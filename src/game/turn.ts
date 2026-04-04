@@ -455,8 +455,13 @@ export const advanceTurn = (
     torpedoStep.caveIns,
     0,
   )
-  const playerHostileKills = torpedoStep.playerHostileKills +
-    depthChargeStep.playerHostileKills
+  const survivingHostileIds = new Set(
+    hostileSubmarines.map((hostileSubmarine) => hostileSubmarine.id),
+  )
+  const destroyedHostileSubmarines = game.hostileSubmarines.filter(
+    (hostileSubmarine) => !survivingHostileIds.has(hostileSubmarine.id),
+  )
+  const hostileDestroyedCount = destroyedHostileSubmarines.length
   const detectionLogs = [
     ...torpedoStep.impactPoints.map((point) =>
       createDirectionalDetectionLog(nextPlayer, point, "explosion")
@@ -476,15 +481,22 @@ export const advanceTurn = (
       "positive",
     )
     : null
-  const playerKillMessage = playerHostileKills === 0 ? null : createLogMessage(
-    () =>
-      playerHostileKills === 1
-        ? i18n._("Hostile submarine destroyed.")
-        : i18n._("Destroyed {playerHostileKills} hostile submarines.", {
-          playerHostileKills,
-        }),
-    "positive",
-  )
+  const hostileDestroyedMessage = hostileDestroyedCount === 0
+    ? null
+    : createLogMessage(
+      () =>
+        hostileDestroyedCount === 1
+          ? i18n._("hostile submatine detroyed at {direction}", {
+            direction: describeDetectionBearing(
+              nextPlayer,
+              destroyedHostileSubmarines[0].position,
+            ),
+          })
+          : i18n._("Destroyed {hostileDestroyedCount} hostile submarines.", {
+            hostileDestroyedCount,
+          }),
+      "positive",
+    )
 
   const nextMessage = playerDestroyed
     ? hostileMessage ??
@@ -501,8 +513,8 @@ export const advanceTurn = (
     ? capsuleMessage
     : pickupStep.message !== null
     ? pickupStep.message
-    : playerKillMessage !== null
-    ? playerKillMessage
+    : hostileDestroyedMessage !== null
+    ? hostileDestroyedMessage
     : rammedFishCount > 0
     ? createLogMessage(
       () =>
@@ -537,6 +549,10 @@ export const advanceTurn = (
     ...detectionHistoryLogs,
     ...(hostileSonarMessage !== null && nextMessage !== hostileSonarMessage
       ? [hostileSonarMessage]
+      : []),
+    ...(hostileDestroyedMessage !== null &&
+        nextMessage !== hostileDestroyedMessage
+      ? [hostileDestroyedMessage]
       : []),
     ...(won ? [createLogMessage(WIN_SEED_MODE_HINT)] : []),
   ].slice(-MAX_LOG_MESSAGES)

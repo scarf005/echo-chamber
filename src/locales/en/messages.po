@@ -14,14 +14,14 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:481
-msgid "Hostile submarine destroyed."
-msgstr "Hostile submarine destroyed."
+#: src/game/turn.ts:489
+msgid "hostile submatine detroyed at {direction}"
+msgstr "hostile submatine detroyed at {direction}"
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:482
-msgid "Destroyed {playerHostileKills} hostile submarines."
-msgstr "Destroyed {playerHostileKills} hostile submarines."
+#: src/game/turn.ts:495
+msgid "Destroyed {hostileDestroyedCount} hostile submarines."
+msgstr "Destroyed {hostileDestroyedCount} hostile submarines."
 
 #. js-lingui-explicit-id
 #: src/game/entity_labels.ts:10
@@ -148,53 +148,53 @@ msgid "When sunk, press R to restart. Use Options for restart or random run anyt
 msgstr "When sunk, press R to restart. Use Options for restart or random run anytime."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:132
-#: src/game/turn.ts:364
+#: src/game/turn.ts:133
+#: src/game/turn.ts:365
 msgid "A hostile submarine rams your hull. Press R for a new run."
 msgstr "A hostile submarine rams your hull. Press R for a new run."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:197
+#: src/game/turn.ts:198
 msgid "A hostile torpedo tears through your hull. Press R for a new run."
 msgstr "A hostile torpedo tears through your hull. Press R for a new run."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:232
+#: src/game/turn.ts:233
 msgid "A hostile blast caves in your hull. Press R for a new run."
 msgstr "A hostile blast caves in your hull. Press R for a new run."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:256
+#: src/game/turn.ts:257
 msgid "Cave-in debris crushes your hull. Press R for a new run."
 msgstr "Cave-in debris crushes your hull. Press R for a new run."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:393
+#: src/game/turn.ts:394
 msgid "hostile sonar from {direction}"
 msgstr "hostile sonar from {direction}"
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:474
+#: src/game/turn.ts:480
 msgid "Capsule retrieved. Return to dock."
 msgstr "Capsule retrieved. Return to dock."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:491
+#: src/game/turn.ts:504
 msgid "Your submarine is destroyed. Press R for a new run."
 msgstr "Your submarine is destroyed. Press R for a new run."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:496
+#: src/game/turn.ts:509
 msgid "Capsule delivered to dock. Press R for a new run."
 msgstr "Capsule delivered to dock. Press R for a new run."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:509
+#: src/game/turn.ts:522
 msgid "You paste a fish against the bow."
 msgstr "You paste a fish against the bow."
 
 #. js-lingui-explicit-id
-#: src/game/turn.ts:510
+#: src/game/turn.ts:523
 msgid "You paste {rammedFishCount} fish against the bow."
 msgstr "You paste {rammedFishCount} fish against the bow."
 
@@ -574,225 +574,225 @@ msgstr "holding near {target}"
 msgid "{id}: will {mode}{targetSuffix}"
 msgstr "{id}: will {mode}{targetSuffix}"
 
-#: src/app.tsx:1029
+#: src/app.tsx:1033
 msgid "active seed modes"
 msgstr "active seed modes"
 
-#: src/app.tsx:1143
+#: src/app.tsx:1147
 msgid "audio"
 msgstr "audio"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:377
+#: src/app.tsx:381
 msgid "Auto-nav engaged to {0}."
 msgstr "Auto-nav engaged to {0}."
 
 #. placeholder {0}: formatPoint(point)
 #. placeholder {1}: bearing ? ` ${bearing}` : ""
-#: src/app.tsx:1460
+#: src/app.tsx:1464
 msgid "Auto-nav halted: {localizedReason} at {0}{1}."
 msgstr "Auto-nav halted: {localizedReason} at {0}{1}."
 
-#: src/app.tsx:1000
-#: src/app.tsx:1431
+#: src/app.tsx:1004
+#: src/app.tsx:1435
 msgid "close"
 msgstr "close"
 
 #. placeholder {0}: formatPoint(point)
-#: src/app.tsx:396
+#: src/app.tsx:400
 msgid "Course plotted to {0}. Click again to engage."
 msgstr "Course plotted to {0}. Click again to engage."
 
-#: src/app.tsx:1295
+#: src/app.tsx:1299
 msgid "credits"
 msgstr "credits"
 
-#: src/app.tsx:1123
+#: src/app.tsx:1127
 msgid "CRT effect"
 msgstr "CRT effect"
 
-#: src/app.tsx:904
+#: src/app.tsx:908
 msgid "depth charges"
 msgstr "depth charges"
 
-#: src/app.tsx:1237
+#: src/app.tsx:1241
 msgid "dev"
 msgstr "dev"
 
-#: src/app.tsx:1065
-#: src/app.tsx:1068
+#: src/app.tsx:1069
+#: src/app.tsx:1072
 msgid "difficulty"
 msgstr "difficulty"
 
-#: src/app.tsx:916
+#: src/app.tsx:920
 msgid "display"
 msgstr "display"
 
-#: src/app.tsx:330
+#: src/app.tsx:334
 msgid "Display set to full map."
 msgstr "Display set to full map."
 
-#: src/app.tsx:331
+#: src/app.tsx:335
 msgid "Display set to tracking camera."
 msgstr "Display set to tracking camera."
 
-#: src/app.tsx:1076
-#: src/app.tsx:1084
+#: src/app.tsx:1080
+#: src/app.tsx:1088
 msgid "easy"
 msgstr "easy"
 
-#: src/app.tsx:1173
+#: src/app.tsx:1177
 msgid "enable music"
 msgstr "enable music"
 
-#: src/app.tsx:1217
+#: src/app.tsx:1221
 msgid "enable sfx"
 msgstr "enable sfx"
 
-#: src/app.tsx:1046
+#: src/app.tsx:1050
 msgid "English"
 msgstr "English"
 
-#: src/app.tsx:840
+#: src/app.tsx:844
 msgid "FULL MAP (M)"
 msgstr "FULL MAP (M)"
 
-#: src/app.tsx:1271
-#: src/app.tsx:1277
+#: src/app.tsx:1275
+#: src/app.tsx:1281
 msgid "god mode"
 msgstr "god mode"
 
-#: src/app.tsx:1121
+#: src/app.tsx:1125
 msgid "graphics"
 msgstr "graphics"
 
-#: src/app.tsx:1108
-#: src/app.tsx:1116
+#: src/app.tsx:1112
+#: src/app.tsx:1120
 msgid "hard"
 msgstr "hard"
 
-#: src/app.tsx:971
+#: src/app.tsx:975
 msgid "hover any tile to inspect terrain and contacts."
 msgstr "hover any tile to inspect terrain and contacts."
 
-#: src/app.tsx:952
+#: src/app.tsx:956
 msgid "hover tile"
 msgstr "hover tile"
 
-#: src/app.tsx:950
+#: src/app.tsx:954
 msgid "inspector"
 msgstr "inspector"
 
-#: src/app.tsx:1057
+#: src/app.tsx:1061
 msgid "Korean"
 msgstr "Korean"
 
-#: src/app.tsx:1035
-#: src/app.tsx:1038
+#: src/app.tsx:1039
+#: src/app.tsx:1042
 msgid "language"
 msgstr "language"
 
-#: src/app.tsx:934
-#: src/app.tsx:1421
+#: src/app.tsx:938
 #: src/app.tsx:1425
+#: src/app.tsx:1429
 msgid "log"
 msgstr "log"
 
-#: src/app.tsx:1268
+#: src/app.tsx:1272
 msgid "map overlay"
 msgstr "map overlay"
 
-#: src/app.tsx:1240
+#: src/app.tsx:1244
 msgid "map visibility"
 msgstr "map visibility"
 
-#: src/app.tsx:1092
-#: src/app.tsx:1100
+#: src/app.tsx:1096
+#: src/app.tsx:1104
 msgid "medium"
 msgstr "medium"
 
-#: src/app.tsx:874
+#: src/app.tsx:878
 msgid "mission status"
 msgstr "mission status"
 
-#: src/app.tsx:1146
+#: src/app.tsx:1150
 msgid "music"
 msgstr "music"
 
-#: src/app.tsx:1155
+#: src/app.tsx:1159
 msgid "music volume"
 msgstr "music volume"
 
-#: src/app.tsx:853
+#: src/app.tsx:857
 msgid "OFF"
 msgstr "OFF"
 
-#: src/app.tsx:853
+#: src/app.tsx:857
 msgid "ON"
 msgstr "ON"
 
-#: src/app.tsx:926
+#: src/app.tsx:930
 msgid "open full order log"
 msgstr "open full order log"
 
-#: src/app.tsx:878
+#: src/app.tsx:882
 msgid "open options"
 msgstr "open options"
 
-#: src/app.tsx:991
-#: src/app.tsx:994
+#: src/app.tsx:995
+#: src/app.tsx:998
 msgid "options"
 msgstr "options"
 
-#: src/app.tsx:908
+#: src/app.tsx:912
 msgid "position"
 msgstr "position"
 
-#: src/app.tsx:1023
+#: src/app.tsx:1027
 msgid "restart"
 msgstr "restart"
 
-#: src/app.tsx:1242
-#: src/app.tsx:1247
+#: src/app.tsx:1246
+#: src/app.tsx:1251
 msgid "reveal map"
 msgstr "reveal map"
 
-#: src/app.tsx:1011
+#: src/app.tsx:1015
 msgid "run seed"
 msgstr "run seed"
 
-#: src/app.tsx:1010
+#: src/app.tsx:1014
 msgid "seed"
 msgstr "seed"
 
-#: src/app.tsx:1190
+#: src/app.tsx:1194
 msgid "sfx"
 msgstr "sfx"
 
-#: src/app.tsx:1199
+#: src/app.tsx:1203
 msgid "sfx volume"
 msgstr "sfx volume"
 
-#: src/app.tsx:896
+#: src/app.tsx:900
 msgid "sonar in"
 msgstr "sonar in"
 
-#: src/app.tsx:912
+#: src/app.tsx:916
 msgid "target"
 msgstr "target"
 
-#: src/app.tsx:1128
+#: src/app.tsx:1132
 msgid "toggle CRT effect"
 msgstr "toggle CRT effect"
 
-#: src/app.tsx:900
+#: src/app.tsx:904
 msgid "torpedoes"
 msgstr "torpedoes"
 
-#: src/app.tsx:841
+#: src/app.tsx:845
 msgid "TRACKING (M)"
 msgstr "TRACKING (M)"
 
-#: src/app.tsx:892
+#: src/app.tsx:896
 msgid "turn"
 msgstr "turn"
