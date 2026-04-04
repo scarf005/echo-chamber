@@ -469,10 +469,13 @@ const uploadSourceTexture = (
 const renderBlurPass = (
   renderer: CrtRenderer,
   inputTexture: WebGLTexture,
-  target: TextureTarget,
-  directionX: number,
-  directionY: number,
+  options: {
+    target: TextureTarget
+    directionX: number
+    directionY: number
+  },
 ) => {
+  const { target, directionX, directionY } = options
   const { gl, blurProgram, quadBuffer } = renderer
   gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer)
   gl.viewport(0, 0, target.width, target.height)
@@ -490,9 +493,12 @@ const renderBlurPass = (
 const renderBurnInPass = (
   renderer: CrtRenderer,
   nextTarget: TextureTarget,
-  previousTarget: TextureTarget,
-  decay: number,
+  options: {
+    previousTarget: TextureTarget
+    decay: number
+  },
 ) => {
+  const { previousTarget, decay } = options
   const { gl, burnInProgram, quadBuffer } = renderer
   gl.bindFramebuffer(gl.FRAMEBUFFER, nextTarget.framebuffer)
   gl.viewport(0, 0, nextTarget.width, nextTarget.height)
@@ -511,9 +517,11 @@ const renderBurnInPass = (
 const renderCompositePass = (
   renderer: CrtRenderer,
   bloomTexture: WebGLTexture,
-  burnInTexture: WebGLTexture,
-  options: RenderCrtFrameOptions,
+  options: {
+    burnInTexture: WebGLTexture
+  } & RenderCrtFrameOptions,
 ) => {
+  const { burnInTexture } = options
   const { gl, compositeProgram, quadBuffer } = renderer
   gl.bindFramebuffer(gl.FRAMEBUFFER, null)
   gl.viewport(0, 0, renderer.canvas.width, renderer.canvas.height)
@@ -561,24 +569,33 @@ export const renderCrtFrame = (
     renderBlurPass(
       renderer,
       renderer.sourceTexture,
-      renderer.bloomTargets[0],
-      1,
-      0,
+      {
+        target: renderer.bloomTargets[0],
+        directionX: 1,
+        directionY: 0,
+      },
     )
     renderBlurPass(
       renderer,
       renderer.bloomTargets[0].texture,
-      renderer.bloomTargets[1],
-      0,
-      1,
+      {
+        target: renderer.bloomTargets[1],
+        directionX: 0,
+        directionY: 1,
+      },
     )
   }
-  renderBurnInPass(renderer, nextBurnTarget, previousBurnTarget, burnDecay)
+  renderBurnInPass(renderer, nextBurnTarget, {
+    previousTarget: previousBurnTarget,
+    decay: burnDecay,
+  })
   renderCompositePass(
     renderer,
     renderer.bloomTargets[1].texture,
-    nextBurnTarget.texture,
-    options,
+    {
+      ...options,
+      burnInTexture: nextBurnTarget.texture,
+    },
   )
 
   renderer.burnInIndex = nextBurnIndex
