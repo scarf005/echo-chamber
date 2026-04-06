@@ -20,8 +20,13 @@ const isLocaleId = (value: string): value is LocaleId => {
   return value === "en" || value === "ko"
 }
 
+const hasBrowserLocaleContext = (): boolean => {
+  return "document" in globalThis && "navigator" in globalThis &&
+    "localStorage" in globalThis
+}
+
 const detectNavigatorLocale = (): LocaleId => {
-  if (!("navigator" in globalThis) || !("localStorage" in globalThis)) {
+  if (!hasBrowserLocaleContext()) {
     return defaultLocale
   }
 
@@ -34,7 +39,7 @@ const detectNavigatorLocale = (): LocaleId => {
 }
 
 const readStoredLocale = (): LocaleId | null => {
-  if (!("localStorage" in globalThis)) {
+  if (!hasBrowserLocaleContext()) {
     return null
   }
 
@@ -47,7 +52,7 @@ const readStoredLocale = (): LocaleId | null => {
 }
 
 const writeStoredLocale = (locale: LocaleId) => {
-  if (!("localStorage" in globalThis)) {
+  if (!hasBrowserLocaleContext()) {
     return
   }
 
